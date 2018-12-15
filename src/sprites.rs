@@ -30,6 +30,7 @@ macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(|byte| { ret
 // they could reuse one of the bits as the mask plane. But it means parsing is weird.
 // Palette entries are 0xRRGGBBAA
 pub fn extract(data: &[u8], width: u8, height: u8, image_loc: u16, mask_loc: u16, palette: &[u32; 16]) -> Vec<u32> {
+    todo transpose (seems it's stored down then across, not normally).
     let image_data: &[u8] = &data[image_loc as usize..];
     let mask_data: &[u8] = &data[mask_loc as usize..];
     let pixels: usize = (width as usize) * (height as usize);

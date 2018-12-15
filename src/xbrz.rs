@@ -849,7 +849,7 @@ pub fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: u32, src_heigh
 fn u8_to_u32_slice(original: &[u8]) -> &[u32] {
     let count = original.len() / mem::size_of::<u32>();
     let ptr = original.as_ptr() as *const u32;
-    return unsafe { slice::from_raw_parts(ptr, count) };
+    return unsafe { slice::from_raw_parts(ptr, count) }; // Warning: potential alignment crash?
 }
 
 fn u32_to_u8_slice(original: &[u32]) -> &[u8] {

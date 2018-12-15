@@ -1,9 +1,19 @@
 use std::fs;
 use std::io;
+use std::mem;
+use std::slice;
+
+extern crate image;
 
 mod decompressor;
 mod ground;
 mod sprites;
+
+fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
+    let count = original.len() * mem::size_of::<u32>();
+    let ptr = original.as_ptr() as *const u8;
+    return unsafe { slice::from_raw_parts(ptr, count) };
+}
 
 fn main() -> io::Result<()> {
     let raw: Vec<u8> = fs::read("data/VGAGR0.DAT")?;
@@ -23,7 +33,11 @@ fn main() -> io::Result<()> {
         if terrain.is_valid() {
             // section[0]=terrain, section[1]=interactive objects.
             let sprite = sprites::extract(&data[0], terrain.width, terrain.height, terrain.image_loc, terrain.mask_loc, &palette);
-            println!("{}: {:?}; {:?}", i, terrain, sprite);
+            println!("{}: {:?}", i, terrain);
+
+            let file = format!("sprite_{}.png", i);
+            let buf = u32_to_u8_slice(&sprite);
+            image::save_buffer(file, buf, terrain.width as u32, terrain.height as u32, image::RGBA(8)).unwrap();
         }
     }
 
