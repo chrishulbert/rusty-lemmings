@@ -1,20 +1,20 @@
 // This extracts sprites from data.
 
 struct BitsIter {
-    bit: u8,
+    bit: i8,
     byte: u8,
 }
 impl BitsIter {
     fn new(byte: u8) -> BitsIter {
-        BitsIter { bit: 0, byte: byte }
+        BitsIter { bit: 7, byte: byte }
     }
 }
 impl Iterator for BitsIter {
     type Item = u8;
     fn next(&mut self) -> Option<u8> {
         let this_bit = self.bit;
-        if this_bit < 8 {
-            self.bit += 1;
+        if this_bit >= 0 {
+            self.bit -= 1;
             Some((self.byte >> this_bit) & 1)
         } else {
             None
@@ -30,7 +30,6 @@ macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(|byte| { ret
 // they could reuse one of the bits as the mask plane. But it means parsing is weird.
 // Palette entries are 0xRRGGBBAA
 pub fn extract(data: &[u8], width: u8, height: u8, image_loc: u16, mask_loc: u16, palette: &[u32; 16]) -> Vec<u32> {
-    todo transpose (seems it's stored down then across, not normally).
     let image_data: &[u8] = &data[image_loc as usize..];
     let mask_data: &[u8] = &data[mask_loc as usize..];
     let pixels: usize = (width as usize) * (height as usize);
@@ -39,7 +38,7 @@ pub fn extract(data: &[u8], width: u8, height: u8, image_loc: u16, mask_loc: u16
     let mut image_iter_2 = iterate_bits!(image_data).skip(pixels * 2);
     let mut image_iter_3 = iterate_bits!(image_data).skip(pixels * 3);
     let mut mask_iter = iterate_bits!(mask_data);
-    let mut sprite: Vec<u32> = Vec::with_capacity(pixels);
+    let mut sprite: Vec<u32> = Vec::new();
     for _ in 0..pixels {
         let colour_index =
             image_iter_0.next().unwrap() +
@@ -47,8 +46,8 @@ pub fn extract(data: &[u8], width: u8, height: u8, image_loc: u16, mask_loc: u16
             (image_iter_2.next().unwrap() << 2) +
             (image_iter_3.next().unwrap() << 3);
         let colour: u32 = palette[colour_index as usize];
-        let alpha: u8 = if mask_iter.next().unwrap() == 0 { 0 } else { 0xff };
-        let masked_colour = (colour & 0xffffff00) + (alpha as u32);
+        let alpha: u32 = if mask_iter.next().unwrap() == 0 { 0 } else { 0xff000000 };
+        let masked_colour = (colour & 0xffffff) + alpha;
         sprite.push(masked_colour);
     }
     return sprite;

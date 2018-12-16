@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
     let ground = ground::parse(&ground_file)?;
     println!("VGA: {:x}", ground.palettes.vga_custom[0]);
 
-    let palette = ground.palettes.as_rgba();
+    let palette = ground.palettes.as_abgr();
 
     for (i, terrain) in ground.terrain_info.iter().enumerate() {
         if terrain.is_valid() {
