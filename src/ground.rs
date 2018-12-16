@@ -6,7 +6,7 @@ use std::io::Error;
 use std::io::ErrorKind;
 use std::slice;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ObjectInfo {
     pub animation_flags: u16,
     pub start_animation_frame_index: u8,
@@ -28,6 +28,12 @@ pub struct ObjectInfo {
     pub trap_sound_effect_id: u8,
 }
 
+impl ObjectInfo {
+    pub fn is_valid(&self) -> bool {
+        return self.width>0 && self.height>0;
+    }
+}
+
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TerrainInfo {
     pub width: u8,
@@ -39,7 +45,7 @@ pub struct TerrainInfo {
 
 impl TerrainInfo {
     pub fn is_valid(&self) -> bool {
-        return self.width>0 || self.height>0 || self.image_loc>0 || self.mask_loc>0;
+        return self.width>0 && self.height>0;
     }
 }
 

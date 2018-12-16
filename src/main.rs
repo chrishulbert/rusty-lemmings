@@ -35,9 +35,20 @@ fn main() -> io::Result<()> {
             let sprite = sprites::extract(&data[0], terrain.width, terrain.height, terrain.image_loc, terrain.mask_loc, &palette);
             println!("{}: {:?}", i, terrain);
 
-            let file = format!("sprite_{}.png", i);
+            let file = format!("terrain_{}.png", i);
             let buf = u32_to_u8_slice(&sprite);
             image::save_buffer(file, buf, terrain.width as u32, terrain.height as u32, image::RGBA(8)).unwrap();
+        }
+    }
+
+    for (i, object) in ground.object_info.iter().enumerate() {
+        if object.is_valid() {
+            let sprite = sprites::extract(&data[1], object.width, object.height, object.animation_frames_base_loc, object.animation_frames_base_loc + object.mask_offset_from_image, &palette);
+            println!("{}: {:?}", i, object);
+
+            let file = format!("object_{}.png", i);
+            let buf = u32_to_u8_slice(&sprite);
+            image::save_buffer(file, buf, object.width as u32, object.height as u32, image::RGBA(8)).unwrap();
         }
     }
 
