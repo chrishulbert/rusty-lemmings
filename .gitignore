@@ -11,3 +11,6 @@ Cargo.lock
 
 # Lemmings data files
 /data/
+
+# Files output by app tests.
+/output/
