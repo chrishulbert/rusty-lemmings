@@ -8,6 +8,8 @@ extern crate image;
 mod decompressor;
 mod ground;
 mod sprites;
+mod level;
+mod special;
 
 fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
     let count = original.len() * mem::size_of::<u32>();
@@ -17,7 +19,7 @@ fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
 
 fn extract(index: u8) -> io::Result<()> {
     println!("Extracting {}", index);
-    fs::create_dir_all(format!("output/{}", index));
+    fs::create_dir_all(format!("output/{}", index))?;
 
     let data_file: Vec<u8> = fs::read(format!("data/VGAGR{}.DAT", index))?;
     let data = decompressor::decompress(&data_file)?;
@@ -54,12 +56,54 @@ fn extract(index: u8) -> io::Result<()> {
             image::save_buffer(file, buf, object.width as u32, object.height as u32, image::RGBA(8)).unwrap();
         }
     }
-        Ok(())
+
+    Ok(())
+}
+
+fn extract_level(index: isize) -> io::Result<()> {
+    println!("Extracting: {}", index);
+    fs::create_dir_all(format!("output/levels/{}", index))?;
+
+    let filename = format!("data/LEVEL00{}.DAT", index);
+    let raw: Vec<u8> = fs::read(filename)?;
+
+    let sections = decompressor::decompress(&raw)?;
+    println!("Sections: {:?}", sections.len());
+
+    for (i, section) in sections.iter().enumerate() {
+        fs::write(format!("output/levels/{}/{}", index, i), section)?;
+
+        let level = level::parse(section)?;
+        println!("{}: {} (num_of_lemmings = {})", i, level.name, level.globals.num_of_lemmings);
+    }
+
+    Ok(())
+}
+
+fn extract_special(index: isize) -> io::Result<()> {
+    let spec_raw: Vec<u8> = fs::read(format!("data/VGASPEC{}.DAT", index))?;
+    let spec_sections = decompressor::decompress(&spec_raw)?;
+    // if spec_sections.len() != 0 {
+    //     return Err(Error::new(ErrorKind::InvalidData, "Wrong section count"));
+    // }
+    let spec = special::parse(&spec_sections[0])?;
+    let buf = u32_to_u8_slice(&spec.bitmap);
+    image::save_buffer(format!("output/spec{}.png", index), &buf, spec.width as u32, spec.height as u32, image::RGBA(8)).unwrap();
+
+    Ok(())
 }
 
 fn main() -> io::Result<()> {
     for i in 0..5 {
         extract(i)?;
+    }
+
+    for i in 0..10 {
+        extract_level(i)?;
+    }
+
+    for i in 0..4 {
+        extract_special(i)?;
     }
 
     Ok(())

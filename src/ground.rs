@@ -133,8 +133,7 @@ fn read_rgb(data: &mut slice::Iter<u8>) -> u32 {
     return ((r as u32) << 16) + ((g as u32) << 8) + (b as u32);
 }
 
-/// Decompresses all the sections from a compressed dat file.
-/// Returns a vec of sections. Each section is a vec of its data.
+/// Parses a ground file.
 pub fn parse(data: &[u8]) -> io::Result<Ground> {
     if data.len() != 1056 {
         return Err(Error::new(ErrorKind::InvalidData, "Ground data wrong length"))
