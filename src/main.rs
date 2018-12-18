@@ -10,6 +10,7 @@ mod ground;
 mod sprites;
 mod level;
 mod special;
+mod maindat;
 
 fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
     let count = original.len() * mem::size_of::<u32>();
@@ -105,6 +106,14 @@ fn main() -> io::Result<()> {
     for i in 0..4 {
         extract_special(i)?;
     }
+
+    // Main.dat
+    let main_raw: Vec<u8> = fs::read("data/MAIN.DAT")?;
+    let main_sections = decompressor::decompress(&main_raw)?;
+    let main = maindat::parse(&main_sections)?;
+    let image = main.main_menu.logo;
+    let buf = u32_to_u8_slice(&image.bitmap);
+    image::save_buffer("output/background.png", &buf, image.width as u32, image.height as u32, image::RGBA(8)).unwrap();
 
     Ok(())
 }
