@@ -161,7 +161,7 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let id = read_u16(&mut data_iter)?;
         let ma = read_u8(&mut data_iter)?;
         let mb = read_u8(&mut data_iter)?;
-        let is_bad = ix==0 && iy==0 && id==0;
+        let is_bad = (ix==0 && iy==0 && id==0) || id>=16;
         if !is_bad {
             level.objects.push(Object {
                 x: ix as isize - 16,
@@ -179,7 +179,8 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let b = read_u8(&mut data_iter)?; // x. 
         let c = read_u8(&mut data_iter)?; // First 8 of 9 bits of y.
         let d = read_u8(&mut data_iter)?; // Another bit of y, and terrain id.
-        let is_bad = a==0 && b==0 && c==0 && d==0;
+        let terrain_id = d & 0x7f;
+        let is_bad = (a==0xff && b==0xff && c==0xff && d==0xff) || terrain_id>=64;
         if !is_bad {
             let x: u16 = (((a & 0xf) as u16) << 8) + (b as u16);
             let y: u16 = ((c as u16) << 1) + ((d >> 7) as u16);
@@ -189,7 +190,7 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
                 remove_terrain: ((a >> 4) & 2) == 2,
                 x: x as isize - 16,
                 y: y as isize - 32,
-                terrain_id: d & 0x7f,
+                terrain_id: terrain_id,
             });
         }
     }
