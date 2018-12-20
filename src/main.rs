@@ -5,12 +5,8 @@ use std::slice;
 
 extern crate image;
 
-mod decompressor;
-mod ground;
-mod sprites;
-mod level;
-mod special;
-mod maindat;
+mod lemmings;
+use lemmings::data::{ maindat, special, decompressor, ground, sprites, level };
 
 fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
     let count = original.len() * mem::size_of::<u32>();
