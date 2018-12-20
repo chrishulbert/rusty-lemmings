@@ -50,12 +50,15 @@ impl ObjectModifier {
 }
 
 pub struct Object {
-    pub x: i16, // May have to -16.
+    pub x: isize, // Normalised to 0.
+        // In file:
         // min 0xFFF8, max 0x0638.  0xFFF8 = -24, 0x0001 = -16, 0x0008 = -8,
         // 0x0010 = 0, 0x0018 = 8, ... , 0x0638 = 1576
         // note: should be multiples of 8
 
-    pub y: i16, // min 0xFFD7, max 0x009F.  0xFFD7 = -41, 0xFFF8 = -8, 0xFFFF = -1,
+    pub y: isize, // Normalised.
+        // In file:
+        // min 0xFFD7, max 0x009F.  0xFFD7 = -41, 0xFFF8 = -8, 0xFFFF = -1,
         // 0x0000 = 0, ... , 0x009F = 159.  
         // note: can be any value in the specified range
 
@@ -73,17 +76,21 @@ pub struct Terrain {
     pub do_not_overwrite_existing_terrain: bool,
     pub is_upside_down: bool,
     pub remove_terrain: bool,
-    pub x: u16, // min 0x0000, max 0x063F.  0x0000 = -16, 0x0008 = -8, 0x0010 = 0, 0x063f = 1583.
-    pub y: u16, // min 0xEF0, max 0x518.  0xEF0 = -38, 0xEF8 = -37,
+    pub x: isize, // Normalised.
+        // In file: min 0x0000, max 0x063F.  0x0000 = -16, 0x0008 = -8, 0x0010 = 0, 0x063f = 1583.
+    pub y: isize, // Normalised. 
+        // In file: min 0xEF0, max 0x518.  0xEF0 = -38, 0xEF8 = -37,
         // 0x020 = 0, 0x028 = 1, 0x030 = 2, 0x038 = 3, ... , 0x518 = 159
     pub terrain_id: u8,
 }
 
 pub struct SteelArea {
-    pub x: u16, // min 0x000, max 0xC78.  0x000 = -16, 0x008 = -12,
+    pub x: isize, // Normalised.
+        // In file: min 0x000, max 0xC78.  0x000 = -16, 0x008 = -12,
         // 0x010 = -8, 0x018 = -4, ... , 0xC78 = 1580.
         // note: each hex value represents 4 pixels.
-    pub y: u8, // min 0x00, max 0x27. 0x00 = 0, 0x01 = 4, 0x02 = 8, ... , 0x27 = 156
+    pub y: isize, // Normalised.
+        // In file: min 0x00, max 0x27. 0x00 = 0, 0x01 = 4, 0x02 = 8, ... , 0x27 = 156
         // note: each hex value represents 4 pixels
     pub width: u8, // 0-F, each value represents 4 pixels, 0=4, 1=8, 7=32
     pub height: u8,
@@ -149,16 +156,16 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
 
     // Objects.
     for _ in 0..32 {
-        let ux = read_u16(&mut data_iter)?;
-        let uy = read_u16(&mut data_iter)?;
+        let ix = read_u16(&mut data_iter)? as i16; // Will convert eg 0xfff8 to -24;
+        let iy = read_u16(&mut data_iter)? as i16;
         let id = read_u16(&mut data_iter)?;
         let ma = read_u8(&mut data_iter)?;
         let mb = read_u8(&mut data_iter)?;
-        let is_bad = ux==0 && uy==0 && id==0;
+        let is_bad = ix==0 && iy==0 && id==0;
         if !is_bad {
             level.objects.push(Object {
-                x: ux as i16, // Will convert eg 0xfff8 to -24;
-                y: uy as i16,
+                x: ix as isize - 16,
+                y: iy as isize,
                 obj_id: id,
                 modifier: ObjectModifier::from_lvl(ma),
                 is_upside_down: mb == 0x8f,
@@ -174,12 +181,14 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let d = read_u8(&mut data_iter)?; // Another bit of y, and terrain id.
         let is_bad = a==0 && b==0 && c==0 && d==0;
         if !is_bad {
+            let x: u16 = (((a & 0xf) as u16) << 8) + (b as u16);
+            let y: u16 = ((c as u16) << 1) + ((d >> 7) as u16);
             level.terrain.push(Terrain {
                 do_not_overwrite_existing_terrain: ((a >> 4) & 8) == 8,
                 is_upside_down: ((a >> 4) & 4) == 4,
                 remove_terrain: ((a >> 4) & 2) == 2,
-                x: (((a & 0xf) as u16) << 8) + (b as u16),
-                y: ((c as u16) << 1) + ((d >> 7) as u16),
+                x: x as isize - 16,
+                y: y as isize - 32,
                 terrain_id: d & 0x7f,
             });
         }
@@ -193,9 +202,11 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let d = read_u8(&mut data_iter)?; // Unused, pity after all that packing!
         let is_bad = a==0 && b==0 && c==0 && d==0;
         if !is_bad {
+            let x: u16 = ((a as u16) << 1) + ((b >> 7) as u16);
+            let y: u8 = b & 0x7f;
             level.steel.push(SteelArea {
-                x: ((a as u16) << 1) + ((b >> 7) as u16),
-                y: b & 0x7f,
+                x: (x as isize) - 16,
+                y: (y as isize) * 4,
                 width: c >> 4,
                 height: c & 0xf,
             });
