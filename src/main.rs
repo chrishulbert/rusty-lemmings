@@ -184,11 +184,16 @@ fn draw(sprite: &Vec<u32>, x: i32, y: i32, sprite_width: i32, sprite_height: i32
     let canvas_stride = canvas_width - sprite_width;
     let mut sprite_offset: i32 = if is_upside_down { (sprite_height - 1) * sprite_width } else { 0 };
     let sprite_stride: i32 = if is_upside_down { -2 * sprite_width } else { 0 };
-    if remove_terrain {
-        println!("Remove!??");
-    }
     for _ in 0..sprite_height {
         for _ in 0..sprite_width {
+            if remove_terrain {
+                if sprite[sprite_offset as usize] != 0 {
+                    canvas[canvas_offset as usize] = LEVEL_BACKGROUND;
+                }
+                sprite_offset += 1;
+                canvas_offset += 1;
+                continue;
+            }
             if do_not_overwrite_existing_terrain {
                 if canvas[canvas_offset as usize] != LEVEL_BACKGROUND {
                     sprite_offset += 1;
