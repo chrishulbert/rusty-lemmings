@@ -19,7 +19,7 @@ fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
 struct GroundCombined {
     ground: ground::Ground,
     terrain_sprites: HashMap<usize, Vec<u32>>,
-    object_sprites: HashMap<usize, Vec<u32>>, // TODO animate.
+    object_sprites: HashMap<usize, Vec<u32>>, // TODO animations.
 }
 
 fn load_ground_and_sprites(index: u8) -> io::Result<GroundCombined> {
@@ -55,9 +55,35 @@ fn load_ground_and_sprites(index: u8) -> io::Result<GroundCombined> {
 
 fn load_all_grounds() -> io::Result<Vec<GroundCombined>> {
     let mut all: Vec<GroundCombined> = Vec::new();
-    for i in 0..5 { // TODO load by file search using for entry in fs::read_dir("data")? { if let Ok(entry) = entry {
+    for i in 0..5 { // TODO load by file search
         let ground = load_ground_and_sprites(i)?;
         all.push(ground);
+    }
+    Ok(all)
+}
+
+// Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
+type LevelMap = HashMap<usize, level::Level>;
+
+// Load all the levels from all the sections in all the files into memory.
+fn load_all_levels() -> io::Result<LevelMap> {
+    let mut all: LevelMap = LevelMap::new();
+    for entry in fs::read_dir("data")? {
+        if let Ok(entry) = entry {
+            let raw_name = entry.file_name().into_string().unwrap();
+            let file_name = raw_name.to_lowercase();
+            if file_name.starts_with("level") && file_name.ends_with(".dat") {
+                let file_number: usize = file_name[5..8].parse().unwrap();
+                let filename = format!("data/{}", raw_name);
+                let raw: Vec<u8> = fs::read(filename)?;
+                let sections = decompressor::decompress(&raw)?;
+                for (section_index, section) in sections.iter().enumerate() {
+                    let level = level::parse(section)?;
+                    let key = file_number*100 + section_index;
+                    all.insert(key, level);
+                }
+            }
+        }
     }
     Ok(all)
 }
@@ -167,11 +193,13 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
 }
 
 fn main() -> io::Result<()> {
+    let levels = load_all_levels()?;
     let grounds = load_all_grounds()?;
+    // todo benchmark it all.
 
-    for i in 0..10 {
-        extract_level(i, &grounds)?;
-    }
+    // for i in 0..10 {
+    //     extract_level(i, &grounds)?;
+    // }
 
     // for i in 0..5 {
     //     extract(i)?;
