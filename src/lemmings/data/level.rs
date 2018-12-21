@@ -183,13 +183,15 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let is_bad = (a==0xff && b==0xff && c==0xff && d==0xff) || terrain_id>=64;
         if !is_bad {
             let x: u16 = (((a & 0xf) as u16) << 8) + (b as u16);
-            let y: u16 = ((c as u16) << 1) + ((d >> 7) as u16);
+            let y_bits: u16 = ((c as u16) << 1) + ((d >> 7) as u16);
+            let y_2s_comp: u16 = if y_bits & 0x100 == 0 { y_bits } else { y_bits | 0xfe00 };
+            let y_i: i16 = y_2s_comp as i16;
             level.terrain.push(Terrain {
                 do_not_overwrite_existing_terrain: ((a >> 4) & 8) == 8,
                 is_upside_down: ((a >> 4) & 4) == 4,
                 remove_terrain: ((a >> 4) & 2) == 2,
                 x: x as isize,
-                y: y as isize,
+                y: y_i as isize,
                 terrain_id: terrain_id as usize,
             });
         }
