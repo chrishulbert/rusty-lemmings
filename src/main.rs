@@ -179,7 +179,8 @@ const LEVEL_BACKGROUND: u32 = 0xff000000;
 fn draw(sprite: &Vec<u32>, x: i32, y: i32, sprite_width: i32, sprite_height: i32, canvas: &mut Vec<u32>, canvas_width: i32, canvas_height: i32,
         do_not_overwrite_existing_terrain: bool,
         is_upside_down: bool,
-        remove_terrain: bool) {
+        remove_terrain: bool,
+        must_have_terrain_underneath_to_be_visible: bool) {
     let mut canvas_offset = y as i32 * canvas_width + x as i32;
     let canvas_stride = canvas_width - sprite_width;
     let mut sprite_offset: i32 = if is_upside_down { (sprite_height - 1) * sprite_width } else { 0 };
@@ -195,7 +196,14 @@ fn draw(sprite: &Vec<u32>, x: i32, y: i32, sprite_width: i32, sprite_height: i32
                 continue;
             }
             if do_not_overwrite_existing_terrain {
-                if canvas[canvas_offset as usize] != LEVEL_BACKGROUND {
+                if canvas[canvas_offset as usize] != LEVEL_BACKGROUND { // Skip the 'paint' if there's existing terrain.
+                    sprite_offset += 1;
+                    canvas_offset += 1;
+                    continue;
+                }
+            }
+            if must_have_terrain_underneath_to_be_visible {
+                if canvas[canvas_offset as usize] == LEVEL_BACKGROUND { // Skip the 'paint' if there's no existing terrain.
                     sprite_offset += 1;
                     canvas_offset += 1;
                     continue;
@@ -233,7 +241,8 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
             width as i32, height as i32,
             terrain.do_not_overwrite_existing_terrain,
             terrain.is_upside_down,
-            terrain.remove_terrain);
+            terrain.remove_terrain,
+            false);
     }
     for object in level.objects.iter() {
         let object_info = &ground.ground.object_info[object.obj_id as usize];
@@ -243,7 +252,10 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
             object_info.width as i32, object_info.height as i32, 
             &mut rendered_level.bitmap, 
             width as i32, height as i32, 
-            false, false, false);
+            object.modifier.is_do_not_overwrite_existing_terrain(),
+            object.is_upside_down,
+            false,
+            object.modifier.is_must_have_terrain_underneath_to_be_visible());
     }
     Ok(rendered_level)
 }
@@ -256,14 +268,14 @@ fn main() -> io::Result<()> {
     let elapsed = now.elapsed();
     println!("Took: {:?}", elapsed); // 27ms optimised.
 
-    // for (key, level) in &levels {
-        let level = &levels[&0];
-        let key = 0;
+    for (key, level) in &levels {
+        // let key = 104;
+        // let level = &levels[&key];
         let rendered = render_level(level, &grounds)?;
         let buf = u32_to_u8_slice(&rendered.bitmap);
         let filename = format!("output/levels/{} {}.png", key, level.name);
         image::save_buffer(filename, &buf, rendered.rect.width() as u32, rendered.rect.height() as u32, image::RGBA(8)).unwrap();
-    // }
+    }
 
     // for i in 0..10 {
     //     extract_level(i, &grounds)?;

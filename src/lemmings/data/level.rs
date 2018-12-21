@@ -47,6 +47,16 @@ impl ObjectModifier {
             return ObjectModifier::Normal;
         }
     }
+
+    #[inline]
+    pub fn is_do_not_overwrite_existing_terrain(&self) -> bool {
+        if let ObjectModifier::DoNotOverwriteExistingTerrain = self { true } else { false }
+    }
+
+    #[inline]
+    pub fn is_must_have_terrain_underneath_to_be_visible(&self) -> bool {
+        if let ObjectModifier::MustHaveTerrainUnderneathToBeVisible = self { true } else { false }
+    }
 }
 
 pub struct Object {
