@@ -11,8 +11,8 @@ pub struct ObjectInfo {
     pub animation_flags: u16,
     pub start_animation_frame_index: u8,
     pub end_animation_frame_index: u8,
-    pub width: u8,
-    pub height: u8,
+    pub width: usize,
+    pub height: usize,
     pub animation_frame_data_size: u16,
     pub mask_offset_from_image: u16,
     unknown1: u16,
@@ -36,8 +36,8 @@ impl ObjectInfo {
 
 #[derive(Default, Copy, Clone, Debug)]
 pub struct TerrainInfo {
-    pub width: u8,
-    pub height: u8,
+    pub width: usize,
+    pub height: usize,
     pub image_loc: u16,
     pub mask_loc: u16,
     unknown1: u16,
@@ -144,8 +144,8 @@ pub fn parse(data: &[u8]) -> io::Result<Ground> {
         ground.object_info[i].animation_flags = read_u16(&mut data_iter);
         ground.object_info[i].start_animation_frame_index = *data_iter.next().unwrap();
         ground.object_info[i].end_animation_frame_index = *data_iter.next().unwrap();
-        ground.object_info[i].width = *data_iter.next().unwrap();
-        ground.object_info[i].height = *data_iter.next().unwrap();
+        ground.object_info[i].width = *data_iter.next().unwrap() as usize;
+        ground.object_info[i].height = *data_iter.next().unwrap() as usize;
         ground.object_info[i].animation_frame_data_size = read_u16(&mut data_iter);
         ground.object_info[i].mask_offset_from_image = read_u16(&mut data_iter);
         ground.object_info[i].unknown1 = read_u16(&mut data_iter);
@@ -161,8 +161,8 @@ pub fn parse(data: &[u8]) -> io::Result<Ground> {
         ground.object_info[i].trap_sound_effect_id = *data_iter.next().unwrap();
     }
     for i in 0..64 {
-        ground.terrain_info[i].width = *data_iter.next().unwrap();
-        ground.terrain_info[i].height = *data_iter.next().unwrap();
+        ground.terrain_info[i].width = *data_iter.next().unwrap() as usize;
+        ground.terrain_info[i].height = *data_iter.next().unwrap() as usize;
         ground.terrain_info[i].image_loc = read_u16(&mut data_iter);
         ground.terrain_info[i].mask_loc = read_u16(&mut data_iter);
         ground.terrain_info[i].unknown1 = read_u16(&mut data_iter);

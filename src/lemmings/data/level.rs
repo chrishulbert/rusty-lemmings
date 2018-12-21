@@ -62,7 +62,7 @@ pub struct Object {
         // 0x0000 = 0, ... , 0x009F = 159.  
         // note: can be any value in the specified range
 
-    pub obj_id: u16, // min 0x0000, max 0x000F.  the object id is different in each
+    pub obj_id: usize, // min 0x0000, max 0x000F.  the object id is different in each
         // graphics set, however 0x0000 is always an exit and 0x0001 is always a start.  
 
     pub modifier: ObjectModifier, // can be 80 (do not overwrite existing terrain) or 40
@@ -81,7 +81,7 @@ pub struct Terrain {
     pub y: isize, // Normalised. 
         // In file: min 0xEF0, max 0x518.  0xEF0 = -38, 0xEF8 = -37,
         // 0x020 = 0, 0x028 = 1, 0x030 = 2, 0x038 = 3, ... , 0x518 = 159
-    pub terrain_id: u8,
+    pub terrain_id: usize,
 }
 
 pub struct SteelArea {
@@ -164,9 +164,9 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let is_bad = (ix==0 && iy==0 && id==0) || id>=16;
         if !is_bad {
             level.objects.push(Object {
-                x: ix as isize - 16,
-                y: iy as isize,
-                obj_id: id,
+                x: ix as isize,
+                y: iy as isize + 4,
+                obj_id: id as usize,
                 modifier: ObjectModifier::from_lvl(ma),
                 is_upside_down: mb == 0x8f,
             });
@@ -188,9 +188,9 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
                 do_not_overwrite_existing_terrain: ((a >> 4) & 8) == 8,
                 is_upside_down: ((a >> 4) & 4) == 4,
                 remove_terrain: ((a >> 4) & 2) == 2,
-                x: x as isize - 16,
-                y: y as isize - 32,
-                terrain_id: terrain_id,
+                x: x as isize,
+                y: y as isize,
+                terrain_id: terrain_id as usize,
             });
         }
     }
@@ -206,7 +206,7 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
             let x: u16 = ((a as u16) << 1) + ((b >> 7) as u16);
             let y: u8 = b & 0x7f;
             level.steel.push(SteelArea {
-                x: (x as isize) - 16,
+                x: (x as isize),
                 y: (y as isize) * 4,
                 width: c >> 4,
                 height: c & 0xf,

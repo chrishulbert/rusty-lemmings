@@ -66,6 +66,7 @@ fn load_all_grounds() -> io::Result<Vec<GroundCombined>> {
 type LevelMap = HashMap<usize, level::Level>;
 
 // Load all the levels from all the sections in all the files into memory.
+// Might as well load into ram, only takes <30ms on my laptop in release mode.
 fn load_all_levels() -> io::Result<LevelMap> {
     let mut all: LevelMap = LevelMap::new();
     for entry in fs::read_dir("data")? {
@@ -133,11 +134,11 @@ struct Rect {
 }
 
 impl Rect {
-    fn width(&self) -> isize {
-        self.max_x - self.min_x
+    fn width(&self) -> usize {
+        (self.max_x - self.min_x) as usize
     }
-    fn height(&self) -> isize {
-        self.max_y - self.min_y
+    fn height(&self) -> usize {
+        (self.max_y - self.min_y) as usize
     }
 }
 
@@ -173,6 +174,23 @@ struct RenderedLevel {
     rect: Rect,
 }
 
+fn draw(sprite: &Vec<u32>, x: isize, y: isize, sprite_width: usize, sprite_height: usize, canvas: &mut Vec<u32>, canvas_width: usize, canvas_height: usize) {
+    let mut canvas_offset = y as usize * canvas_width + x as usize;
+    let mut sprite_offset: usize = 0;
+    let stride = canvas_width - sprite_width;
+    for _ in 0..sprite_height {
+        for _ in 0..sprite_width {
+            let pixel = sprite[sprite_offset];
+            if pixel != 0 {
+                canvas[canvas_offset] = pixel;
+            }
+            sprite_offset += 1;
+            canvas_offset += 1;
+        }
+        canvas_offset += stride;
+    }
+}
+
 fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<RenderedLevel> {
     let rect = size_of_level(level, grounds);
     let width = rect.width();
@@ -185,17 +203,31 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
     let ground = &grounds[level.globals.normal_graphic_set as usize];
     for terrain in level.terrain.iter() {
         let terrain_info = &ground.ground.terrain_info[terrain.terrain_id as usize];
+        let sprite = &ground.terrain_sprites[&terrain.terrain_id];
+        draw(&sprite, terrain.x - rect.min_x, terrain.y - rect.min_y, terrain_info.width, terrain_info.height, &mut rendered_level.bitmap, width, height);
     }
     for object in level.objects.iter() {
-        let object = &ground.ground.object_info[object.obj_id as usize];
+        let object_info = &ground.ground.object_info[object.obj_id as usize];
+        let sprite = &ground.object_sprites[&object.obj_id];
+        draw(&sprite, object.x - rect.min_x, object.y - rect.min_y, object_info.width, object_info.height, &mut rendered_level.bitmap, width, height);
     }
     Ok(rendered_level)
 }
 
 fn main() -> io::Result<()> {
+    use std::time::Instant;
+    let now = Instant::now();
     let levels = load_all_levels()?;
     let grounds = load_all_grounds()?;
-    // todo benchmark it all.
+    let elapsed = now.elapsed();
+    println!("Took: {:?}", elapsed); // 27ms optimised.
+
+    for (key, level) in &levels {
+        let rendered = render_level(level, &grounds)?;
+        let buf = u32_to_u8_slice(&rendered.bitmap);
+        let filename = format!("output/levels/{} {}.png", key, level.name);
+        image::save_buffer(filename, &buf, rendered.rect.width() as u32, rendered.rect.height() as u32, image::RGBA(8)).unwrap();
+    }
 
     // for i in 0..10 {
     //     extract_level(i, &grounds)?;
