@@ -174,20 +174,37 @@ struct RenderedLevel {
     rect: Rect,
 }
 
-fn draw(sprite: &Vec<u32>, x: isize, y: isize, sprite_width: usize, sprite_height: usize, canvas: &mut Vec<u32>, canvas_width: usize, canvas_height: usize) {
-    let mut canvas_offset = y as usize * canvas_width + x as usize;
-    let mut sprite_offset: usize = 0;
-    let stride = canvas_width - sprite_width;
+const LEVEL_BACKGROUND: u32 = 0xff000000;
+
+fn draw(sprite: &Vec<u32>, x: i32, y: i32, sprite_width: i32, sprite_height: i32, canvas: &mut Vec<u32>, canvas_width: i32, canvas_height: i32,
+        do_not_overwrite_existing_terrain: bool,
+        is_upside_down: bool,
+        remove_terrain: bool) {
+    let mut canvas_offset = y as i32 * canvas_width + x as i32;
+    let canvas_stride = canvas_width - sprite_width;
+    let mut sprite_offset: i32 = if is_upside_down { (sprite_height - 1) * sprite_width } else { 0 };
+    let sprite_stride: i32 = if is_upside_down { -2 * sprite_width } else { 0 };
+    if remove_terrain {
+        println!("Remove!??");
+    }
     for _ in 0..sprite_height {
         for _ in 0..sprite_width {
-            let pixel = sprite[sprite_offset];
+            if do_not_overwrite_existing_terrain {
+                if canvas[canvas_offset as usize] != LEVEL_BACKGROUND {
+                    sprite_offset += 1;
+                    canvas_offset += 1;
+                    continue;
+                }
+            }
+            let pixel = sprite[sprite_offset as usize];
             if pixel != 0 {
-                canvas[canvas_offset] = pixel;
+                canvas[canvas_offset as usize] = pixel;
             }
             sprite_offset += 1;
             canvas_offset += 1;
         }
-        canvas_offset += stride;
+        canvas_offset += canvas_stride;
+        sprite_offset += sprite_stride;
     }
 }
 
@@ -197,19 +214,31 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
     let height = rect.height();
     let pixels = (width * height) as usize;
     let mut rendered_level = RenderedLevel {
-        bitmap: vec![0; pixels],
+        bitmap: vec![LEVEL_BACKGROUND; pixels],
         rect: rect,
     };
     let ground = &grounds[level.globals.normal_graphic_set as usize];
     for terrain in level.terrain.iter() {
         let terrain_info = &ground.ground.terrain_info[terrain.terrain_id as usize];
         let sprite = &ground.terrain_sprites[&terrain.terrain_id];
-        draw(&sprite, terrain.x - rect.min_x, terrain.y - rect.min_y, terrain_info.width, terrain_info.height, &mut rendered_level.bitmap, width, height);
+        draw(&sprite, 
+            (terrain.x - rect.min_x) as i32, (terrain.y - rect.min_y) as i32,
+            terrain_info.width as i32, terrain_info.height as i32,
+            &mut rendered_level.bitmap, 
+            width as i32, height as i32,
+            terrain.do_not_overwrite_existing_terrain,
+            terrain.is_upside_down,
+            terrain.remove_terrain);
     }
     for object in level.objects.iter() {
         let object_info = &ground.ground.object_info[object.obj_id as usize];
         let sprite = &ground.object_sprites[&object.obj_id];
-        draw(&sprite, object.x - rect.min_x, object.y - rect.min_y, object_info.width, object_info.height, &mut rendered_level.bitmap, width, height);
+        draw(&sprite, 
+            (object.x - rect.min_x) as i32, (object.y - rect.min_y) as i32,
+            object_info.width as i32, object_info.height as i32, 
+            &mut rendered_level.bitmap, 
+            width as i32, height as i32, 
+            false, false, false);
     }
     Ok(rendered_level)
 }
@@ -222,12 +251,14 @@ fn main() -> io::Result<()> {
     let elapsed = now.elapsed();
     println!("Took: {:?}", elapsed); // 27ms optimised.
 
-    for (key, level) in &levels {
+    // for (key, level) in &levels {
+        let level = &levels[&0];
+        let key = 0;
         let rendered = render_level(level, &grounds)?;
         let buf = u32_to_u8_slice(&rendered.bitmap);
         let filename = format!("output/levels/{} {}.png", key, level.name);
         image::save_buffer(filename, &buf, rendered.rect.width() as u32, rendered.rect.height() as u32, image::RGBA(8)).unwrap();
-    }
+    // }
 
     // for i in 0..10 {
     //     extract_level(i, &grounds)?;
