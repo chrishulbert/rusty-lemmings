@@ -6,7 +6,7 @@ use std::io::Error;
 use std::io::ErrorKind;
 use std::slice;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Skills {
     pub climbers: u16, // 2 bytes each, only lower byte is used, max 0x00FA
     pub floaters: u16,
@@ -18,7 +18,7 @@ pub struct Skills {
     pub diggers: u16,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Globals {
     pub release_rate: u16, // 0x0000 is slowest, 0x00FA is fastest
     pub num_of_lemmings: u16, // maximum 0x0072
@@ -31,6 +31,7 @@ pub struct Globals {
     pub unknown: u16,
 }
 
+#[derive(Debug)]
 pub enum ObjectModifier {
     Normal, // Draw full graphic, 0
     MustHaveTerrainUnderneathToBeVisible, // 40
@@ -59,6 +60,7 @@ impl ObjectModifier {
     }
 }
 
+#[derive(Debug)]
 pub struct Object {
     pub x: i32, // Normalised to 0.
         // In file:
@@ -82,6 +84,7 @@ pub struct Object {
     pub is_upside_down: bool, // can be 8F (display graphic upside-down) or 0F (display graphic normally)
 }
 
+#[derive(Debug)]
 pub struct Terrain {
     pub do_not_overwrite_existing_terrain: bool,
     pub is_upside_down: bool,
@@ -94,6 +97,7 @@ pub struct Terrain {
     pub terrain_id: usize,
 }
 
+#[derive(Debug)]
 pub struct SteelArea {
     pub x: isize, // Normalised.
         // In file: min 0x000, max 0xC78.  0x000 = -16, 0x008 = -12,
@@ -106,7 +110,7 @@ pub struct SteelArea {
     pub height: u8,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Level {
     pub globals: Globals,
     pub objects: Vec<Object>, // Up to 32

@@ -145,11 +145,13 @@ impl LevelSize {
     }
 }
 
+const SPECIAL_LEFT_X: i32 = 320;
+
 fn size_of_level(level: &level::Level, grounds: &[GroundCombined]) -> LevelSize {
     if level.globals.extended_graphic_set != 0 {
         return LevelSize {
-            min_x: 0,
-            max_x: special::WIDTH as i32,            
+            min_x: SPECIAL_LEFT_X,
+            max_x: SPECIAL_LEFT_X + special::WIDTH as i32,            
         }
     }
 
