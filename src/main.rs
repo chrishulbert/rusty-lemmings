@@ -126,70 +126,73 @@ fn extract_special(index: isize) -> io::Result<()> {
 }
 
 #[derive(Debug, Copy, Clone)]
-struct Rect {
-    min_x: isize,
-    min_y: isize,
-    max_x: isize,
-    max_y: isize,
+struct LevelSize {
+    min_x: i32,
+    max_x: i32,
 }
 
-impl Rect {
-    fn width(&self) -> usize {
-        (self.max_x - self.min_x) as usize
-    }
-    fn height(&self) -> usize {
-        (self.max_y - self.min_y) as usize
+impl LevelSize {
+    fn width(&self) -> i32 {
+        self.max_x - self.min_x
     }
 }
 
-fn size_of_level(level: &level::Level, grounds: &[GroundCombined]) -> Rect {
-    let mut rect = Rect {
-        min_x: std::isize::MAX,
-        min_y: std::isize::MAX,
-        max_x: std::isize::MIN,
-        max_y: std::isize::MIN,
+fn size_of_level(level: &level::Level, grounds: &[GroundCombined]) -> LevelSize {
+    let mut size = LevelSize {
+        min_x: std::i32::MAX,
+        max_x: std::i32::MIN,
     };
     let ground = &grounds[level.globals.normal_graphic_set as usize];
-    for object in level.objects.iter() {
-        let width = ground.ground.object_info[object.obj_id as usize].width as isize;
-        let height = ground.ground.object_info[object.obj_id as usize].height as isize;
-        rect.min_x = cmp::min(rect.min_x, object.x);
-        rect.min_y = cmp::min(rect.min_y, object.y);
-        rect.max_x = cmp::max(rect.max_x, object.x + width);
-        rect.max_y = cmp::max(rect.max_y, object.y + height);
-    }
     for terrain in level.terrain.iter() {
-        let width = ground.ground.terrain_info[terrain.terrain_id as usize].width as isize;
-        let height = ground.ground.terrain_info[terrain.terrain_id as usize].height as isize;
-        rect.min_x = cmp::min(rect.min_x, terrain.x);
-        rect.min_y = cmp::min(rect.min_y, terrain.y);
-        rect.max_x = cmp::max(rect.max_x, terrain.x + width);
-        rect.max_y = cmp::max(rect.max_y, terrain.y + height);
+        let width = ground.ground.terrain_info[terrain.terrain_id as usize].width as i32;
+        size.min_x = cmp::min(size.min_x, terrain.x);
+        size.max_x = cmp::max(size.max_x, terrain.x + width);
     }
-    rect
+    size
 }
 
 struct RenderedLevel {
     bitmap: Vec<u32>,
-    rect: Rect,
+    size: LevelSize,
 }
 
 const LEVEL_BACKGROUND: u32 = 0xff000000;
+const LEVEL_HEIGHT: i32 = 160;
 
-fn draw(sprite: &Vec<u32>, x: i32, y: i32, sprite_width: i32, sprite_height: i32, canvas: &mut Vec<u32>, canvas_width: i32, canvas_height: i32,
+fn draw(sprite: &Vec<u32>,
+        x: i32, y: i32,
+        sprite_width: i32, sprite_height: i32,
+        canvas: &mut Vec<u32>, canvas_width: i32, canvas_height: i32,
         do_not_overwrite_existing_terrain: bool,
         is_upside_down: bool,
         remove_terrain: bool,
         must_have_terrain_underneath_to_be_visible: bool) {
-    let mut canvas_offset = y as i32 * canvas_width + x as i32;
+    let mut canvas_offset = y * canvas_width + x;
     let canvas_stride = canvas_width - sprite_width;
     let mut sprite_offset: i32 = if is_upside_down { (sprite_height - 1) * sprite_width } else { 0 };
     let sprite_stride: i32 = if is_upside_down { -2 * sprite_width } else { 0 };
-    for _ in 0..sprite_height {
-        for _ in 0..sprite_width {
+    for pixel_y in 0..sprite_height {
+        if pixel_y+y < 0 || pixel_y+y >= canvas_height { // Out of bounds, skip a row.
+            canvas_offset += sprite_width + canvas_stride;
+            sprite_offset += sprite_width + sprite_stride;
+            continue
+        }
+
+        for pixel_x in 0..sprite_width {
+            if pixel_x+x < 0 || pixel_x+x >= canvas_width { // Out of canvas bounds, skip this pixel.
+                sprite_offset += 1;
+                canvas_offset += 1;
+                continue
+            }
+
             if remove_terrain {
                 if sprite[sprite_offset as usize] != 0 {
-                    canvas[canvas_offset as usize] = LEVEL_BACKGROUND;
+
+                    let d1: u32 = if do_not_overwrite_existing_terrain { 0xff } else { 0 };
+                    let d2: u32 = if is_upside_down { 0xff0000 } else { 0 };
+                    let d3: u32 = if remove_terrain { 0xff00 } else { 0 };
+                    canvas[canvas_offset as usize] = 0xff000000 + d1 + d2 + d3; //LEVEL_BACKGROUND;
+
                 }
                 sprite_offset += 1;
                 canvas_offset += 1;
@@ -222,22 +225,22 @@ fn draw(sprite: &Vec<u32>, x: i32, y: i32, sprite_width: i32, sprite_height: i32
 }
 
 fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<RenderedLevel> {
-    let rect = size_of_level(level, grounds);
-    let width = rect.width();
-    let height = rect.height();
-    let pixels = (width * height) as usize;
+    let size = size_of_level(level, grounds);
+    let width = size.width();
+    let height = LEVEL_HEIGHT;
+    let pixels = width * height;
     let mut rendered_level = RenderedLevel {
-        bitmap: vec![LEVEL_BACKGROUND; pixels],
-        rect: rect,
+        bitmap: vec![LEVEL_BACKGROUND; pixels as usize],
+        size: size,
     };
     let ground = &grounds[level.globals.normal_graphic_set as usize];
     for terrain in level.terrain.iter() {
         let terrain_info = &ground.ground.terrain_info[terrain.terrain_id as usize];
         let sprite = &ground.terrain_sprites[&terrain.terrain_id];
-        draw(&sprite, 
-            (terrain.x - rect.min_x) as i32, (terrain.y - rect.min_y) as i32,
+        draw(&sprite,
+            (terrain.x - size.min_x) as i32, terrain.y,
             terrain_info.width as i32, terrain_info.height as i32,
-            &mut rendered_level.bitmap, 
+            &mut rendered_level.bitmap,
             width as i32, height as i32,
             terrain.do_not_overwrite_existing_terrain,
             terrain.is_upside_down,
@@ -247,11 +250,11 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
     for object in level.objects.iter() {
         let object_info = &ground.ground.object_info[object.obj_id as usize];
         let sprite = &ground.object_sprites[&object.obj_id];
-        draw(&sprite, 
-            (object.x - rect.min_x) as i32, (object.y - rect.min_y) as i32,
-            object_info.width as i32, object_info.height as i32, 
-            &mut rendered_level.bitmap, 
-            width as i32, height as i32, 
+        draw(&sprite,
+            (object.x - size.min_x) as i32, object.y as i32,
+            object_info.width as i32, object_info.height as i32,
+            &mut rendered_level.bitmap,
+            width as i32, height as i32,
             object.modifier.is_do_not_overwrite_existing_terrain(),
             object.is_upside_down,
             false,
@@ -274,7 +277,7 @@ fn main() -> io::Result<()> {
         let rendered = render_level(level, &grounds)?;
         let buf = u32_to_u8_slice(&rendered.bitmap);
         let filename = format!("output/levels/{} {}.png", key, level.name);
-        image::save_buffer(filename, &buf, rendered.rect.width() as u32, rendered.rect.height() as u32, image::RGBA(8)).unwrap();
+        image::save_buffer(filename, &buf, rendered.size.width() as u32, LEVEL_HEIGHT as u32, image::RGBA(8)).unwrap();
     }
 
     // for i in 0..10 {

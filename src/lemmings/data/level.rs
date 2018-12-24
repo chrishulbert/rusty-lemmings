@@ -60,13 +60,13 @@ impl ObjectModifier {
 }
 
 pub struct Object {
-    pub x: isize, // Normalised to 0.
+    pub x: i32, // Normalised to 0.
         // In file:
         // min 0xFFF8, max 0x0638.  0xFFF8 = -24, 0x0001 = -16, 0x0008 = -8,
         // 0x0010 = 0, 0x0018 = 8, ... , 0x0638 = 1576
         // note: should be multiples of 8
 
-    pub y: isize, // Normalised.
+    pub y: i32, // Normalised.
         // In file:
         // min 0xFFD7, max 0x009F.  0xFFD7 = -41, 0xFFF8 = -8, 0xFFFF = -1,
         // 0x0000 = 0, ... , 0x009F = 159.  
@@ -86,9 +86,9 @@ pub struct Terrain {
     pub do_not_overwrite_existing_terrain: bool,
     pub is_upside_down: bool,
     pub remove_terrain: bool,
-    pub x: isize, // Normalised.
+    pub x: i32, // Normalised.
         // In file: min 0x0000, max 0x063F.  0x0000 = -16, 0x0008 = -8, 0x0010 = 0, 0x063f = 1583.
-    pub y: isize, // Normalised. 
+    pub y: i32, // Normalised. 
         // In file: min 0xEF0, max 0x518.  0xEF0 = -38, 0xEF8 = -37,
         // 0x020 = 0, 0x028 = 1, 0x030 = 2, 0x038 = 3, ... , 0x518 = 159
     pub terrain_id: usize,
@@ -174,8 +174,8 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         let is_bad = (ix==0 && iy==0 && id==0) || id>=16;
         if !is_bad {
             level.objects.push(Object {
-                x: ix as isize,
-                y: iy as isize + 4,
+                x: ix as i32,
+                y: iy as i32 + 4,
                 obj_id: id as usize,
                 modifier: ObjectModifier::from_lvl(ma),
                 is_upside_down: mb == 0x8f,
@@ -196,12 +196,13 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
             let y_bits: u16 = ((c as u16) << 1) + ((d >> 7) as u16);
             let y_2s_comp: u16 = if y_bits & 0x100 == 0 { y_bits } else { y_bits | 0xfe00 };
             let y_i: i16 = y_2s_comp as i16;
+            let flags: u8 = a >> 4;
             level.terrain.push(Terrain {
-                do_not_overwrite_existing_terrain: ((a >> 4) & 8) == 8,
-                is_upside_down: ((a >> 4) & 4) == 4,
-                remove_terrain: ((a >> 4) & 2) == 2,
-                x: x as isize,
-                y: y_i as isize,
+                do_not_overwrite_existing_terrain: (flags & 8) == 8,
+                is_upside_down: (flags & 4) == 4,
+                remove_terrain: (flags & 2) == 2,
+                x: x as i32,
+                y: y_i as i32,
                 terrain_id: terrain_id as usize,
             });
         }
