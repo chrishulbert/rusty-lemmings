@@ -63,7 +63,7 @@ pub struct Special {
     pub bitmap: Vec<u32>,
 }
 
-const WIDTH: usize = 960;
+pub const WIDTH: usize = 960;
 const HEIGHT: usize = 160;
 const PIXELS: usize = WIDTH * HEIGHT;
 const SECTION_HEIGHT: usize = 40;

@@ -62,6 +62,27 @@ fn load_all_grounds() -> io::Result<Vec<GroundCombined>> {
     Ok(all)
 }
 
+type SpecialMap = HashMap<i32, special::Special>;
+
+fn load_all_specials() -> io::Result<SpecialMap> {
+    let mut all: SpecialMap = SpecialMap::new();
+    for entry in fs::read_dir("data")? {
+        if let Ok(entry) = entry {
+            let raw_name = entry.file_name().into_string().unwrap();
+            let file_name = raw_name.to_lowercase();
+            if file_name.starts_with("vgaspec") && file_name.ends_with(".dat") {
+                let file_number: i32 = file_name[7..8].parse().unwrap();
+                let filename = format!("data/{}", raw_name);
+                let raw: Vec<u8> = fs::read(filename)?;
+                let sections = decompressor::decompress(&raw)?;
+                let spec = special::parse(&sections[0])?;
+                all.insert(file_number, spec);
+            }
+        }
+    }
+    Ok(all)
+}
+
 // Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
 type LevelMap = HashMap<usize, level::Level>;
 
@@ -112,19 +133,6 @@ fn extract_level(index: isize, grounds: &[GroundCombined]) -> io::Result<()> {
     Ok(())
 }
 
-fn extract_special(index: isize) -> io::Result<()> {
-    let spec_raw: Vec<u8> = fs::read(format!("data/VGASPEC{}.DAT", index))?;
-    let spec_sections = decompressor::decompress(&spec_raw)?;
-    // if spec_sections.len() != 0 {
-    //     return Err(Error::new(ErrorKind::InvalidData, "Wrong section count"));
-    // }
-    let spec = special::parse(&spec_sections[0])?;
-    let buf = u32_to_u8_slice(&spec.bitmap);
-    image::save_buffer(format!("output/spec{}.png", index), &buf, spec.width as u32, spec.height as u32, image::RGBA(8)).unwrap();
-
-    Ok(())
-}
-
 #[derive(Debug, Copy, Clone)]
 struct LevelSize {
     min_x: i32,
@@ -138,6 +146,13 @@ impl LevelSize {
 }
 
 fn size_of_level(level: &level::Level, grounds: &[GroundCombined]) -> LevelSize {
+    if level.globals.extended_graphic_set != 0 {
+        return LevelSize {
+            min_x: 0,
+            max_x: special::WIDTH as i32,            
+        }
+    }
+
     let mut size = LevelSize {
         min_x: std::i32::MAX,
         max_x: std::i32::MIN,
@@ -219,7 +234,7 @@ fn draw(sprite: &Vec<u32>,
     }
 }
 
-fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<RenderedLevel> {
+fn render_level(level: &level::Level, grounds: &[GroundCombined], specials: &SpecialMap) -> io::Result<RenderedLevel> {
     let size = size_of_level(level, grounds);
     let width = size.width();
     let height = LEVEL_HEIGHT;
@@ -229,18 +244,23 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined]) -> io::Result<
         size: size,
     };
     let ground = &grounds[level.globals.normal_graphic_set as usize];
-    for terrain in level.terrain.iter() {
-        let terrain_info = &ground.ground.terrain_info[terrain.terrain_id as usize];
-        let sprite = &ground.terrain_sprites[&terrain.terrain_id];
-        draw(&sprite,
-            (terrain.x - size.min_x) as i32, terrain.y,
-            terrain_info.width as i32, terrain_info.height as i32,
-            &mut rendered_level.bitmap,
-            width as i32, height as i32,
-            terrain.do_not_overwrite_existing_terrain,
-            terrain.is_upside_down,
-            terrain.remove_terrain,
-            false);
+    if level.globals.extended_graphic_set == 0 {
+        for terrain in level.terrain.iter() {
+            let terrain_info = &ground.ground.terrain_info[terrain.terrain_id as usize];
+            let sprite = &ground.terrain_sprites[&terrain.terrain_id];
+            draw(&sprite,
+                (terrain.x - size.min_x) as i32, terrain.y,
+                terrain_info.width as i32, terrain_info.height as i32,
+                &mut rendered_level.bitmap,
+                width as i32, height as i32,
+                terrain.do_not_overwrite_existing_terrain,
+                terrain.is_upside_down,
+                terrain.remove_terrain,
+                false);
+        }
+    } else {
+        let special = &specials[&(level.globals.extended_graphic_set as i32 - 1)];
+        rendered_level.bitmap.copy_from_slice(&special.bitmap);
     }
     for object in level.objects.iter() {
         let object_info = &ground.ground.object_info[object.obj_id as usize];
@@ -263,15 +283,16 @@ fn main() -> io::Result<()> {
     let now = Instant::now();
     let levels = load_all_levels()?;
     let grounds = load_all_grounds()?;
+    let specials = load_all_specials()?;
     let elapsed = now.elapsed();
     println!("Took: {:?}", elapsed); // 27ms optimised.
 
     for (key, level) in &levels {
         // let key = 104;
         // let level = &levels[&key];
-        let rendered = render_level(level, &grounds)?;
+        let rendered = render_level(level, &grounds, &specials)?;
         let buf = u32_to_u8_slice(&rendered.bitmap);
-        let filename = format!("output/levels/{} {}.png", key, level.name);
+        let filename = format!("output/levels/{} {} ({} - {}).png", key, level.name, level.globals.normal_graphic_set, level.globals.extended_graphic_set);
         image::save_buffer(filename, &buf, rendered.size.width() as u32, LEVEL_HEIGHT as u32, image::RGBA(8)).unwrap();
     }
 
