@@ -175,7 +175,7 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
         if !is_bad {
             level.objects.push(Object {
                 x: ix as i32,
-                y: iy as i32 + 4,
+                y: iy as i32,
                 obj_id: id as usize,
                 modifier: ObjectModifier::from_lvl(ma),
                 is_upside_down: mb == 0x8f,
@@ -197,12 +197,14 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
             let y_2s_comp: u16 = if y_bits & 0x100 == 0 { y_bits } else { y_bits | 0xfe00 };
             let y_i: i16 = y_2s_comp as i16;
             let flags: u8 = a >> 4;
+            let do_not_overwrite_existing_terrain = (flags & 8) == 8;
+            let remove_terrain = (flags & 2) == 2;
             level.terrain.push(Terrain {
-                do_not_overwrite_existing_terrain: (flags & 8) == 8,
+                do_not_overwrite_existing_terrain: do_not_overwrite_existing_terrain,
                 is_upside_down: (flags & 4) == 4,
-                remove_terrain: (flags & 2) == 2,
+                remove_terrain: remove_terrain && !do_not_overwrite_existing_terrain, // If both flags are on, only honor 'do not overwrite'.
                 x: x as i32,
-                y: y_i as i32,
+                y: y_i as i32 - 4,
                 terrain_id: terrain_id as usize,
             });
         }
@@ -220,7 +222,7 @@ pub fn parse(data: &[u8]) -> io::Result<Level> {
             let y: u8 = b & 0x7f;
             level.steel.push(SteelArea {
                 x: (x as isize),
-                y: (y as isize) * 4,
+                y: (y as isize) * 4 - 4, // TODO test this makes the steel in the correct place?
                 width: c >> 4,
                 height: c & 0xf,
             });

@@ -187,12 +187,7 @@ fn draw(sprite: &Vec<u32>,
 
             if remove_terrain {
                 if sprite[sprite_offset as usize] != 0 {
-
-                    let d1: u32 = if do_not_overwrite_existing_terrain { 0xff } else { 0 };
-                    let d2: u32 = if is_upside_down { 0xff0000 } else { 0 };
-                    let d3: u32 = if remove_terrain { 0xff00 } else { 0 };
-                    canvas[canvas_offset as usize] = 0xff000000 + d1 + d2 + d3; //LEVEL_BACKGROUND;
-
+                    canvas[canvas_offset as usize] = LEVEL_BACKGROUND;
                 }
                 sprite_offset += 1;
                 canvas_offset += 1;
