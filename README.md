@@ -1,5 +1,7 @@
 # rusty-lemmings
 
+![Lemmings](https://raw.githubusercontent.com/chrishulbert/rusty-lemmings/master/github/logo.png)
+
 Rewrite of the old game Lemmings in Rust
 
 You'll need to make a '~/Lemmings' folder and unzip the lemmings variants there. Eg:
