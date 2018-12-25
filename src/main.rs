@@ -4,11 +4,16 @@ use std::mem;
 use std::cmp;
 use std::slice;
 use std::collections::HashMap;
+use std::env;
 
 extern crate image;
 
 mod lemmings;
 use lemmings::data::{ maindat, special, decompressor, ground, sprites, level };
+
+fn data_dir() -> String {
+    return format!("{}/Lemmings/lemmings", env::home_dir().unwrap().to_str().unwrap());
+}
 
 fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
     let count = original.len() * mem::size_of::<u32>();
@@ -23,10 +28,10 @@ struct GroundCombined {
 }
 
 fn load_ground_and_sprites(index: u8) -> io::Result<GroundCombined> {
-    let vga_file: Vec<u8> = fs::read(format!("data/VGAGR{}.DAT", index))?;
+    let vga_file: Vec<u8> = fs::read(format!("{}/vgagr{}.dat", data_dir(), index))?;
     let vga_sections = decompressor::decompress(&vga_file)?;
 
-    let ground_file: Vec<u8> = fs::read(format!("data/GROUND{}O.DAT", index))?;
+    let ground_file: Vec<u8> = fs::read(format!("{}/ground{}o.dat", data_dir(), index))?;
     let ground = ground::parse(&ground_file)?;
     let palette = ground.palettes.as_abgr();
 
@@ -66,13 +71,13 @@ type SpecialMap = HashMap<i32, special::Special>;
 
 fn load_all_specials() -> io::Result<SpecialMap> {
     let mut all: SpecialMap = SpecialMap::new();
-    for entry in fs::read_dir("data")? {
+    for entry in fs::read_dir(data_dir())? {
         if let Ok(entry) = entry {
             let raw_name = entry.file_name().into_string().unwrap();
             let file_name = raw_name.to_lowercase();
             if file_name.starts_with("vgaspec") && file_name.ends_with(".dat") {
                 let file_number: i32 = file_name[7..8].parse().unwrap();
-                let filename = format!("data/{}", raw_name);
+                let filename = format!("{}/{}", data_dir(), raw_name);
                 let raw: Vec<u8> = fs::read(filename)?;
                 let sections = decompressor::decompress(&raw)?;
                 let spec = special::parse(&sections[0])?;
@@ -90,13 +95,13 @@ type LevelMap = HashMap<usize, level::Level>;
 // Might as well load into ram, only takes <30ms on my laptop in release mode.
 fn load_all_levels() -> io::Result<LevelMap> {
     let mut all: LevelMap = LevelMap::new();
-    for entry in fs::read_dir("data")? {
+    for entry in fs::read_dir(data_dir())? {
         if let Ok(entry) = entry {
             let raw_name = entry.file_name().into_string().unwrap();
             let file_name = raw_name.to_lowercase();
             if file_name.starts_with("level") && file_name.ends_with(".dat") {
                 let file_number: usize = file_name[5..8].parse().unwrap();
-                let filename = format!("data/{}", raw_name);
+                let filename = format!("{}/{}", data_dir(), raw_name);
                 let raw: Vec<u8> = fs::read(filename)?;
                 let sections = decompressor::decompress(&raw)?;
                 for (section_index, section) in sections.iter().enumerate() {
@@ -108,29 +113,6 @@ fn load_all_levels() -> io::Result<LevelMap> {
         }
     }
     Ok(all)
-}
-
-fn extract_level(index: isize, grounds: &[GroundCombined]) -> io::Result<()> {
-    println!("Extracting: {}", index);
-    fs::create_dir_all(format!("output/levels/{}", index))?;
-
-    let filename = format!("data/LEVEL00{}.DAT", index);
-    let raw: Vec<u8> = fs::read(filename)?;
-
-    let sections = decompressor::decompress(&raw)?;
-    println!("Sections: {:?}", sections.len());
-
-    for (i, section) in sections.iter().enumerate() {
-        fs::write(format!("output/levels/{}/{}", index, i), section)?;
-
-        let level = level::parse(section)?;
-        println!("{}: {} (num_of_lemmings = {})", i, level.name, level.globals.num_of_lemmings);
-
-        let size = size_of_level(&level, grounds);
-        println!("size: {:?}", size);
-    }
-
-    Ok(())
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -283,15 +265,19 @@ fn render_level(level: &level::Level, grounds: &[GroundCombined], specials: &Spe
 fn main() -> io::Result<()> {
     use std::time::Instant;
     let now = Instant::now();
+    println!("Loading levels");
     let levels = load_all_levels()?;
+    println!("Loading grounds");
     let grounds = load_all_grounds()?;
+    println!("Loading specials");
     let specials = load_all_specials()?;
     let elapsed = now.elapsed();
     println!("Took: {:?}", elapsed); // 27ms optimised.
 
     for (key, level) in &levels {
-        // let key = 104;
+        // let key = 1;
         // let level = &levels[&key];
+        // println!("Level: {:?}", level);
         let rendered = render_level(level, &grounds, &specials)?;
         let buf = u32_to_u8_slice(&rendered.bitmap);
         let filename = format!("output/levels/{} {} ({} - {}).png", key, level.name, level.globals.normal_graphic_set, level.globals.extended_graphic_set);
@@ -310,7 +296,7 @@ fn main() -> io::Result<()> {
     // }
 
     // Main.dat
-    // let main_raw: Vec<u8> = fs::read("data/MAIN.DAT")?;
+    // let main_raw: Vec<u8> = fs::read("{}/main.dat", data_dir())?;
     // let main_sections = decompressor::decompress(&main_raw)?;
     // let main = maindat::parse(&main_sections)?;
     // let image = main.main_menu.logo;
