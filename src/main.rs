@@ -9,7 +9,7 @@ use std::env;
 extern crate image;
 
 mod lemmings;
-use lemmings::data::{ maindat, special, decompressor, ground, sprites, level };
+use lemmings::parsers::*;
 use lemmings::models::*;
 
 fn data_dir() -> String {
