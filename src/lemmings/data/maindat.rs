@@ -5,16 +5,10 @@ use std::io;
 use std::io::Error;
 use std::io::ErrorKind;
 use super::helpers::BitsIterMS;
+use lemmings::models::*;
 
 // Creates a bit iterator from [u8].
 macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new); } }
-
-#[derive(Default)]
-pub struct Image {
-    pub bitmap: Vec<u32>,
-    pub width: usize,
-    pub height: usize,
-}
 
 impl Image {
     /// Parses where 0=transparent, 1=white.
@@ -79,12 +73,6 @@ impl Image {
         }
         return Image { bitmap: bitmap, width: width, height: height };
     }
-}
-
-pub struct Animation {
-    pub frames: Vec<Vec<u32>>, // Think of this as an array of frames, where each frame is Vec<u32>.
-    pub width: usize,
-    pub height: usize,
 }
 
 impl Animation {
@@ -170,39 +158,6 @@ impl Animation {
     }
 }
 
-pub struct LemmingAnimations {
-    pub walking_right: Animation,
-    pub jumping_right: Animation, // Walking up a step 3-6px tall.
-    pub walking_left: Animation,
-    pub jumping_left: Animation,
-    pub digging: Animation,
-    pub climbing_right: Animation,
-    pub climbing_left: Animation,
-    pub drowning: Animation,
-    pub post_climb_right: Animation,
-    pub post_climb_left: Animation,
-    pub brick_laying_right: Animation,
-    pub brick_laying_left: Animation,
-    pub bashing_right: Animation,
-    pub bashing_left: Animation,
-    pub mining_right: Animation,
-    pub mining_left: Animation,
-    pub falling_right: Animation,
-    pub falling_left: Animation,
-    pub pre_umbrella_right: Animation,
-    pub umbrella_right: Animation,
-    pub pre_umbrella_left: Animation,
-    pub umbrella_left: Animation,
-    pub splatting: Animation,
-    pub exiting: Animation,
-    pub fried: Animation,
-    pub blocking: Animation,
-    pub shrugging_right: Animation, // Builder running out of bricks.
-    pub shrugging_left: Animation,
-    pub oh_no_ing: Animation,
-    pub explosion: Animation,
-}
-
 impl LemmingAnimations {
     fn parse(data: &[u8], palette: [u32; 16]) -> io::Result<LemmingAnimations> {
         Ok(LemmingAnimations {
@@ -240,12 +195,6 @@ impl LemmingAnimations {
     }
 }
 
-pub struct Mask {
-    pub frames: Vec<Vec<u8>>, // 1 means take a pixel out, 0 means leave alone.
-    pub width: usize,
-    pub height: usize,
-}
-
 impl Mask {
     fn parse(data: &[u8], frame_count: usize, width: usize, height: usize) -> Mask {
         let pixels = width * height;
@@ -262,14 +211,6 @@ impl Mask {
         }
         return Mask { frames: frames, width: width, height: height };
     }
-}
-
-pub struct Masks {
-    pub bash_right: Mask,
-    pub bash_left: Mask,
-    pub mine_right: Mask,
-    pub mine_left: Mask,
-    pub explosion: Mask,
 }
 
 impl Masks {
@@ -297,11 +238,6 @@ fn parse_countdown_numbers(data: &[u8]) -> [Image; 10] {
         Image::parse_1bpp(&data[0x013C..], 8, 8),
         Image::parse_1bpp(&data[0x0134..], 8, 8),
     ]
-}
-
-pub struct SkillNumberDigits {
-    pub left: [Image; 10],
-    pub right: [Image; 10],
 }
 
 impl SkillNumberDigits {
@@ -335,14 +271,6 @@ impl SkillNumberDigits {
     }
 }
 
-#[derive(Default)]
-pub struct GameFont {
-    pub percent: Image,
-    pub digits: [Image; 10], // 0-9
-    pub dash: Image,
-    pub letters: [Image; 26], // A-Z
-}
-
 impl GameFont {
     fn parse(data: &[u8], palette: [u32; 16]) -> GameFont {
         const SIZE_PER_CHAR: usize = 0x30;
@@ -364,11 +292,6 @@ impl GameFont {
     }
 }
 
-#[derive(Default)]
-pub struct MenuFont {
-    pub characters: Vec<Image>, // '!'(33) - '~'(126), in ascii order.
-}
-
 impl MenuFont {
     fn parse(data: &[u8], palette: [u32; 16]) -> MenuFont {
         const SIZE_PER_CHAR: usize = 0x60;
@@ -381,35 +304,6 @@ impl MenuFont {
         }
         return font;
     }
-}
-
-pub struct MainMenu {
-    pub background: Image,
-    pub logo: Image,
-    pub f1: Image,
-    pub f2: Image,
-    pub f3: Image,
-    pub f4: Image,
-    pub level_rating: Image,
-    pub exit_to_dos: Image,
-    pub music_note: Image,
-    pub fx: Image,
-
-    pub blink1: Animation,
-    pub blink2: Animation,
-    pub blink3: Animation,
-    pub blink4: Animation,
-    pub blink5: Animation,
-    pub blink6: Animation,
-    pub blink7: Animation,
-    pub left_scroller: Animation,
-    pub right_scroller: Animation,
-    pub reel: Image,
-    pub mayhem: Image,
-    pub taxing: Image,
-    pub tricky: Image,
-    pub fun: Image,
-    pub menu_font: MenuFont,
 }
 
 impl MainMenu {
@@ -444,18 +338,6 @@ impl MainMenu {
             menu_font:      MenuFont::parse(&section_4[0x69B0..], palette)
         }
     }
-}
-
-pub struct MainDat {
-    pub lemming_animations: LemmingAnimations,
-    pub masks: Masks,
-    pub countdown_numbers: [Image; 10],
-    pub skill_panel_high_perf: Image,
-    pub skill_number_digits: SkillNumberDigits,
-    pub game_font_high_perf: GameFont,
-    pub main_menu: MainMenu,
-    pub skill_panel: Image,
-    pub game_font: GameFont,
 }
 
 macro_rules! abgr_from_rgb { ($r:expr, $g:expr, $b:expr) => {
