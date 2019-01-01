@@ -1,38 +1,15 @@
 // This loads the special levels eg VGASPEC0.DAT.
 // https://www.camanis.net/lemmings/files/docs/lemmings_vgaspecx_dat_file_format.txt
 
-use std::io;
-use std::io::Error;
-use std::io::ErrorKind;
-use std::slice;
-
-struct BitsIter {
-    bit: i8,
-    byte: u8,
-}
-impl BitsIter {
-    fn new(byte: u8) -> BitsIter {
-        BitsIter { bit: 7, byte: byte }
-    }
-}
-impl Iterator for BitsIter {
-    type Item = u8;
-    fn next(&mut self) -> Option<u8> {
-        let this_bit = self.bit;
-        if this_bit >= 0 {
-            self.bit -= 1;
-            Some((self.byte >> this_bit) & 1)
-        } else {
-            None
-        }
-    }
-}
+use std::io::{Error, ErrorKind, Result};
+use std::slice::Iter;
+use super::helpers::BitsIterMS;
 
 // Creates a bit iterator from [u8].
-macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(|byte| { return BitsIter::new(*byte); }); } }
+macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new); } }
 
 // Reads a byte, failing gracefully if none are left.
-fn read_u8(data: &mut slice::Iter<u8>) -> io::Result<u8> {
+fn read_u8(data: &mut Iter<u8>) -> Result<u8> {
     match data.next() {
         Some(t) => Ok(*t),
         None => Err(Error::new(ErrorKind::UnexpectedEof, "No data remaining")),
@@ -47,7 +24,7 @@ fn colour_upgrade(six: u8) -> u8 {
 
 // Read 3 RGB bytes, outputting ABGR.
 // (0x3F, 0x00, 0x00) gives you the brightest red you can get (camanis.net)
-fn read_rgb(data: &mut slice::Iter<u8>) -> io::Result<u32> {
+fn read_rgb(data: &mut Iter<u8>) -> Result<u32> {
     let r6 = read_u8(data)?;
     let g6 = read_u8(data)?;
     let b6 = read_u8(data)?;
@@ -71,7 +48,7 @@ const SECTION_PIXELS: usize = WIDTH * SECTION_HEIGHT;
 const SECTION_CAPACITY: usize = SECTION_PIXELS * 3 / 8; // Decompressed quarter-section size in bytes.
 
 // Pass this data that has already been DAT-decompressed.
-pub fn parse(data: &[u8]) -> io::Result<Special> {
+pub fn parse(data: &[u8]) -> Result<Special> {
     let mut iter = data.into_iter();
 
     // Palette.

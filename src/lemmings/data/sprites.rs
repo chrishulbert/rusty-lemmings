@@ -1,29 +1,9 @@
 // This extracts sprites from data.
 
-struct BitsIter {
-    bit: i8,
-    byte: u8,
-}
-impl BitsIter {
-    fn new(byte: u8) -> BitsIter {
-        BitsIter { bit: 7, byte: byte }
-    }
-}
-impl Iterator for BitsIter {
-    type Item = u8;
-    fn next(&mut self) -> Option<u8> {
-        let this_bit = self.bit;
-        if this_bit >= 0 {
-            self.bit -= 1;
-            Some((self.byte >> this_bit) & 1)
-        } else {
-            None
-        }
-    }
-}
+use super::helpers::BitsIterMS;
 
 // Creates a bit iterator from [u8].
-macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(|byte| { return BitsIter::new(*byte); }); } }
+macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new); } }
 
 // Extract a single sprite.
 // Sprites are stored as 4 planes, eg all the 1 bits, then all the 2 bits, then so on. It seems they did this so

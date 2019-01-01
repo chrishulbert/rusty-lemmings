@@ -1,3 +1,5 @@
+mod helpers;
+
 pub mod maindat;
 pub mod special;
 pub mod decompressor;

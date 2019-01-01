@@ -11,7 +11,8 @@
                 "build"
             ],
             "presentation": {
-                "clear": true
+                "clear": true,
+                "focus": true
             },
             "problemMatcher": [
                 "$rustc"

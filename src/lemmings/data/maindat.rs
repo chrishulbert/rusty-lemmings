@@ -4,31 +4,10 @@
 use std::io;
 use std::io::Error;
 use std::io::ErrorKind;
-
-struct BitsIter {
-    bit: i8,
-    byte: u8,
-}
-impl BitsIter {
-    fn new(byte: u8) -> BitsIter {
-        BitsIter { bit: 7, byte: byte }
-    }
-}
-impl Iterator for BitsIter {
-    type Item = u8;
-    fn next(&mut self) -> Option<u8> {
-        let this_bit = self.bit;
-        if this_bit >= 0 {
-            self.bit -= 1;
-            Some((self.byte >> this_bit) & 1)
-        } else {
-            None
-        }
-    }
-}
+use super::helpers::BitsIterMS;
 
 // Creates a bit iterator from [u8].
-macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(|byte| { return BitsIter::new(*byte); }); } }
+macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new); } }
 
 #[derive(Default)]
 pub struct Image {
