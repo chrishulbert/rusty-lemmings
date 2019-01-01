@@ -68,7 +68,7 @@ fn load_all_grounds() -> io::Result<Vec<GroundCombined>> {
     Ok(all)
 }
 
-type SpecialMap = HashMap<i32, special::Special>;
+type SpecialMap = HashMap<i32, Image>;
 
 fn load_all_specials() -> io::Result<SpecialMap> {
     let mut all: SpecialMap = SpecialMap::new();

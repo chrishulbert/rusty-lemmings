@@ -208,3 +208,14 @@ pub struct Ground {
     pub terrain_info: [TerrainInfo; 64],
     pub palettes: Palettes,
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// Images
+
+#[derive(Default)]
+pub struct Image {
+    pub bitmap: Vec<u32>,
+    pub width: usize,
+    pub height: usize,
+}

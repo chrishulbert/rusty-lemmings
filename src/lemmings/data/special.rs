@@ -3,6 +3,7 @@
 
 use std::io::{Error, ErrorKind, Result};
 use std::slice::Iter;
+use lemmings::models::*;
 use super::helpers::BitsIterMS;
 
 // Creates a bit iterator from [u8].
@@ -34,12 +35,6 @@ fn read_rgb(data: &mut Iter<u8>) -> Result<u32> {
     Ok(0xff000000 + ((b8 as u32) << 16) + ((g8 as u32) << 8) + (r8 as u32))
 }
 
-pub struct Special {
-    pub width: usize,
-    pub height: usize,
-    pub bitmap: Vec<u32>,
-}
-
 pub const WIDTH: usize = 960;
 const HEIGHT: usize = 160;
 const PIXELS: usize = WIDTH * HEIGHT;
@@ -48,7 +43,7 @@ const SECTION_PIXELS: usize = WIDTH * SECTION_HEIGHT;
 const SECTION_CAPACITY: usize = SECTION_PIXELS * 3 / 8; // Decompressed quarter-section size in bytes.
 
 // Pass this data that has already been DAT-decompressed.
-pub fn parse(data: &[u8]) -> Result<Special> {
+pub fn parse(data: &[u8]) -> Result<Image> {
     let mut iter = data.into_iter();
 
     // Palette.
@@ -95,7 +90,7 @@ pub fn parse(data: &[u8]) -> Result<Special> {
         }
     }
 
-    Ok(Special {
+    Ok(Image {
         width: WIDTH,
         height: HEIGHT,
         bitmap: bitmap,
