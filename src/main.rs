@@ -23,7 +23,7 @@ fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
 }
 
 struct GroundCombined {
-    ground: ground::Ground,
+    ground: Ground,
     terrain_sprites: HashMap<usize, Vec<u32>>,
     object_sprites: HashMap<usize, Vec<u32>>, // TODO animations.
 }
