@@ -10,6 +10,7 @@ extern crate image;
 
 mod lemmings;
 use lemmings::data::{ maindat, special, decompressor, ground, sprites, level };
+use lemmings::models::*;
 
 fn data_dir() -> String {
     return format!("{}/Lemmings/lemmings", env::home_dir().unwrap().to_str().unwrap());
@@ -89,7 +90,7 @@ fn load_all_specials() -> io::Result<SpecialMap> {
 }
 
 // Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
-type LevelMap = HashMap<usize, level::Level>;
+type LevelMap = HashMap<usize, Level>;
 
 // Load all the levels from all the sections in all the files into memory.
 // Might as well load into ram, only takes <30ms on my laptop in release mode.
@@ -129,7 +130,7 @@ impl LevelSize {
 
 const SPECIAL_LEFT_X: i32 = 320;
 
-fn size_of_level(level: &level::Level, grounds: &[GroundCombined]) -> LevelSize {
+fn size_of_level(level: &Level, grounds: &[GroundCombined]) -> LevelSize {
     if level.globals.extended_graphic_set != 0 {
         return LevelSize {
             min_x: SPECIAL_LEFT_X,
@@ -218,7 +219,7 @@ fn draw(sprite: &Vec<u32>,
     }
 }
 
-fn render_level(level: &level::Level, grounds: &[GroundCombined], specials: &SpecialMap) -> io::Result<RenderedLevel> {
+fn render_level(level: &Level, grounds: &[GroundCombined], specials: &SpecialMap) -> io::Result<RenderedLevel> {
     let size = size_of_level(level, grounds);
     let width = size.width();
     let height = LEVEL_HEIGHT;
