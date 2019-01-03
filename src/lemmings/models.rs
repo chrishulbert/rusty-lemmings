@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::vec::IntoIter;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Levels
@@ -352,6 +353,8 @@ pub type LevelMap = HashMap<i32, Level>; // Key is file# * 100 + section. Eg 203
 pub type SpecialMap = HashMap<i32, Image>;
 
 pub struct Game {
+    pub name: String, // Eg 'Oh No More Lemmings'
+    pub id: String, // Eg 'ohnomore'
     pub levels: LevelMap,
     pub specials: SpecialMap,
     pub grounds: GroundMap,
@@ -364,4 +367,19 @@ pub struct Games {
     pub christmas_92: Option<Game>,
     pub holiday_93: Option<Game>,
     pub holiday_94: Option<Game>,
+}
+
+impl IntoIterator for Games {
+    type Item = Game;
+    type IntoIter = IntoIter<Game>;
+    fn into_iter(self) -> Self::IntoIter {
+        let mut v: Vec<Game> = Vec::new();
+        if let Some(game) = self.lemmings     { v.push(game); }
+        if let Some(game) = self.oh_no_more   { v.push(game); }
+        if let Some(game) = self.christmas_91 { v.push(game); }
+        if let Some(game) = self.christmas_92 { v.push(game); }
+        if let Some(game) = self.holiday_93   { v.push(game); }
+        if let Some(game) = self.holiday_94   { v.push(game); }
+        v.into_iter()
+    }
 }

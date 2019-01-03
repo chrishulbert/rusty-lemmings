@@ -100,12 +100,14 @@ fn load_all_levels(dir: &str) -> Result<LevelMap> {
     Ok(all)
 }
 
-fn load_game(dir: &str, sub_dir: &str) -> Result<Option<Game>> {
+fn load_game(dir: &str, sub_dir: &str, name: &str) -> Result<Option<Game>> {
     let sub_path = format!("{}/{}", dir, sub_dir);
     if !Path::new(&sub_path).exists() {
         return Ok(None);
     }
     Ok(Some(Game {
+        name: name.to_string(),
+        id: sub_dir.to_string(),
         levels: load_all_levels(&sub_path)?,
         specials: load_all_specials(&sub_path)?,
         grounds: load_all_grounds(&sub_path)?,
@@ -115,11 +117,11 @@ fn load_game(dir: &str, sub_dir: &str) -> Result<Option<Game>> {
 pub fn load() -> Result<Games> {
     let data_root = format!("{}/Lemmings", env::home_dir().unwrap().to_str().unwrap());
     return Ok(Games {
-        lemmings: load_game(&data_root, "lemmings")?,
-        oh_no_more: load_game(&data_root, "ohnomore")?,
-        christmas_91: load_game(&data_root, "christmas1991")?,
-        christmas_92: load_game(&data_root, "christmas1992")?,
-        holiday_93: load_game(&data_root, "holiday1993")?,
-        holiday_94: load_game(&data_root, "holiday1994")?,
+        lemmings: load_game(&data_root, "lemmings", "Lemmings")?,
+        oh_no_more: load_game(&data_root, "ohnomore", "Oh no! More Lemmings")?,
+        christmas_91: load_game(&data_root, "christmas1991", "Xmas Lemmings '91")?,
+        christmas_92: load_game(&data_root, "christmas1992", "Xmas Lemmings '92")?,
+        holiday_93: load_game(&data_root, "holiday1993", "Holiday Lemmings '93")?,
+        holiday_94: load_game(&data_root, "holiday1994", "Holiday Lemmings '94")?,
     })
 }
