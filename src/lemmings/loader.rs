@@ -84,7 +84,7 @@ fn load_all_levels(dir: &str) -> Result<LevelMap> {
         if let Ok(entry) = entry {
             let raw_name = entry.file_name().into_string().unwrap();
             let file_name = raw_name.to_lowercase();
-            if file_name.starts_with("level") && file_name.ends_with(".dat") {
+            if (file_name.starts_with("level") || file_name.starts_with("dlvel")) && file_name.ends_with(".dat") {
                 let file_number: i32 = file_name[5..8].parse().unwrap();
                 let filename = format!("{}/{}", dir, raw_name);
                 let raw: Vec<u8> = fs::read(filename)?;
