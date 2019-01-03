@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Levels
 
@@ -331,4 +333,35 @@ pub struct MainDat {
     pub main_menu: MainMenu,
     pub skill_panel: Image,
     pub game_font: GameFont,
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Loader
+
+pub type ImageMap = HashMap<i32, Image>;
+pub type AnimationMap = HashMap<i32, Animation>;
+
+pub struct GroundCombined {
+    pub ground: Ground,
+    pub terrain_sprites: ImageMap,
+    pub object_sprites: AnimationMap,
+}
+
+pub type GroundMap = HashMap<i32, GroundCombined>;
+pub type LevelMap = HashMap<i32, Level>; // Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
+pub type SpecialMap = HashMap<i32, Image>;
+
+pub struct Game {
+    pub levels: LevelMap,
+    pub specials: SpecialMap,
+    pub grounds: GroundMap,
+}
+
+pub struct Games {
+    pub lemmings: Option<Game>,
+    pub oh_no_more: Option<Game>,
+    pub christmas_91: Option<Game>,
+    pub christmas_92: Option<Game>,
+    pub holiday_93: Option<Game>,
+    pub holiday_94: Option<Game>,
 }

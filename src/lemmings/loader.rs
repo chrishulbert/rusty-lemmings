@@ -1,6 +1,5 @@
 // This loads the games from disk into memory.
 
-use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::io::Result;
@@ -8,31 +7,6 @@ use std::path::Path;
 
 use lemmings::models::*;
 use lemmings::parsers::*;
-
-struct GroundCombined {
-    ground: Ground,
-    terrain_sprites: HashMap<usize, Vec<u32>>,
-    object_sprites: HashMap<usize, Vec<u32>>, // TODO animations.
-}
-
-type GroundMap = HashMap<i32, GroundCombined>;
-type LevelMap = HashMap<i32, Level>; // Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
-type SpecialMap = HashMap<i32, Image>;
-
-pub struct Game {
-    pub levels: LevelMap,
-    pub specials: SpecialMap,
-    pub grounds: GroundMap,
-}
-
-pub struct Games {
-    pub lemmings: Option<Game>,
-    pub oh_no_more: Option<Game>,
-    pub christmas_91: Option<Game>,
-    pub christmas_92: Option<Game>,
-    pub holiday_93: Option<Game>,
-    pub holiday_94: Option<Game>,
-}
 
 // Load a ground file and its associated vga graphics.
 fn load_ground_and_sprites(dir: &str, index: i32) -> Result<GroundCombined> {
@@ -43,19 +17,20 @@ fn load_ground_and_sprites(dir: &str, index: i32) -> Result<GroundCombined> {
     let ground = ground::parse(&ground_file)?;
     let palette = ground.palettes.as_abgr();
 
-    let mut terrain_sprites: HashMap<usize, Vec<u32>> = HashMap::new();
+    let mut terrain_sprites: ImageMap = ImageMap::new();
     for (i, terrain) in ground.terrain_info.iter().enumerate() {
         if terrain.is_valid() {
-            let sprite = sprites::extract(&vga_sections[0], terrain.width, terrain.height, terrain.image_loc, terrain.mask_loc, &palette);
-            terrain_sprites.insert(i, sprite);
+            let sprite = sprites::extract_image(&vga_sections[0], terrain.width, terrain.height, terrain.image_loc, terrain.mask_loc, &palette);
+            terrain_sprites.insert(i as i32, sprite);
         }
     }
 
-    let mut object_sprites: HashMap<usize, Vec<u32>> = HashMap::new();
+    let mut object_sprites: AnimationMap = AnimationMap::new();
     for (i, object) in ground.object_info.iter().enumerate() {
         if object.is_valid() {
-            let sprite = sprites::extract(&vga_sections[1], object.width, object.height, object.animation_frames_base_loc, object.animation_frames_base_loc + object.mask_offset_from_image, &palette);
-            object_sprites.insert(i, sprite);
+            // TODO do we need +1 for the # of frames?
+            let sprite = sprites::extract_animation(&vga_sections[1], object.width, object.height, object.animation_frames_base_loc as usize, object.animation_frames_base_loc as usize + object.mask_offset_from_image as usize, &palette, object.animation_frame_data_size as usize, object.end_animation_frame_index as usize);
+            object_sprites.insert(i as i32, sprite);
         }
     }
 
