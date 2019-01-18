@@ -1,7 +1,5 @@
 // Commonly used parsing helpers.
 
-use std::iter::FlatMap;
-
 // Iterates through bits, most significant first.
 pub struct BitsIterMS {
     bit: i8,

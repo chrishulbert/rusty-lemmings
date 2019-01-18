@@ -3,13 +3,7 @@
 // Based on code from: https://sourceforge.net/projects/xbrz/
 // Port by Chris Hulbert 2018
 
-extern crate image;
-
-use std::time::Instant;
-use std::mem;
 use std::cmp;
-use std::slice;
-use image::{RgbaImage};
 
 const LUMINANCE_WEIGHT: f32             = 1.0;
 const EQUAL_COLOR_TOLERANCE: f32        = 30.0;
@@ -70,7 +64,7 @@ struct Kernel3x3 {
     i: u32,
 }
 
-pub trait ColoursExt {
+trait ColoursExt {
     fn r(&self) -> u8;
     fn g(&self) -> u8;
     fn b(&self) -> u8;
@@ -96,10 +90,12 @@ impl ColoursExt for u32 {
     }
 }
 
-pub fn make_pixel(a: u8, r: u8, g: u8, b: u8) -> u32 {
+#[inline]
+fn make_pixel(a: u8, r: u8, g: u8, b: u8) -> u32 {
     return ((a as u32) << 24) | ((b as u32) << 16) | ((g as u32) << 8) | (r as u32)
 }
 
+#[inline]
 fn dist(pix1: u32, pix2: u32) -> f32 {
     let a1: f32 = (pix1.a() as f32) / 255.0;
     let a2: f32 = (pix2.a() as f32) / 255.0;
@@ -678,13 +674,7 @@ fn blend_pixel(scale: u8,
     }
 }
 
-fn scale(factor: u8, src: &[u32], src_width: u32, src_height: u32) -> Vec<u32> {
-    let mut output: Vec<u32> = vec![0; (src_width * src_height * factor as u32 * factor as u32) as usize];
-    do_scale(factor, src, output.as_mut_ptr(), src_width, src_height);
-    return output;
-}
-
-pub fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: u32, src_height: u32) {
+fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: u32, src_height: u32) {
     let y_first: u32 = 0;
     let y_last = src_height;
     if y_first >= y_last { return }
@@ -846,17 +836,27 @@ pub fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: u32, src_heigh
     }
 }
 
-fn u8_to_u32_slice(original: &[u8]) -> &[u32] {
-    let count = original.len() / mem::size_of::<u32>();
-    let ptr = original.as_ptr() as *const u32;
-    return unsafe { slice::from_raw_parts(ptr, count) }; // Warning: potential alignment crash?
+pub fn scale(factor: u8, src: &[u32], src_width: u32, src_height: u32) -> Vec<u32> {
+    if factor == 1 {
+        return Vec::from(src);
+    }
+
+    let mut output: Vec<u32> = vec![0; (src_width * src_height * factor as u32 * factor as u32) as usize];
+    do_scale(factor, src, output.as_mut_ptr(), src_width, src_height);
+    return output;
 }
 
-fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
-    let count = original.len() * mem::size_of::<u32>();
-    let ptr = original.as_ptr() as *const u8;
-    return unsafe { slice::from_raw_parts(ptr, count) };
-}
+// fn u8_to_u32_slice(original: &[u8]) -> &[u32] {
+//     let count = original.len() / mem::size_of::<u32>();
+//     let ptr = original.as_ptr() as *const u32;
+//     return unsafe { slice::from_raw_parts(ptr, count) }; // Warning: potential alignment crash?
+// }
+
+// fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
+//     let count = original.len() * mem::size_of::<u32>();
+//     let ptr = original.as_ptr() as *const u8;
+//     return unsafe { slice::from_raw_parts(ptr, count) };
+// }
 
 // // Test with: cargo run --release 12ms
 // fn main() {

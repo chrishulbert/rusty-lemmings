@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Chris Hulbert <chris.hulbert@gmail.com>"]
 
 [dependencies]
-image = "*"
+quicksilver = "*"

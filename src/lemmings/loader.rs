@@ -100,6 +100,12 @@ fn load_all_levels(dir: &str) -> Result<LevelMap> {
     Ok(all)
 }
 
+fn load_main_dat(dir: &str) -> Result<MainDat> {
+    let file: Vec<u8> = fs::read(format!("{}/main.dat", dir))?;
+    let sections = decompressor::decompress(&file)?;
+    maindat::parse(&sections)
+}
+
 fn load_game(dir: &str, sub_dir: &str, name: &str) -> Result<Option<Game>> {
     let sub_path = format!("{}/{}", dir, sub_dir);
     if !Path::new(&sub_path).exists() {
@@ -111,6 +117,7 @@ fn load_game(dir: &str, sub_dir: &str, name: &str) -> Result<Option<Game>> {
         levels: load_all_levels(&sub_path)?,
         specials: load_all_specials(&sub_path)?,
         grounds: load_all_grounds(&sub_path)?,
+        main: load_main_dat(&sub_path)?,
     }))
 }
 

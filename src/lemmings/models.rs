@@ -358,6 +358,7 @@ pub struct Game {
     pub levels: LevelMap,
     pub specials: SpecialMap,
     pub grounds: GroundMap,
+    pub main: MainDat,
 }
 
 pub struct Games {
@@ -381,5 +382,18 @@ impl IntoIterator for Games {
         if let Some(game) = self.holiday_93   { v.push(game); }
         if let Some(game) = self.holiday_94   { v.push(game); }
         v.into_iter()
+    }
+}
+
+impl Games {
+    pub fn as_vec(&self) -> Vec<&Game> {
+        let mut v: Vec<&Game> = Vec::new();
+        if let Some(ref game) = self.lemmings     { v.push(game); }
+        if let Some(ref game) = self.oh_no_more   { v.push(game); }
+        if let Some(ref game) = self.christmas_91 { v.push(game); }
+        if let Some(ref game) = self.christmas_92 { v.push(game); }
+        if let Some(ref game) = self.holiday_93   { v.push(game); }
+        if let Some(ref game) = self.holiday_94   { v.push(game); }
+        return v;
     }
 }
