@@ -1,7 +1,6 @@
 use std::thread;
 
 extern crate quicksilver;
-
 use quicksilver::{
     Result,
     geom::{Rectangle, Vector, Transform},
@@ -11,9 +10,11 @@ use quicksilver::{
 };
 
 use lemmings::{loader, models::*};
-use super::Scene;
-use crate::qs_helpers::*;
+use Scene;
+use SkillSelection;
+use qs_helpers::*;
 
+// This is the first screen of the game where you select which game you want to play.
 pub struct GameSelection {
     games: Games,
     background: QSImage,
@@ -43,20 +44,29 @@ impl GameSelection {
 
 impl Scene for GameSelection {
     fn event(&mut self, event: &Event, _window: &mut Window) -> Result<()> {
-        // match event {
-        //     Event::MouseMoved(vector) => {
-        //         let scaled_y = (vector.y / SCALE as f32).round() as i32;
-        //         self.current_menu_hover_index = (scaled_y - MENU_TOP as i32) / MENU_ROW_HEIGHT as i32;
-        //         // if vector.overlaps_rectangle(&self.crosshair_rect) {
-        //         //     window.set_cursor(MouseCursor::Crosshair); // use qs input::MouseCursor
-        //         // } else if vector.overlaps_rectangle(&self.grab_rect) {
-        //         //     window.set_cursor(MouseCursor::Grab);
-        //         // } else {
-        //         //     window.set_cursor(MouseCursor::Default);
-        //         // }
-        //     }
-        //     _ => {}
-        // };
+        match event {
+            Event::MouseButton(MouseButton::Left, state) => {
+                if state.is_down() {
+                    let skill = SkillSelection::new(
+                        self.games.oh_no_more.unwrap(), // todo which one? clone it?
+                        self.background.clone(),
+                    );
+
+                }
+            }
+            Event::MouseMoved(vector) => {
+                let scaled_y = (vector.y / SCALE as f32).round() as i32;
+                self.current_menu_hover_index = (scaled_y - MENU_TOP as i32) / MENU_ROW_HEIGHT as i32;
+                // if vector.overlaps_rectangle(&self.crosshair_rect) {
+                //     window.set_cursor(MouseCursor::Crosshair); // use qs input::MouseCursor
+                // } else if vector.overlaps_rectangle(&self.grab_rect) {
+                //     window.set_cursor(MouseCursor::Grab);
+                // } else {
+                //     window.set_cursor(MouseCursor::Default);
+                // }
+            }
+            _ => {}
+        };
         Ok(())
     }
 
@@ -114,8 +124,6 @@ impl Scene for GameSelection {
                 y = this_bottom;
             }
         }
-
-            window.draw(&Rectangle::new((0, 0), (20, 20)), Col(Color::BLUE));
 
         Ok(())
     }

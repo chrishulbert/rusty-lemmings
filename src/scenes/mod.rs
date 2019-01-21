@@ -5,6 +5,7 @@ use quicksilver::{
 };
 
 pub mod game_selection;
+pub mod skill_selection;
 
 // This is basically the same as quicksilver's State, but State can't be a
 // `dyn` value because of it's `handle_error` func.

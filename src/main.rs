@@ -12,7 +12,6 @@ use quicksilver::{
     // graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
 
 mod lemmings;
-use lemmings::{models::*};
 
 mod qs_helpers;
 use qs_helpers::*;
@@ -28,7 +27,7 @@ struct LemmingsQuicksilverGame {
 
 impl State for LemmingsQuicksilverGame {
     fn new() -> Result<LemmingsQuicksilverGame> {
-        let game_selection = scenes::game_selection::GameSelection::new()?;
+        let game_selection = GameSelection::new()?;
         let scene = Box::new(game_selection);
         Ok(LemmingsQuicksilverGame { scene })
     }
@@ -48,23 +47,14 @@ impl State for LemmingsQuicksilverGame {
 
 fn main() {
     run::<LemmingsQuicksilverGame>("Rusty Lemmings",
-    Vector::new(SCREEN_WIDTH, SCREEN_HEIGHT), Settings {
-        draw_rate: 1000. / 60.,
-        max_updates: 60,
-        update_rate: 1000. / 2.,
-        ..Settings::default()
-    });
-
+        Vector::new(SCREEN_WIDTH, SCREEN_HEIGHT),
+        Settings {
+            draw_rate: 1000. / 60.,
+            max_updates: 60,
+            update_rate: 1000. / 2.,
+            ..Settings::default()
+        });
 }
-
-// use lemmings::models::*;
-// use lemmings::loader;
-
-// fn u32_to_u8_slice(original: &[u32]) -> &[u8] {
-//     let count = original.len() * mem::size_of::<u32>();
-//     let ptr = original.as_ptr() as *const u8;
-//     return unsafe { slice::from_raw_parts(ptr, count) };
-// }
 
 // #[derive(Debug, Copy, Clone)]
 // struct LevelSize {
