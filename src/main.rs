@@ -4,12 +4,9 @@ extern crate quicksilver;
 use quicksilver::{
     Result,
     geom::{Rectangle, Vector, Transform},
-    graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
+    graphics::{Background::Col, Color},
     lifecycle::{Event, Settings, State, Window, run},
-    input::MouseButton,
 };
-    // geom::{Shape, Circle, Line, Rectangle, Transform, Triangle, Vector},
-    // graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
 
 mod lemmings;
 
@@ -17,41 +14,92 @@ mod qs_helpers;
 use qs_helpers::*;
 
 mod scenes;
-use scenes::{Scene, game_selection::GameSelection};
+use scenes::{Scene, EventAction, game_selection::GameSelection};
 
 mod xbrz;
 
-struct LemmingsQuicksilverGame {
+/// Because QS doesn't let you control the init of your root State, this has to be an outer 'wrapper'
+/// around our ref-counted Game.
+struct GameController {
     scene: Box<dyn Scene>,
+    is_fading_out: bool,
+    is_fading_in: bool,
+    fade: i32, // 0 = looks normal, 40 = looks black.
+    can_update: bool, // Used to prevent it updating multiple times per draw, workaround for QS ignoring `max_updates: 1`.
 }
 
-impl State for LemmingsQuicksilverGame {
-    fn new() -> Result<LemmingsQuicksilverGame> {
-        let game_selection = GameSelection::new()?;
-        let scene = Box::new(game_selection);
-        Ok(LemmingsQuicksilverGame { scene })
+impl State for GameController {
+    fn new() -> Result<GameController> {
+        let scene = Box::new(GameSelection::new()?);
+        Ok(GameController { scene, is_fading_out: false, is_fading_in: false, fade: 0, can_update: true })
     }
 
     fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
-        self.scene.event(event, window)
+        let actions = self.scene.event(event, window)?;
+        for action in actions {
+            match action {
+                EventAction::BeginFadeOut => {
+                    self.fade = 0;
+                    self.is_fading_out = true;
+                }
+            }
+        }
+        Ok(())
     }
 
     fn update(&mut self, window: &mut Window) -> Result<()> {
-        self.scene.update(window)
+        // Disallow multiple updates per draw.
+        if !self.can_update {
+            return Ok(());
+        }
+        self.can_update = false;
+
+        if self.is_fading_out {
+            self.fade += 1;
+            if self.fade >= 40 {
+                self.fade = 40;
+                self.scene = self.scene.next_scene()?.unwrap();
+                self.is_fading_out = false;
+                self.is_fading_in = true;
+            }
+            Ok(())
+        } else if self.is_fading_in {
+            self.fade -= 1;
+            if self.fade <= 0 {
+                self.fade = 0;
+                self.is_fading_in = false;
+            }
+            Ok(())
+        } else {
+            self.scene.update(window)
+        }
     }
 
     fn draw(&mut self, window: &mut Window) -> Result<()> {
-        self.scene.draw(window)
+        self.can_update = true;
+
+        self.scene.draw(window)?;
+
+        if self.is_fading_in || self.is_fading_out {
+            window.draw_ex(
+                &Rectangle::new((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT)),
+                Col(Color { r: 0., g: 0., b: 0., a: self.fade as f32 / 40. }),
+                Transform::IDENTITY,
+                999);            
+        }
+
+        Ok(())
     }
 }
 
+
 fn main() {
-    run::<LemmingsQuicksilverGame>("Rusty Lemmings",
+    run::<GameController>("Rusty Lemmings",
         Vector::new(SCREEN_WIDTH, SCREEN_HEIGHT),
         Settings {
             draw_rate: 1000. / 60.,
-            max_updates: 60,
-            update_rate: 1000. / 2.,
+            max_updates: 1,
+            update_rate: 1000. / 60.,
             ..Settings::default()
         });
 }

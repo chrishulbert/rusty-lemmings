@@ -4,7 +4,7 @@ use std::vec::IntoIter;
 ////////////////////////////////////////////////////////////////////////////////
 /// Levels
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Skills {
     pub climbers: u16, // 2 bytes each, only lower byte is used, max 0x00FA
     pub floaters: u16,
@@ -16,7 +16,7 @@ pub struct Skills {
     pub diggers: u16,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Globals {
     pub release_rate: u16, // 0x0000 is slowest, 0x00FA is fastest
     pub num_of_lemmings: u16, // maximum 0x0072
@@ -28,7 +28,7 @@ pub struct Globals {
     pub extended_graphic_set: u16, // Apparently ignored in windows version.
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ObjectModifier {
     Normal, // Draw full graphic, 0
     MustHaveTerrainUnderneathToBeVisible, // 40
@@ -47,7 +47,7 @@ impl ObjectModifier {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Object {
     pub x: i32, // Normalised to 0.
         // In file:
@@ -71,7 +71,7 @@ pub struct Object {
     pub is_upside_down: bool, // can be 8F (display graphic upside-down) or 0F (display graphic normally)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Terrain {
     pub do_not_overwrite_existing_terrain: bool,
     pub is_upside_down: bool,
@@ -84,7 +84,7 @@ pub struct Terrain {
     pub terrain_id: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SteelArea {
     pub x: isize, // Normalised.
         // In file: min 0x000, max 0xC78.  0x000 = -16, 0x008 = -12,
@@ -97,7 +97,7 @@ pub struct SteelArea {
     pub height: u8,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Level {
     pub globals: Globals,
     pub objects: Vec<Object>, // Up to 32
@@ -109,7 +109,7 @@ pub struct Level {
 ////////////////////////////////////////////////////////////////////////////////
 /// Ground
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct ObjectInfo {
     pub animation_flags: u16,
     pub start_animation_frame_index: u8,
@@ -148,7 +148,7 @@ impl TerrainInfo {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Palettes {
     pub ega_custom: [u8; 8],
     pub ega_standard: [u8; 8],
@@ -205,6 +205,7 @@ impl Palettes {
     }
 }
 
+#[derive(Clone)]
 pub struct Ground {
     pub object_info: [ObjectInfo; 16],
     pub terrain_info: [TerrainInfo; 64],
@@ -214,19 +215,21 @@ pub struct Ground {
 ////////////////////////////////////////////////////////////////////////////////
 /// Images
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Image {
     pub bitmap: Vec<u32>,
     pub width: usize,
     pub height: usize,
 }
 
+#[derive(Clone)]
 pub struct Animation {
     pub frames: Vec<Vec<u32>>, // Think of this as an array of frames, where each frame is Vec<u32>.
     pub width: usize,
     pub height: usize,
 }
 
+#[derive(Clone)]
 pub struct Mask {
     pub frames: Vec<Vec<u8>>, // 1 means take a pixel out, 0 means leave alone.
     pub width: usize,
@@ -236,6 +239,7 @@ pub struct Mask {
 ////////////////////////////////////////////////////////////////////////////////
 /// Main dat
 
+#[derive(Clone)]
 pub struct LemmingAnimations {
     pub walking_right: Animation,
     pub jumping_right: Animation, // Walking up a step 3-6px tall.
@@ -269,6 +273,7 @@ pub struct LemmingAnimations {
     pub explosion: Animation,
 }
 
+#[derive(Clone)]
 pub struct Masks {
     pub bash_right: Mask,
     pub bash_left: Mask,
@@ -277,12 +282,13 @@ pub struct Masks {
     pub explosion: Mask,
 }
 
+#[derive(Clone)]
 pub struct SkillNumberDigits {
     pub left: [Image; 10],
     pub right: [Image; 10],
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct GameFont {
     pub percent: Image,
     pub digits: [Image; 10], // 0-9
@@ -290,11 +296,12 @@ pub struct GameFont {
     pub letters: [Image; 26], // A-Z
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MenuFont {
     pub characters: Vec<Image>, // '!'(33) - '~'(126), in ascii order.
 }
 
+#[derive(Clone)]
 pub struct MainMenu {
     pub background: Image,
     pub logo: Image,
@@ -317,6 +324,8 @@ pub struct MainMenu {
     pub left_scroller: Animation,
     pub right_scroller: Animation,
     pub reel: Image,
+    // TODO change this to skill indexes so it's not lemmings-1-specific.
+    // TODO change to support 5 skills for oh-no-more.
     pub mayhem: Image,
     pub taxing: Image,
     pub tricky: Image,
@@ -324,6 +333,7 @@ pub struct MainMenu {
     pub menu_font: MenuFont,
 }
 
+#[derive(Clone)]
 pub struct MainDat {
     pub lemming_animations: LemmingAnimations,
     pub masks: Masks,
@@ -342,8 +352,9 @@ pub struct MainDat {
 pub type ImageMap = HashMap<i32, Image>;
 pub type AnimationMap = HashMap<i32, Animation>;
 
+#[derive(Clone)]
 pub struct GroundCombined {
-    pub ground: Ground,
+    pub ground: Ground, 
     pub terrain_sprites: ImageMap,
     pub object_sprites: AnimationMap,
 }
@@ -352,6 +363,7 @@ pub type GroundMap = HashMap<i32, GroundCombined>;
 pub type LevelMap = HashMap<i32, Level>; // Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
 pub type SpecialMap = HashMap<i32, Image>;
 
+#[derive(Clone)]
 pub struct Game {
     pub name: String, // Eg 'Oh No More Lemmings'
     pub id: String, // Eg 'ohnomore'

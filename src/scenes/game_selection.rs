@@ -1,4 +1,4 @@
-use std::thread;
+use std::{thread, rc::Weak, cell::RefCell};
 
 extern crate quicksilver;
 use quicksilver::{
@@ -11,7 +11,8 @@ use quicksilver::{
 
 use lemmings::{loader, models::*};
 use Scene;
-use SkillSelection;
+use super::EventAction;
+use super::skill_selection::SkillSelection;
 use qs_helpers::*;
 
 // This is the first screen of the game where you select which game you want to play.
@@ -20,6 +21,9 @@ pub struct GameSelection {
     background: QSImage,
     logo: QSImage,
     font: QSMenuFont,
+    mouse_was_down: bool,
+    selected_game_index: usize,
+    selected_game: Option<Game>,
 }
 
 const MENU_TOP: f32 = 80.;
@@ -38,36 +42,38 @@ impl GameSelection {
             background,
             logo,
             font,
+            mouse_was_down: false,
+            selected_game_index: 0,
+            selected_game: None,
         })
     }
 }
 
 impl Scene for GameSelection {
-    fn event(&mut self, event: &Event, _window: &mut Window) -> Result<()> {
+    fn event(&mut self, event: &Event, _window: &mut Window) -> Result<Vec<EventAction>> {
+        let mut actions: Vec<EventAction> = Vec::new();
         match event {
             Event::MouseButton(MouseButton::Left, state) => {
-                if state.is_down() {
-                    let skill = SkillSelection::new(
-                        self.games.oh_no_more.unwrap(), // todo which one? clone it?
-                        self.background.clone(),
-                    );
-
+                if self.mouse_was_down && !state.is_down() {
+                    self.selected_game = Some(self.games.as_vec()[self.selected_game_index].clone());
+                    actions.push(EventAction::BeginFadeOut);
                 }
+                self.mouse_was_down = state.is_down();
             }
-            Event::MouseMoved(vector) => {
-                let scaled_y = (vector.y / SCALE as f32).round() as i32;
-                self.current_menu_hover_index = (scaled_y - MENU_TOP as i32) / MENU_ROW_HEIGHT as i32;
-                // if vector.overlaps_rectangle(&self.crosshair_rect) {
-                //     window.set_cursor(MouseCursor::Crosshair); // use qs input::MouseCursor
-                // } else if vector.overlaps_rectangle(&self.grab_rect) {
-                //     window.set_cursor(MouseCursor::Grab);
-                // } else {
-                //     window.set_cursor(MouseCursor::Default);
-                // }
-            }
+            // Event::MouseMoved(vector) => {
+            //     let scaled_y = (vector.y / SCALE as f32).round() as i32;
+            //     self.current_menu_hover_index = (scaled_y - MENU_TOP as i32) / MENU_ROW_HEIGHT as i32;
+            //     // if vector.overlaps_rectangle(&self.crosshair_rect) {
+            //     //     window.set_cursor(MouseCursor::Crosshair); // use qs input::MouseCursor
+            //     // } else if vector.overlaps_rectangle(&self.grab_rect) {
+            //     //     window.set_cursor(MouseCursor::Grab);
+            //     // } else {
+            //     //     window.set_cursor(MouseCursor::Default);
+            //     // }
+            // }
             _ => {}
         };
-        Ok(())
+        Ok(actions)
     }
 
     fn update(&mut self, _window: &mut Window) -> Result<()> {        
@@ -109,9 +115,10 @@ impl Scene for GameSelection {
         {
             let mouse = window.mouse();        
             let mut y: f32 = MENU_TOP * SCALE as f32;
-            for game in self.games.as_vec() {
+            for (index, game) in self.games.as_vec().iter().enumerate() {
                 let this_bottom = y + MENU_ROW_HEIGHT * SCALE as f32;
                 if y < mouse.pos().y && mouse.pos().y <= this_bottom {
+                    self.selected_game_index = index;
                     let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.2 } else { 0.1 };
                     window.draw_ex(
                         &Rectangle::new((0, y), (SCREEN_WIDTH, MENU_ROW_HEIGHT * SCALE as f32)),
@@ -127,4 +134,15 @@ impl Scene for GameSelection {
 
         Ok(())
     }
+
+    fn next_scene(&mut self) -> Result<Option<Box<dyn Scene>>> {
+        let selected_game = self.selected_game.take(); // Transfer ownership from the ivar.
+        if let Some(selected_game) = selected_game {
+            let skill_selection = SkillSelection::new(selected_game, self.background.clone())?;
+            Ok(Some(Box::new(skill_selection)))
+        } else {
+            Ok(None)
+        }
+    }
+
 }

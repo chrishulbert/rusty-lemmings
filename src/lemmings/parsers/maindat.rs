@@ -331,10 +331,10 @@ impl MainMenu {
             left_scroller:  Animation::parse_4bpp(&section_4[0x2A00..], 16, 48, 16, palette),
             right_scroller: Animation::parse_4bpp(&section_4[0x4200..], 16, 48, 16, palette),
             reel:           Image::parse_4bpp(&section_4[0x5A00..], 16, 16, palette),
-            mayhem:         Image::parse_4bpp(&section_4[0x5A80..], 16, 16, palette),
-            taxing:         Image::parse_4bpp(&section_4[0x5E4C..], 16, 16, palette),
-            tricky:         Image::parse_4bpp(&section_4[0x6218..], 16, 16, palette),
-            fun:            Image::parse_4bpp(&section_4[0x65E4..], 16, 16, palette),
+            mayhem:         Image::parse_4bpp(&section_4[0x5A80..], 72, 27, back_palette),
+            taxing:         Image::parse_4bpp(&section_4[0x5E4C..], 72, 27, back_palette),
+            tricky:         Image::parse_4bpp(&section_4[0x6218..], 72, 27, back_palette),
+            fun:            Image::parse_4bpp(&section_4[0x65E4..], 72, 27, back_palette),
             menu_font:      MenuFont::parse(&section_4[0x69B0..], palette)
         }
     }

@@ -1,16 +1,20 @@
 use std::thread;
+use std::boxed::Box;
+use std::io::{Error, ErrorKind};
 
 extern crate quicksilver;
 use quicksilver::{
     Result,
-    geom::{Rectangle, Vector, Transform},
+    geom::{Rectangle, Vector, Transform, Shape},
     graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
     lifecycle::{Event, Settings, State, Window, run},
     input::MouseButton,
 };
 
-use lemmings::{loader, models::*};
+use lemmings::models::*;
+use lemmings::levels_per_game_and_skill;
 use Scene;
+use super::EventAction;
 use qs_helpers::*;
 
 // This is the screen that allows you to choose which skill level you'd like to play at.
@@ -18,36 +22,66 @@ pub struct SkillSelection {
     game: Game,
     background: QSImage,
     logo: QSImage,
-    frames_skills: Vec<(QSImage, QSImage)>,
+    frame: QSImage,
+    skills: Vec<QSImage>,
+    mouse_was_down: bool,
+    selected_skill: isize,
 }
 
-const SKILLS_TOP: f32 = 100.;
+const SKILLS_TOP: f32 = 80.;
 const SKILL_WIDTH: f32 = 64.;
-const FRAME_OFFSET: f32 = 4.;
+const FRAME_OFFSET_Y: f32 = 12.5;
+const FRAME_OFFSET_X: f32 = 4.5;
+const BUTTON_MARGIN_Y: f32 = 4.;
 
 impl SkillSelection {
     pub fn new(game: Game, background: QSImage) -> Result<SkillSelection> {
+        println!("---");
+        for (k, v) in &game.levels {
+            // println!("{:04}, {}", k, v.name);
+            println!("{}", v.name);
+        }
+        println!("---");
+
         let logo = qs_image_from_lemmings_image(&game.main.main_menu.logo)?;
-        let frame_0 = qs_image_from_lemmings_image(&game.main.main_menu.f1)?;
-        let frame_1 = qs_image_from_lemmings_image(&game.main.main_menu.f2)?;
-        let frame_2 = qs_image_from_lemmings_image(&game.main.main_menu.f3)?;
-        let frame_3 = qs_image_from_lemmings_image(&game.main.main_menu.level_rating)?;
+        let frame = qs_image_from_lemmings_image(&game.main.main_menu.level_rating)?;
         let skill_0 = qs_image_from_lemmings_image(&game.main.main_menu.fun)?;
         let skill_1 = qs_image_from_lemmings_image(&game.main.main_menu.tricky)?;
         let skill_2 = qs_image_from_lemmings_image(&game.main.main_menu.taxing)?;
         let skill_3 = qs_image_from_lemmings_image(&game.main.main_menu.mayhem)?;
+        // TODO extra skill for oh no more lemmings
         Ok(SkillSelection {
             game,
             background,
             logo,
-            frames_skills: vec![(frame_0, skill_0), (frame_1, skill_1), (frame_2, skill_2), (frame_3, skill_3)],
+            frame,
+            skills: vec![skill_0, skill_1, skill_2, skill_3],
+            mouse_was_down: false,
+            selected_skill: 0,
         })
     }
 }
 
 impl Scene for SkillSelection {
-    fn event(&mut self, event: &Event, _window: &mut Window) -> Result<()> {
-        Ok(())
+    fn event(&mut self, event: &Event, _window: &mut Window) -> Result<Vec<EventAction>> {
+        let mut actions: Vec<EventAction> = Vec::new();
+        match event {
+            Event::MouseButton(MouseButton::Left, state) => {
+                if self.mouse_was_down && !state.is_down() {
+                    println!("!!!");
+                    let levels = levels_per_game_and_skill::levels_per_game_and_skill(&self.game.id, self.selected_skill, &self.game.levels);
+                    for l in levels {
+                        println!("{}", l.name);
+                    }
+                    println!("!!!");
+                    // self.selected_game = Some(self.games.as_vec()[self.selected_game_index].clone());
+                    // actions.push(EventAction::BeginFadeOut);
+                }
+                self.mouse_was_down = state.is_down();
+            },
+            _ => {}
+        };
+        Ok(actions)
     }
 
     fn update(&mut self, _window: &mut Window) -> Result<()> {        
@@ -87,30 +121,35 @@ impl Scene for SkillSelection {
 
         // Skill list.
         {
-            let mut x: f32 = (SCREEN_WIDTH / 2. - self.frames_skills.len() as f32 / 2. * SKILL_WIDTH).round();
+            let mut x: f32 = (SCREEN_WIDTH / 2. - self.skills.len() as f32 / 2. * SKILL_WIDTH * SCALE as f32).round();
+            let y: f32 = SKILLS_TOP * SCALE as f32;
+            let skill_y: f32 = y + FRAME_OFFSET_Y * SCALE as f32;
             let mouse = window.mouse();
-            for (frame, skill) in self.frames_skills.iter() {
+            let frame_size = self.frame.area().size;
+            let button_top = y - BUTTON_MARGIN_Y * SCALE as f32;
+            let button_height = frame_size.y / 2. + 2. * BUTTON_MARGIN_Y * SCALE as f32;
+            for (index, skill) in self.skills.iter().enumerate() {
                 let this_right = x + SKILL_WIDTH * SCALE as f32;
                 let this_mid_x = x + SKILL_WIDTH * SCALE as f32 / 2.;
-                // BUTTON_AREA.contains(window.mouse().pos())
-                // mouse.pos().
-                // if y < mouse.pos().y && mouse.pos().y <= this_bottom {
-                //     let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.2 } else { 0.1 };
-                //     window.draw_ex(
-                //         &Rectangle::new((0, y), (SCREEN_WIDTH, MENU_ROW_HEIGHT * SCALE as f32)),
-                //         Col(Color { r: 1., g: 1., b: 1., a: alpha }),
-                //         Transform::IDENTITY,
-                //         1);
-                // }
+
+                let button_area = Rectangle::new((x, button_top), (this_right - x, button_height));
+                if button_area.contains(mouse.pos()) {
+                    self.selected_skill = index as isize;
+                    let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.2 } else { 0.1 };
+                    window.draw_ex(
+                        &button_area,
+                        Col(Color { r: 1., g: 1., b: 1., a: alpha }),
+                        Transform::IDENTITY,
+                        1);
+                }
                 {
-                    let size = frame.area().size;
-                    let draw_x = (this_mid_x - size.x / 2.).round();
-                    window.draw(&Rectangle::new((x, SKILLS_TOP), (size.x/2., size.y/2.)), Img(frame));
+                    let draw_x = (this_mid_x - frame_size.x / 4.).round();
+                    window.draw_ex(&Rectangle::new((draw_x, y), (frame_size.x/2., frame_size.y/2.)), Img(&self.frame), Transform::IDENTITY, 2);
                 }
                 {
                     let size = skill.area().size;
-                    let draw_x = (this_mid_x - size.x / 2.).round();
-                    window.draw(&Rectangle::new((x, SKILLS_TOP + FRAME_OFFSET * SCALE as f32), (size.x/2., size.y/2.)), Img(skill));
+                    let draw_x = (this_mid_x - size.x / 4.).round();
+                    window.draw_ex(&Rectangle::new((draw_x + FRAME_OFFSET_X * SCALE as f32, skill_y), (size.x/2., size.y/2.)), Img(skill), Transform::IDENTITY, 3);
                 }
 
                 // let draw_y = ((y + this_bottom - MENU_FONT_HEIGHT * SCALE as f32) / 2.).round();
@@ -121,4 +160,9 @@ impl Scene for SkillSelection {
 
         Ok(())
     }
+
+    fn next_scene(&mut self) -> Result<Option<Box<dyn Scene>>> {
+        Ok(None)
+    }
+
 }
