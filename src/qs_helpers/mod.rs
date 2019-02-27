@@ -50,17 +50,19 @@ pub struct QSMenuFont {
     pub characters: Vec<QSImage>, // '!'(33) - '~'(126), in ascii order.
 }
 pub fn qs_font_from_lemmings_menu_font(menu_font: &MenuFont) -> Result<QSMenuFont> {
+    qs_font_from_lemmings_menu_font_with_scale(menu_font, SCALE)
+}
+pub fn qs_font_from_lemmings_menu_font_with_scale(menu_font: &MenuFont, scale: u8) -> Result<QSMenuFont> {
     let mut characters: Vec<QSImage> = Vec::with_capacity(menu_font.characters.len());
     for character in menu_font.characters.iter() {
-        let scaled = xbrz::scale(SCALE, &character.bitmap, character.width as u32, character.height as u32);
+        let scaled = xbrz::scale(scale, &character.bitmap, character.width as u32, character.height as u32);
         let rgba = rgba_from_pixels(&scaled);
-        let qs_image = quicksilver::graphics::Image::from_raw(&rgba, character.width as u32 * SCALE as u32, character.height as u32 * SCALE as u32, PixelFormat::RGBA)?;
+        let qs_image = quicksilver::graphics::Image::from_raw(&rgba, character.width as u32 * scale as u32, character.height as u32 * scale as u32, PixelFormat::RGBA)?;
         characters.push(qs_image);
     }
     Ok(QSMenuFont { characters })
 }
 impl QSMenuFont {
-    /// Returns the height.
     pub fn draw(&self, window: &mut Window, x: f32, y: f32, string: &str, z: f32) {
         let mut current_x = x;
         for char in string.chars() {
@@ -77,4 +79,77 @@ impl QSMenuFont {
             }
         }
     }
+    pub fn width(&self, string: &str) -> f32 {
+        return self.characters[0].area().size.x / 2. * string.chars().count() as f32;
+    }
 }
+
+impl Image {
+    fn qs_scaled(&self) -> Result<QSImage> {
+        let scaled = xbrz::scale(SCALE, &self.bitmap, self.width as u32, self.height as u32);
+        let rgba = rgba_from_pixels(&scaled);
+        let qs_image = quicksilver::graphics::Image::from_raw(&rgba, self.width as u32 * SCALE as u32, self.height as u32 * SCALE as u32, PixelFormat::RGBA)?;
+        Ok(qs_image)
+    }
+}
+pub struct QSGameFont {
+    pub percent: QSImage,
+    pub digits: Vec<QSImage>, // 0-9
+    pub dash: QSImage,
+    pub letters: Vec<QSImage>, // A-Z
+}
+impl GameFont {
+    pub fn qs_font(&self) -> Result<QSGameFont> {
+        let percent = self.percent.qs_scaled()?;
+        let dash = self.dash.qs_scaled()?;
+        let digits: Result<Vec<QSImage>> = self.digits.iter().map(|i| i.qs_scaled()).collect();
+        let letters: Result<Vec<QSImage>> = self.letters.iter().map(|i| i.qs_scaled()).collect();
+        Ok(QSGameFont{
+            percent,
+            digits: digits?,
+            dash,
+            letters: letters?,
+        })
+    }
+}
+impl QSGameFont {
+    pub fn draw(&self, window: &mut Window, x: f32, y: f32, string: &str, z: f32) {
+        let mut current_x = x;
+        for char in string.chars() {
+            let c = char as usize;
+            if c == 37 { // Percent.
+                let image = &self.percent;
+                let size = image.area().size;
+                window.draw_ex(&Rectangle::new((current_x, y), (size.x/2., size.y/2.)), Img(image), Transform::IDENTITY, z);
+                current_x += size.x/2.;
+            } else if 48 <= c && c <= 57 { // Digit
+                let index = c - 48;
+                let image = &self.digits[index as usize];
+                let size = image.area().size;
+                window.draw_ex(&Rectangle::new((current_x, y), (size.x/2., size.y/2.)), Img(image), Transform::IDENTITY, z);
+                current_x += size.x/2.;
+            } else if 65 <= c && c <= 90 { // A-Z
+                let index = c - 65;
+                let image = &self.letters[index as usize];
+                let size = image.area().size;
+                window.draw_ex(&Rectangle::new((current_x, y), (size.x/2., size.y/2.)), Img(image), Transform::IDENTITY, z);
+                current_x += size.x/2.;
+            } else if 97 <= c && c <= 122 { // a-z
+                let index = c - 97;
+                let image = &self.letters[index as usize];
+                let size = image.area().size;
+                window.draw_ex(&Rectangle::new((current_x, y), (size.x/2., size.y/2.)), Img(image), Transform::IDENTITY, z);
+                current_x += size.x/2.;
+            } else if c == 32 { // Space
+                let size = self.percent.area().size;
+                current_x += size.x/2.;
+            } else { // Anything else, draw a dash.
+                let image = &self.dash;
+                let size = image.area().size;
+                window.draw_ex(&Rectangle::new((current_x, y), (size.x/2., size.y/2.)), Img(image), Transform::IDENTITY, z);
+                current_x += size.x/2.;
+            }
+        }
+    }
+}
+
