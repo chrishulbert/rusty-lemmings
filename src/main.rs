@@ -24,9 +24,11 @@ struct GameController {
     scene: Box<dyn Scene>,
     is_fading_out: bool,
     is_fading_in: bool,
-    fade: i32, // 0 = looks normal, 40 = looks black.
+    fade: isize, // 0 = looks normal, FADE_FRAMES = looks black.
     can_update: bool, // Used to prevent it updating multiple times per draw, workaround for QS ignoring `max_updates: 1`.
 }
+
+const FADE_FRAMES: isize = 20; // 40 is graceful like the original game.
 
 impl State for GameController {
     fn new() -> Result<GameController> {
@@ -35,12 +37,14 @@ impl State for GameController {
     }
 
     fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
-        let actions = self.scene.event(event, window)?;
-        for action in actions {
-            match action {
-                EventAction::BeginFadeOut => {
-                    self.fade = 0;
-                    self.is_fading_out = true;
+        if !self.is_fading_in && !self.is_fading_out {
+            let actions = self.scene.event(event, window)?;
+            for action in actions {
+                match action {
+                    EventAction::BeginFadeOut => {
+                        self.fade = 0;
+                        self.is_fading_out = true;
+                    }
                 }
             }
         }
@@ -56,8 +60,8 @@ impl State for GameController {
 
         if self.is_fading_out {
             self.fade += 1;
-            if self.fade >= 40 {
-                self.fade = 40;
+            if self.fade >= FADE_FRAMES {
+                self.fade = FADE_FRAMES;
                 self.scene = self.scene.next_scene()?.unwrap();
                 self.is_fading_out = false;
                 self.is_fading_in = true;
@@ -83,7 +87,7 @@ impl State for GameController {
         if self.is_fading_in || self.is_fading_out {
             window.draw_ex(
                 &Rectangle::new((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT)),
-                Col(Color { r: 0., g: 0., b: 0., a: self.fade as f32 / 40. }),
+                Col(Color { r: 0., g: 0., b: 0., a: self.fade as f32 / FADE_FRAMES as f32 }),
                 Transform::IDENTITY,
                 999);            
         }
