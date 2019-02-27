@@ -8,6 +8,8 @@ use quicksilver::{
 
 pub mod game_selection;
 pub mod skill_selection;
+pub mod level_selection;
+pub mod level_preview;
 
 // This is a list of actions for the scene to pass back to the controller, because rust's
 // ownership model makes it almost impossible to use the delegate pattern instead.

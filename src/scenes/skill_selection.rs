@@ -16,6 +16,7 @@ use lemmings::levels_per_game_and_skill;
 use Scene;
 use super::EventAction;
 use qs_helpers::*;
+use super::level_selection::LevelSelection;
 
 // This is the screen that allows you to choose which skill level you'd like to play at.
 pub struct SkillSelection {
@@ -25,6 +26,7 @@ pub struct SkillSelection {
     frame: QSImage,
     skills: Vec<QSImage>,
     mouse_was_down: bool,
+    hovered_skill: isize,
     selected_skill: isize,
 }
 
@@ -36,13 +38,6 @@ const BUTTON_MARGIN_Y: f32 = 4.;
 
 impl SkillSelection {
     pub fn new(game: Game, background: QSImage) -> Result<SkillSelection> {
-        println!("---");
-        for (k, v) in &game.levels {
-            // println!("{:04}, {}", k, v.name);
-            println!("{}", v.name);
-        }
-        println!("---");
-
         let logo = qs_image_from_lemmings_image(&game.main.main_menu.logo)?;
         let frame = qs_image_from_lemmings_image(&game.main.main_menu.level_rating)?;
         let skill_0 = qs_image_from_lemmings_image(&game.main.main_menu.fun)?;
@@ -57,6 +52,7 @@ impl SkillSelection {
             frame,
             skills: vec![skill_0, skill_1, skill_2, skill_3],
             mouse_was_down: false,
+            hovered_skill: 0,
             selected_skill: 0,
         })
     }
@@ -68,14 +64,8 @@ impl Scene for SkillSelection {
         match event {
             Event::MouseButton(MouseButton::Left, state) => {
                 if self.mouse_was_down && !state.is_down() {
-                    println!("!!!");
-                    let levels = levels_per_game_and_skill::levels_per_game_and_skill(&self.game.id, self.selected_skill, &self.game.levels);
-                    for l in levels {
-                        println!("{}", l.name);
-                    }
-                    println!("!!!");
-                    // self.selected_game = Some(self.games.as_vec()[self.selected_game_index].clone());
-                    // actions.push(EventAction::BeginFadeOut);
+                    self.selected_skill = self.hovered_skill;
+                    actions.push(EventAction::BeginFadeOut);
                 }
                 self.mouse_was_down = state.is_down();
             },
@@ -134,7 +124,7 @@ impl Scene for SkillSelection {
 
                 let button_area = Rectangle::new((x, button_top), (this_right - x, button_height));
                 if button_area.contains(mouse.pos()) {
-                    self.selected_skill = index as isize;
+                    self.hovered_skill = index as isize;
                     let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.2 } else { 0.1 };
                     window.draw_ex(
                         &button_area,
@@ -162,7 +152,13 @@ impl Scene for SkillSelection {
     }
 
     fn next_scene(&mut self) -> Result<Option<Box<dyn Scene>>> {
-        Ok(None)
+        let levels = levels_per_game_and_skill::levels_per_game_and_skill(&self.game.id, self.selected_skill, &self.game.levels);
+        let scene = LevelSelection::new(self.game.clone(), 
+            levels,
+            self.background.clone(),
+            self.frame.clone(),
+            self.skills[self.selected_skill as usize].clone())?;
+        Ok(Some(Box::new(scene)))
     }
 
 }
