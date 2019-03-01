@@ -3,8 +3,8 @@ extern crate quicksilver;
 use quicksilver::{
     Result,
     geom::{Rectangle, Transform},
-    graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
-    lifecycle::{State, Window},
+    graphics::{Background::Img, Image as QSImage, PixelFormat},
+    lifecycle::{Window},
 };
 
 use xbrz;

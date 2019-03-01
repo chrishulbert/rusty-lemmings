@@ -1,11 +1,9 @@
-use std::{thread, rc::Weak, cell::RefCell};
-
 extern crate quicksilver;
 use quicksilver::{
     Result,
-    geom::{Rectangle, Vector, Transform},
-    graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
-    lifecycle::{Event, Settings, State, Window, run},
+    geom::{Rectangle, Transform},
+    graphics::{Background::Img, Background::Col, Color, Image as QSImage},
+    lifecycle::{Event, Window},
     input::MouseButton,
 };
 
@@ -28,7 +26,6 @@ pub struct GameSelection {
 
 const MENU_TOP: f32 = 80.;
 const MENU_ROW_HEIGHT: f32 = 12.;
-const MENU_FONT_WIDTH: f32 = 4.;
 const MENU_FONT_HEIGHT: f32 = 8.;
 
 impl GameSelection {
@@ -77,7 +74,7 @@ impl Scene for GameSelection {
     }
 
     fn update(&mut self, _window: &mut Window) -> Result<()> {        
-        thread::yield_now();
+        std::thread::yield_now();
         Ok(())
     }
 

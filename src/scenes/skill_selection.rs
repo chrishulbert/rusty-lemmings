@@ -1,13 +1,12 @@
 use std::thread;
 use std::boxed::Box;
-use std::io::{Error, ErrorKind};
 
 extern crate quicksilver;
 use quicksilver::{
     Result,
-    geom::{Rectangle, Vector, Transform, Shape},
-    graphics::{Background::Img, Background::Col, Color, Image as QSImage, PixelFormat},
-    lifecycle::{Event, Settings, State, Window, run},
+    geom::{Rectangle, Transform, Shape},
+    graphics::{Background::Img, Background::Col, Color, Image as QSImage},
+    lifecycle::{Event, Window},
     input::MouseButton,
 };
 

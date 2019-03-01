@@ -106,8 +106,8 @@ pub fn parse(data: &[u8]) -> Result<Level> {
                 do_not_overwrite_existing_terrain: do_not_overwrite_existing_terrain,
                 is_upside_down: (flags & 4) == 4,
                 remove_terrain: remove_terrain && !do_not_overwrite_existing_terrain, // If both flags are on, only honor 'do not overwrite'.
-                x: x as i32,
-                y: y_i as i32 - 4,
+                x: x as isize,
+                y: y_i as isize - 4,
                 terrain_id: terrain_id as usize,
             });
         }

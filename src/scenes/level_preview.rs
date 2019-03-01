@@ -12,28 +12,32 @@ use quicksilver::{
 use lemmings::models::*;
 use Scene;
 use super::EventAction;
-// use super::skill_selection::SkillSelection;
 use qs_helpers::*;
+use lemmings::level_renderer;
 
 // This previews a level before you play it.
 pub struct LevelPreview {
     game: Game,
     level_index: usize,
     level: Level,
+    preview: QSImage,
     background: QSImage,
     font: QSMenuFont,
 }
 
 const ROW_HEIGHT: f32 = 12.;
+const PREVIEW_SCALE: f32 = 4.;
 
 impl LevelPreview {
     pub fn new(game: Game, level_index: usize, level: Level, background: QSImage) -> Result<LevelPreview> {
         let font = qs_font_from_lemmings_menu_font(&game.main.main_menu.menu_font)?;
-        // TODO render level
+        let render = level_renderer::render(&level, &game.grounds, &game.specials)?;
+        let preview = qs_image_from_lemmings_image(&render.image)?;
         Ok(LevelPreview {
             game,
             level_index,
             level,
+            preview,
             background,
             font,
         })
@@ -85,21 +89,23 @@ impl Scene for LevelPreview {
         {
             window.draw_ex(
                 &Rectangle::new((0, 0), (SCREEN_WIDTH, preview_height)),
-                Col(Color { r: 0., g: 0., b: 0., a: 0.7 }),
+                Col(Color { r: 0., g: 0., b: 0., a: 1. }),
                 Transform::IDENTITY,
                 1);
-            
-            // let skill_size = self.skill.area().size;
-            // let skill_x = (SCREEN_WIDTH/2. - skill_size.x/4. + FRAME_OFFSET_X*SCALE as f32).round();
-            // let skill_y = frame_y + FRAME_OFFSET_Y*SCALE as f32;
-            // window.draw(&Rectangle::new((skill_x, skill_y), (skill_size.x/2., skill_size.y/2.)), Img(&self.skill));
+
+            let size = self.preview.area().size;
+            let w: f32 = size.x / PREVIEW_SCALE;
+            let h: f32 = size.y / PREVIEW_SCALE;
+            let x: f32 = ((SCREEN_WIDTH - w)/2.).round();
+            let y: f32 = ((preview_height - h)/2.).round();
+            window.draw_ex(&Rectangle::new((x, y), (w, h)), Img(&self.preview), Transform::IDENTITY, 2);
         }
 
         // Text.
         {
             let x: f32 = (SCALE as f32 * 4.).round();
             let text = format!("Level {}", self.level_index + 1);
-            self.font.draw(window, x, x, &text, 2.);
+            self.font.draw(window, x, x, &text, 3.);
         }
         {
             let width = self.font.width(&self.level.name);

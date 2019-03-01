@@ -76,9 +76,9 @@ pub struct Terrain {
     pub do_not_overwrite_existing_terrain: bool,
     pub is_upside_down: bool,
     pub remove_terrain: bool,
-    pub x: i32, // Normalised.
+    pub x: isize, // Normalised.
         // In file: min 0x0000, max 0x063F.  0x0000 = -16, 0x0008 = -8, 0x0010 = 0, 0x063f = 1583.
-    pub y: i32, // Normalised. 
+    pub y: isize, // Normalised. 
         // In file: min 0xEF0, max 0x518.  0xEF0 = -38, 0xEF8 = -37,
         // 0x020 = 0, 0x028 = 1, 0x030 = 2, 0x038 = 3, ... , 0x518 = 159
     pub terrain_id: usize,
