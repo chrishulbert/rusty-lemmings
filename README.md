@@ -1,4 +1,4 @@
-# rusty-lemmings
+# Rusty Lemmings
 
 ![Lemmings](https://raw.githubusercontent.com/chrishulbert/rusty-lemmings/master/github/logo.png)
 
