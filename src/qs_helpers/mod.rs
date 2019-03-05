@@ -27,10 +27,22 @@ pub fn rgba_from_pixels(source: &[u32]) -> Vec<u8> {
 }
 
 pub fn qs_image_from_lemmings_image(image: &Image) -> Result<quicksilver::graphics::Image> {
-    println!("Loaded {} x {}, scaling", image.width, image.height);
+    //println!("Loaded {} x {}, scaling", image.width, image.height);
     let scaled = xbrz::scale(SCALE, &image.bitmap, image.width as u32, image.height as u32);
     let rgba = rgba_from_pixels(&scaled);
     return quicksilver::graphics::Image::from_raw(&rgba, image.width as u32 * SCALE as u32, image.height as u32 * SCALE as u32, PixelFormat::RGBA);
+}
+
+/// Scale it, then scale again. Useful for in-game graphics.
+pub fn qs_image_from_lemmings_image_scaled_twice(image: &Image, scale_a: u8, scale_b: u8) -> Result<quicksilver::graphics::Image> {
+    //println!("Loaded {} x {}, scaling", image.width, image.height);
+    let half = xbrz::scale(scale_a, &image.bitmap, image.width as u32, image.height as u32);
+    let scaled = xbrz::scale(scale_b, &half, image.width as u32 * scale_a as u32, image.height as u32 * scale_a as u32);
+    let rgba = rgba_from_pixels(&scaled);
+    return quicksilver::graphics::Image::from_raw(&rgba, 
+        image.width as u32 * scale_a as u32 * scale_b as u32,
+        image.height as u32 * scale_a as u32 * scale_b as u32,
+        PixelFormat::RGBA);
 }
 
 pub fn qs_animation_from_lemmings_animation(animation: &Animation) -> Result<Vec<QSImage>> {
@@ -150,6 +162,9 @@ impl QSGameFont {
                 current_x += size.x/2.;
             }
         }
+    }
+    pub fn width(&self, string: &str) -> f32 {
+        return self.dash.area().size.x / 2. * string.chars().count() as f32;
     }
 }
 

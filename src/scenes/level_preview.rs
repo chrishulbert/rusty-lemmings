@@ -14,6 +14,7 @@ use Scene;
 use super::EventAction;
 use qs_helpers::*;
 use lemmings::level_renderer;
+use scenes::level::LevelScene;
 
 // This previews a level before you play it.
 pub struct LevelPreview {
@@ -141,13 +142,8 @@ impl Scene for LevelPreview {
     }
 
     fn next_scene(&mut self) -> Result<Option<Box<dyn Scene>>> {
-        // let selected_game = self.selected_game.take(); // Transfer ownership from the ivar.
-        // if let Some(selected_game) = selected_game {
-        //     let skill_selection = SkillSelection::new(selected_game, self.background.clone())?;
-        //     Ok(Some(Box::new(skill_selection)))
-        // } else {
-            Ok(None)
-        // }
+        let scene = LevelScene::new(self.game.clone(), self.level_index, self.level.clone())?;
+        Ok(Some(Box::new(scene)))
     }
 
 }

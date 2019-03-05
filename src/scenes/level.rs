@@ -14,36 +14,50 @@ use Scene;
 use EventAction;
 use qs_helpers::*;
 
-pub struct Level {
+const SKILL_PANEL_SCALE: u8 = 5;
+const SKILL_WIDTH: f32 = 16.;
+const SKILL_HEIGHT: f32 = 24.;
+const SKILL_PANEL_GRAPHIC_HEIGHT: f32 = 40.;
+const SKILL_BUTTONS: usize = 12;
+
+pub struct LevelScene {
     game: Game,
     level_index: usize,
     level: Level,
     font: QSGameFont,
+    skill_panel: QSImage,
+    mouse_was_down: bool,
 }
 
-impl Level {
-    pub fn new(game: Game, level_index: usize, level: Level) -> Result<Level> {
+// Skill panel only gets buttons displayed. At 5x, thus covers 5*24=120pt. Level is 160x6=960. 120+960 = 1080 full.
+// Only regret is that the buttons don't fill the whole width.
+
+impl LevelScene {
+    pub fn new(game: Game, level_index: usize, level: Level) -> Result<LevelScene> {
         let font = game.main.game_font.qs_font()?;
-        Ok(Level {
+        let skill_panel = qs_image_from_lemmings_image_scaled_twice(&game.main.skill_panel, SKILL_PANEL_SCALE, 2)?;
+        Ok(LevelScene {
             game,
             level_index,
             level,
             font,
+            skill_panel,
+            mouse_was_down: false,
         })
     }
 }
 
-impl Scene for Level {
+impl Scene for LevelScene {
     fn event(&mut self, event: &Event, _window: &mut Window) -> Result<Vec<EventAction>> {
         let mut actions: Vec<EventAction> = Vec::new();
-        match event {
-            Event::MouseButton(MouseButton::Left, state) => {
-                if state.is_down() {
-                    actions.push(EventAction::BeginFadeOut);
-                }
-            },
-            _ => {}
-        };
+        // match event {
+        //     Event::MouseButton(MouseButton::Left, state) => {
+        //         if state.is_down() {
+        //             actions.push(EventAction::BeginFadeOut);
+        //         }
+        //     },
+        //     _ => {}
+        // };
         Ok(actions)
     }
 
@@ -53,77 +67,50 @@ impl Scene for Level {
     }
 
     fn draw(&mut self, window: &mut Window) -> Result<()> {
+        let mouse = window.mouse();
+        let mouse_pos = mouse.pos();
+
         window.clear(Color::BLACK)?;
 
-        // Background.
+        // Bottom panel.
         {
-            let size = self.background.area().size;
-            let tiles_x: i32 = (SCREEN_WIDTH  / size.x * 2.).ceil() as i32;
-            let tiles_y: i32 = (SCREEN_HEIGHT / size.y * 2.).ceil() as i32;
-            for x in 0..tiles_x {
-                for y in 0..tiles_y {
-                    let is_even = y & 1 == 0;
-                    if is_even {
-                        window.draw(&Rectangle::new((x * (size.x as i32 / 2), y * (size.y as i32 / 2)), (size.x/2., size.y/2.)), Img(&self.background));
-                    } else {
-                        // Background image tiles badly as-is, so mirror it for a slightly better effect.
-                        window.draw(&Rectangle::new((x * (size.x as i32 / 2), (y+1) * (size.y as i32 / 2)), (size.x/2., -size.y/2.)), Img(&self.background));
-                    }
-                }
+            // Skills.
+            let size = self.skill_panel.area().size;
+            let w: f32 = size.x / 2.;
+            let h: f32 = size.y / 2.;
+            let x: f32 = 0.;
+            let y: f32 = (SCREEN_HEIGHT - h).round();
+            window.draw_ex(&Rectangle::new((x, y), (w, h)), Img(&self.skill_panel), Transform::IDENTITY, 1);
+
+            // Text.
+            let bar_height: f32 = (h * SKILL_HEIGHT / SKILL_PANEL_GRAPHIC_HEIGHT).round();
+            let text_y_mid: f32 = SCREEN_HEIGHT - (bar_height/2.).round();
+            let text_y: f32 = text_y_mid - 9. * SCALE as f32;
+            let text_y_2: f32 = text_y_mid + 1. * SCALE as f32;
+            let text_x: f32 = w + 2. * SCALE as f32;
+            let text = format!("Out {}", 1);
+            self.font.draw(window, text_x, text_y, &text, 2.);
+
+            let text = format!("In {}%", 2);
+            self.font.draw(window, text_x, text_y_2, &text, 2.);
+
+            let text = format!("{}-{:02}", 3, 4);
+            let text_w = self.font.width(&text);
+            let text_x = SCREEN_WIDTH - text_w - SCALE as f32;
+            self.font.draw(window, text_x, text_y_2, &text, 2.);
+
+            // Button highlights.
+            let skill_top: f32 = SCREEN_HEIGHT - bar_height;
+            if mouse_pos.y >= skill_top && mouse_pos.x <= SKILL_WIDTH * SKILL_PANEL_SCALE as f32 * SKILL_BUTTONS as f32 {
+                let index = mouse_pos.x as isize / (SKILL_WIDTH as isize * SKILL_PANEL_SCALE as isize);
+                let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.2 } else { 0.1 };
+                let x: f32 = index as f32 * SKILL_WIDTH * SKILL_PANEL_SCALE as f32;
+                window.draw_ex(
+                    &Rectangle::new((x, skill_top), (SKILL_WIDTH * SKILL_PANEL_SCALE as f32, SKILL_HEIGHT * SKILL_PANEL_SCALE as f32)),
+                    Col(Color { r: 1., g: 1., b: 1., a: alpha }),
+                    Transform::IDENTITY,
+                    3);
             }
-        }
-
-        // Preview.
-        let preview_height: f32 = (SCREEN_HEIGHT / 3.).round();
-        {
-            window.draw_ex(
-                &Rectangle::new((0, 0), (SCREEN_WIDTH, preview_height)),
-                Col(Color { r: 0., g: 0., b: 0., a: 1. }),
-                Transform::IDENTITY,
-                1);
-
-            let size = self.preview.area().size;
-            let w: f32 = size.x / PREVIEW_SCALE;
-            let h: f32 = size.y / PREVIEW_SCALE;
-            let x: f32 = ((SCREEN_WIDTH - w)/2.).round();
-            let y: f32 = ((preview_height - h)/2.).round();
-            window.draw_ex(&Rectangle::new((x, y), (w, h)), Img(&self.preview), Transform::IDENTITY, 2);
-        }
-
-        // Text.
-        {
-            let x: f32 = (SCALE as f32 * 4.).round();
-            let text = format!("Level {}", self.level_index + 1);
-            self.font.draw(window, x, x, &text, 3.);
-        }
-        {
-            let width = self.font.width(&self.level.name);
-            let x: f32 = ((SCREEN_WIDTH - width) / 2.).round();
-            let mut y: f32 = preview_height + ROW_HEIGHT * SCALE as f32;
-            self.font.draw(window, x, y, &self.level.name, 2.);
-
-            let x: f32 = (SCREEN_WIDTH / 4.).round();
-            y += 2. * ROW_HEIGHT * SCALE as f32;
-            let text = format!("Number of Lemmings: {}", self.level.globals.num_of_lemmings);
-            self.font.draw(window, x, y, &text, 2.);
-
-            y += ROW_HEIGHT * SCALE as f32;
-            let text = format!("{} to be saved", self.level.globals.num_to_rescue);
-            self.font.draw(window, x, y, &text, 2.);
-
-            y += ROW_HEIGHT * SCALE as f32;
-            let text = format!("Release rate: {}", self.level.globals.release_rate);
-            self.font.draw(window, x, y, &text, 2.);
-
-            y += ROW_HEIGHT * SCALE as f32;
-            let text = format!("Time: {} minutes", self.level.globals.time_limit);
-            self.font.draw(window, x, y, &text, 2.);
-
-            y += 2. * ROW_HEIGHT * SCALE as f32;
-            let text = "Press mouse button to continue";
-            let width = self.font.width(&text);
-            let x: f32 = ((SCREEN_WIDTH - width) / 2.).round();
-            self.font.draw(window, x, y, &text, 2.);
         }
 
         Ok(())
