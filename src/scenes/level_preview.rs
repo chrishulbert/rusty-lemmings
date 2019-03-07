@@ -27,13 +27,12 @@ pub struct LevelPreview {
 }
 
 const ROW_HEIGHT: f32 = 12.;
-const PREVIEW_SCALE: f32 = 4.;
 
 impl LevelPreview {
     pub fn new(game: Game, level_index: usize, level: Level, background: QSImage) -> Result<LevelPreview> {
         let font = qs_font_from_lemmings_menu_font(&game.main.main_menu.menu_font)?;
         let render = level_renderer::render(&level, &game.grounds, &game.specials)?;
-        let preview = qs_image_from_lemmings_image(&render.image)?;
+        let preview = qs_image_from_lemmings_image_scale(&render.image, 2)?;
         Ok(LevelPreview {
             game,
             level_index,
@@ -95,8 +94,8 @@ impl Scene for LevelPreview {
                 1);
 
             let size = self.preview.area().size;
-            let w: f32 = size.x / PREVIEW_SCALE;
-            let h: f32 = size.y / PREVIEW_SCALE;
+            let w: f32 = size.x / 2.;
+            let h: f32 = size.y / 2.;
             let x: f32 = ((SCREEN_WIDTH - w)/2.).round();
             let y: f32 = ((preview_height - h)/2.).round();
             window.draw_ex(&Rectangle::new((x, y), (w, h)), Img(&self.preview), Transform::IDENTITY, 2);
