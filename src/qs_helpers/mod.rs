@@ -26,6 +26,17 @@ pub fn rgba_from_pixels(source: &[u32]) -> Vec<u8> {
     return rgba;
 }
 
+pub fn qs_image_from_lemmings_image_no_scale(image: &Image) -> Result<quicksilver::graphics::Image> {
+    let rgba = rgba_from_pixels(&image.bitmap);
+    return quicksilver::graphics::Image::from_raw(&rgba, image.width as u32, image.height as u32, PixelFormat::RGBA);
+}
+
+pub fn qs_image_from_lemmings_image_scale(image: &Image, scale: u8) -> Result<quicksilver::graphics::Image> {
+    let scaled = xbrz::scale(scale, &image.bitmap, image.width as u32, image.height as u32);
+    let rgba = rgba_from_pixels(&scaled);
+    return quicksilver::graphics::Image::from_raw(&rgba, image.width as u32 * scale as u32, image.height as u32 * scale as u32, PixelFormat::RGBA);
+}
+
 pub fn qs_image_from_lemmings_image(image: &Image) -> Result<quicksilver::graphics::Image> {
     //println!("Loaded {} x {}, scaling", image.width, image.height);
     let scaled = xbrz::scale(SCALE, &image.bitmap, image.width as u32, image.height as u32);
