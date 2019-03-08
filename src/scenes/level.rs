@@ -3,7 +3,7 @@
 extern crate quicksilver;
 use quicksilver::{
     Result,
-    geom::{Rectangle, Transform},
+    geom::{Rectangle, Transform, Vector},
     graphics::{Background::Img, Background::Col, Color, Image as QSImage},
     lifecycle::{Event, Window},
     input::MouseButton,
@@ -41,11 +41,13 @@ pub struct LevelScene {
     level_scaled_image: Image,
     level_slices: SliceMap,
     scroll_offset_x: isize, // In game pixels.
+    selected_skill_index: isize,
 }
 
 // Skill panel only gets buttons displayed. At 5x, thus covers 5*24=120pt. Level is 160x6=960. 120+960 = 1080 full.
-// Only regret is that the buttons don't fill the whole width.
-
+// Only regret is that the buttons don't fill the whole width, but it looks good left-aligned with text to its right.
+// Skill panel minimap has 2-game-px margin on top and bottom, thus 20-game-pt high (1/8th original game px). Aka 20*5=100pt / 200px high.
+// Map is 1040px wide, aka 520pt wide, aka 104-game-px wide. Thus supporting a max map width of 832px.
 impl LevelScene {
     pub fn new(game: Game, level_index: usize, level: Level) -> Result<LevelScene> {
         let font = game.main.game_font.qs_font()?;
@@ -102,21 +104,53 @@ impl LevelScene {
             level_scaled_image,
             level_slices: slices,
             scroll_offset_x,
+            selected_skill_index: 0,
         })
+    }
+
+    fn on_mouse_down_in_game_area(&mut self, mouse: &Vector) {
+
+    }
+
+    fn on_mouse_down_in_skill_bar(&mut self, mouse: &Vector) {
+        let index = mouse.x as isize / (SKILL_WIDTH as isize * SKILL_PANEL_SCALE as isize);
+        if index < SKILL_BUTTONS as isize {
+            match index {
+                // 0 => { - },
+                // 1 => { + },
+                2 => { self.selected_skill_index = index - 2 }, // climb
+                3 => { self.selected_skill_index = index - 2 }, // umbrella
+                4 => { self.selected_skill_index = index - 2 }, // explode
+                5 => { self.selected_skill_index = index - 2 }, // block
+                6 => { self.selected_skill_index = index - 2 }, // build
+                7 => { self.selected_skill_index = index - 2 }, // bash
+                8 => { self.selected_skill_index = index - 2 }, // diagonal dig
+                9 => { self.selected_skill_index = index - 2 }, // vertical dig
+                // 10 >= {  pause },
+                // 11 >= {  explode all },
+                _ => {},
+            }
+        }
     }
 }
 
 impl Scene for LevelScene {
-    fn event(&mut self, event: &Event, _window: &mut Window) -> Result<Vec<EventAction>> {
+    fn event(&mut self, event: &Event, window: &mut Window) -> Result<Vec<EventAction>> {
+        let mouse_pos = window.mouse().pos();
         let mut actions: Vec<EventAction> = Vec::new();
-        // match event {
-        //     Event::MouseButton(MouseButton::Left, state) => {
-        //         if state.is_down() {
-        //             actions.push(EventAction::BeginFadeOut);
-        //         }
-        //     },
-        //     _ => {}
-        // };
+        match event {
+            Event::MouseButton(MouseButton::Left, state) => {
+                if !self.mouse_was_down && state.is_down() { // Start a click.
+                    if mouse_pos.y > GAME_AREA_HEIGHT {
+                        self.on_mouse_down_in_skill_bar(&mouse_pos)
+                    } else {
+                        self.on_mouse_down_in_game_area(&mouse_pos)
+                    }
+                }
+                self.mouse_was_down = state.is_down();
+            },
+            _ => {}
+        };
         Ok(actions)
     }
 
@@ -186,14 +220,40 @@ impl Scene for LevelScene {
             let skill_top: f32 = SCREEN_HEIGHT - bar_height;
             if mouse_pos.y >= skill_top && mouse_pos.x <= SKILL_WIDTH * SKILL_PANEL_SCALE as f32 * SKILL_BUTTONS as f32 {
                 let index = mouse_pos.x as isize / (SKILL_WIDTH as isize * SKILL_PANEL_SCALE as isize);
-                let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.2 } else { 0.1 };
-                let x: f32 = index as f32 * SKILL_WIDTH * SKILL_PANEL_SCALE as f32;
+                let alpha: f32 = if mouse[MouseButton::Left].is_down() { 0.4 } else { 0.2 };
+                let x: f32 = ((index as f32 * SKILL_WIDTH) + 1.) * SKILL_PANEL_SCALE as f32;
                 window.draw_ex(
-                    &Rectangle::new((x, skill_top), (SKILL_WIDTH * SKILL_PANEL_SCALE as f32, SKILL_HEIGHT * SKILL_PANEL_SCALE as f32)),
+                    &Rectangle::new((x, skill_top), ((SKILL_WIDTH - 1.) * SKILL_PANEL_SCALE as f32, (SKILL_HEIGHT - 1.) * SKILL_PANEL_SCALE as f32)),
                     Col(Color { r: 1., g: 1., b: 1., a: alpha }),
                     Transform::IDENTITY,
                     3);
             }
+
+            // Skill selection box.
+            window.draw_ex( // Left side of box.
+                &Rectangle::new(((self.selected_skill_index + 2) as f32 * SKILL_WIDTH * SKILL_PANEL_SCALE as f32, GAME_AREA_HEIGHT),
+                    (SKILL_PANEL_SCALE as f32, SKILL_HEIGHT * SKILL_PANEL_SCALE as f32)),
+                Col(Color { r: 1., g: 1., b: 1., a: 1. }),
+                Transform::IDENTITY,
+                4);
+            window.draw_ex( // Right side.
+                &Rectangle::new(((self.selected_skill_index + 3) as f32 * SKILL_WIDTH * SKILL_PANEL_SCALE as f32, GAME_AREA_HEIGHT),
+                    (SKILL_PANEL_SCALE as f32, SKILL_HEIGHT * SKILL_PANEL_SCALE as f32)),
+                Col(Color { r: 1., g: 1., b: 1., a: 1. }),
+                Transform::IDENTITY,
+                4);
+            window.draw_ex( // Top.
+                &Rectangle::new(((self.selected_skill_index + 2) as f32 * SKILL_WIDTH * SKILL_PANEL_SCALE as f32, GAME_AREA_HEIGHT),
+                    (SKILL_WIDTH * SKILL_PANEL_SCALE as f32, SKILL_PANEL_SCALE as f32)),
+                Col(Color { r: 1., g: 1., b: 1., a: 1. }),
+                Transform::IDENTITY,
+                4);
+            window.draw_ex( // Bottom.
+                &Rectangle::new(((self.selected_skill_index + 2) as f32 * SKILL_WIDTH * SKILL_PANEL_SCALE as f32, GAME_AREA_HEIGHT + (SKILL_HEIGHT - 1.) * SKILL_PANEL_SCALE as f32),
+                    (SKILL_WIDTH * SKILL_PANEL_SCALE as f32, SKILL_PANEL_SCALE as f32)),
+                Col(Color { r: 1., g: 1., b: 1., a: 1. }),
+                Transform::IDENTITY,
+                4);
         }
 
         // Level.
