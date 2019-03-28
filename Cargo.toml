@@ -5,3 +5,4 @@ authors = ["Chris Hulbert <chris.hulbert@gmail.com>"]
 
 [dependencies]
 quicksilver = "*"
+image = "*"
