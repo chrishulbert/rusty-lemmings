@@ -16,6 +16,8 @@ use quicksilver::{
 };
 use qs_helpers::*;
 use scenes::{Scene, EventAction, game_selection::GameSelection};
+use lemmings::{loader, levels_per_game_and_skill};
+use scenes::level::LevelScene;
 
 const FADE_FRAMES: isize = 20; // 40 is graceful like the original game.
 
@@ -29,7 +31,15 @@ struct GameController {
 
 impl State for GameController {
     fn new() -> Result<GameController> {
-        let scene = Box::new(GameSelection::new()?);
+
+        // Jump direct to the game.
+        let games = loader::load()?;
+        let index: usize = 3;
+        let game = games.lemmings.unwrap();
+        let levels = levels_per_game_and_skill::levels_per_game_and_skill(&game.id, 0, &game.levels);
+        let scene = Box::new(LevelScene::new(game, index, levels[index].clone())?);
+
+        // let scene = Box::new(GameSelection::new()?);
         Ok(GameController { scene, is_fading_out: false, is_fading_in: false, fade: 0, can_update: true })
     }
 
