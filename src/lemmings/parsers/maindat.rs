@@ -196,8 +196,8 @@ impl LemmingAnimations {
 }
 
 impl Mask {
-    fn parse(data: &[u8], frame_count: usize, width: usize, height: usize) -> Mask {
-        let pixels = width * height;
+    fn parse(data: &[u8], frame_count: usize, width: isize, height: isize) -> Mask {
+        let pixels = (width * height) as usize;
         let mut frames: Vec<Vec<u8>> = Vec::with_capacity(frame_count);
         for frame_index in 0..frame_count {
             let offset_bits = frame_index * pixels;

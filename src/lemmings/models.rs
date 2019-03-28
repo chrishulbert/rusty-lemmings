@@ -232,8 +232,8 @@ pub struct Animation {
 #[derive(Clone)]
 pub struct Mask {
     pub frames: Vec<Vec<u8>>, // 1 means take a pixel out, 0 means leave alone.
-    pub width: usize,
-    pub height: usize,
+    pub width: isize,
+    pub height: isize,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
