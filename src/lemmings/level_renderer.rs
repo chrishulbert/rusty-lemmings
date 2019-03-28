@@ -45,7 +45,7 @@ pub struct RenderedLevel {
     pub size: LevelSize,
 }
 
-const LEVEL_BACKGROUND: u32 = 0xff000000;
+pub const LEVEL_BACKGROUND: u32 = 0xff000000;
 const LEVEL_HEIGHT: isize = 160;
 
 fn draw(sprite: &[u32],
@@ -108,7 +108,7 @@ fn draw(sprite: &[u32],
     }
 }
 
-pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap) -> Result<RenderedLevel> {
+pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap, show_objects: bool) -> Result<RenderedLevel> {
     let size = size_of_level(level, grounds);
     let width = size.width();
     let height = LEVEL_HEIGHT;
@@ -132,17 +132,19 @@ pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap) -> Resu
         let special = &specials[&(level.globals.extended_graphic_set as i32 - 1)];
         bitmap.copy_from_slice(&special.bitmap);
     }
-    for object in level.objects.iter() {
-        let sprite = &ground.object_sprites[&(object.obj_id as i32)];
-        draw(&sprite.frames[0],
-            sprite.width as isize, sprite.height as isize,
-            object.x as isize - size.min_x, object.y as isize,
-            &mut bitmap,
-            width as isize, height as isize,
-            object.modifier.is_do_not_overwrite_existing_terrain(),
-            object.is_upside_down,
-            false,
-            object.modifier.is_must_have_terrain_underneath_to_be_visible());
+    if show_objects {
+        for object in level.objects.iter() {
+            let sprite = &ground.object_sprites[&(object.obj_id as i32)];
+            draw(&sprite.frames[0],
+                sprite.width as isize, sprite.height as isize,
+                object.x as isize - size.min_x, object.y as isize,
+                &mut bitmap,
+                width as isize, height as isize,
+                object.modifier.is_do_not_overwrite_existing_terrain(),
+                object.is_upside_down,
+                false,
+                object.modifier.is_must_have_terrain_underneath_to_be_visible());
+        }
     }
     let image = Image {
         bitmap,

@@ -31,7 +31,7 @@ const ROW_HEIGHT: f32 = 12.;
 impl LevelPreview {
     pub fn new(game: Game, level_index: usize, level: Level, background: QSImage) -> Result<LevelPreview> {
         let font = qs_font_from_lemmings_menu_font(&game.main.main_menu.menu_font)?;
-        let render = level_renderer::render(&level, &game.grounds, &game.specials)?;
+        let render = level_renderer::render(&level, &game.grounds, &game.specials, true)?;
         let preview = qs_image_from_lemmings_image_scale(&render.image, 2)?;
         Ok(LevelPreview {
             game,
