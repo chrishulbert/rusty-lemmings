@@ -28,8 +28,7 @@ fn extract_frame(data: &[u8], width: usize, height: usize, image_loc: usize, mas
             (image_iter_2.next().unwrap() << 2) +
             (image_iter_3.next().unwrap() << 3);
         let colour: u32 = palette[colour_index as usize];
-        let alpha: u32 = if mask_iter.next().unwrap() == 0 { 0 } else { 0xff000000 };
-        let masked_colour = (colour & 0xffffff) + alpha;
+        let masked_colour: u32 = if mask_iter.next().unwrap() == 0 { 0 } else { colour };
         sprite.push(masked_colour);
     }
     sprite

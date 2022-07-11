@@ -23,7 +23,7 @@ fn colour_upgrade(six: u8) -> u8 {
     if six == 0 { 0 } else { (six << 2) + 3 }
 }
 
-// Read 3 RGB bytes, outputting ABGR.
+// Read 3 RGB bytes, outputting RGBA.
 // (0x3F, 0x00, 0x00) gives you the brightest red you can get (camanis.net)
 fn read_rgb(data: &mut Iter<u8>) -> Result<u32> {
     let r6 = read_u8(data)?;
@@ -32,7 +32,7 @@ fn read_rgb(data: &mut Iter<u8>) -> Result<u32> {
     let r8: u8 = colour_upgrade(r6);
     let g8: u8 = colour_upgrade(g6);
     let b8: u8 = colour_upgrade(b6);
-    Ok(0xff000000 + ((b8 as u32) << 16) + ((g8 as u32) << 8) + (r8 as u32))
+    Ok(((r8 as u32) << 24) + ((g8 as u32) << 16) + ((b8 as u32) << 8) + 0xff)
 }
 
 pub const WIDTH: usize = 960;

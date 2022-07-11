@@ -15,7 +15,7 @@ fn load_ground_and_sprites(dir: &str, index: i32) -> Result<GroundCombined> {
 
     let ground_file: Vec<u8> = fs::read(format!("{}/ground{}o.dat", dir, index))?;
     let ground = ground::parse(&ground_file)?;
-    let palette = ground.palettes.as_abgr();
+    let palette = ground.palettes.as_rgba();
 
     let mut terrain_sprites: ImageMap = ImageMap::new();
     for (i, terrain) in ground.terrain_info.iter().enumerate() {
@@ -114,6 +114,7 @@ fn load_game(dir: &str, sub_dir: &str, name: &str) -> Result<Option<Game>> {
     Ok(Some(Game {
         name: name.to_string(),
         id: sub_dir.to_string(),
+        path: sub_path.to_string(),
         levels: load_all_levels(&sub_path)?,
         specials: load_all_specials(&sub_path)?,
         grounds: load_all_grounds(&sub_path)?,

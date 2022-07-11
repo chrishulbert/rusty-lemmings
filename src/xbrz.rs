@@ -74,25 +74,25 @@ trait ColoursExt {
 impl ColoursExt for u32 {
     #[inline]
     fn r(&self) -> u8 {
-        *self as u8 // 'as' truncates/ignores larger numbers so no '& 0xff' required.
+        (self>>24) as u8 // 'as' truncates/ignores larger numbers so no '& 0xff' required.
     }
     #[inline]
     fn g(&self) -> u8 {
-        (self>>8) as u8
-    }
-    #[inline]
-    fn b(&self) -> u8 {
         (self>>16) as u8
     }
     #[inline]
+    fn b(&self) -> u8 {
+        (self>>8) as u8
+    }
+    #[inline]
     fn a(&self) -> u8 {
-        (self>>24) as u8
+        *self as u8
     }
 }
 
 #[inline]
-fn make_pixel(a: u8, r: u8, g: u8, b: u8) -> u32 {
-    return ((a as u32) << 24) | ((b as u32) << 16) | ((g as u32) << 8) | (r as u32)
+fn make_pixel(r: u8, g: u8, b: u8, a: u8) -> u32 {
+    return ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32)
 }
 
 #[inline]
@@ -222,10 +222,10 @@ fn gradient_argb(m: i32, n: i32, pix_front: u32, pix_back: u32) -> u32 {
     };
 
     return make_pixel(
-        (weight_sum / n) as u8,
         calc_color(pix_front.r(), pix_back.r()),
         calc_color(pix_front.g(), pix_back.g()),
-        calc_color(pix_front.b(), pix_back.b()));
+        calc_color(pix_front.b(), pix_back.b()),
+        (weight_sum / n) as u8);
 }
 
 fn alpha_grad(m: i32, n: i32, pix_back: &mut u32, pix_front: u32) {

@@ -340,8 +340,8 @@ impl MainMenu {
     }
 }
 
-macro_rules! abgr_from_rgb { ($r:expr, $g:expr, $b:expr) => {
-    0xff000000 + (($b as u32) << 16) + (($g as u32) << 8) + ($r as u32)
+macro_rules! rgba_from_rgb { ($r:expr, $g:expr, $b:expr) => {
+    (($r as u32) << 24) + (($g as u32) << 16) + (($b as u32) << 8) + 0xff
 }}
 
 pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
@@ -351,29 +351,29 @@ pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
 
     let menu_palette: [u32; 16] = [
         0, // Transparent black.
-        abgr_from_rgb!(128, 64, 32), // Browns 
-        abgr_from_rgb!( 96, 48, 32), // 
-        abgr_from_rgb!( 48,  0, 16), //
-        abgr_from_rgb!( 32,  8,124), // Purples 
-        abgr_from_rgb!( 64, 44,144), //
-        abgr_from_rgb!(104, 88,164), // 
-        abgr_from_rgb!(152,140,188), // 
-        abgr_from_rgb!(  0, 80,  0), // Greens
-        abgr_from_rgb!(  0, 96, 16), //
-        abgr_from_rgb!(  0,112, 32), //
-        abgr_from_rgb!(  0,128, 64), //
-        abgr_from_rgb!(208,208,208), // White 
-        abgr_from_rgb!(176,176,  0), // Yellow 
-        abgr_from_rgb!( 64, 80,176), // Blue 
-        abgr_from_rgb!(224,128,144), // Pink  
+        rgba_from_rgb!(128, 64, 32), // Browns 
+        rgba_from_rgb!( 96, 48, 32), // 
+        rgba_from_rgb!( 48,  0, 16), //
+        rgba_from_rgb!( 32,  8,124), // Purples 
+        rgba_from_rgb!( 64, 44,144), //
+        rgba_from_rgb!(104, 88,164), // 
+        rgba_from_rgb!(152,140,188), // 
+        rgba_from_rgb!(  0, 80,  0), // Greens
+        rgba_from_rgb!(  0, 96, 16), //
+        rgba_from_rgb!(  0,112, 32), //
+        rgba_from_rgb!(  0,128, 64), //
+        rgba_from_rgb!(208,208,208), // White 
+        rgba_from_rgb!(176,176,  0), // Yellow 
+        rgba_from_rgb!( 64, 80,176), // Blue 
+        rgba_from_rgb!(224,128,144), // Pink  
     ];
     let mut game_palette = menu_palette;
-    game_palette[1] = abgr_from_rgb!( 64, 64,224); // Blue
-    game_palette[2] = abgr_from_rgb!(  0,176,  0); // Green
-    game_palette[3] = abgr_from_rgb!(240,208,208); // White
-    game_palette[4] = abgr_from_rgb!(176,176,  0); // Yellow
-    game_palette[5] = abgr_from_rgb!(240, 32, 32); // Red
-    game_palette[6] = abgr_from_rgb!(128,128,128); // Grey
+    game_palette[1] = rgba_from_rgb!( 64, 64,224); // Blue
+    game_palette[2] = rgba_from_rgb!(  0,176,  0); // Green
+    game_palette[3] = rgba_from_rgb!(240,208,208); // White
+    game_palette[4] = rgba_from_rgb!(176,176,  0); // Yellow
+    game_palette[5] = rgba_from_rgb!(240, 32, 32); // Red
+    game_palette[6] = rgba_from_rgb!(128,128,128); // Grey
 
     Ok(MainDat {
         lemming_animations: LemmingAnimations::parse(&sections[0], game_palette)?,

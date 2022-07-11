@@ -164,43 +164,43 @@ fn colour_upgrade(six: u8) -> u8 {
 }
 
 // Converts 6-bit rgb to rgba.
-fn abgr_from_lemmings_rgb(rgb: u32) -> u32 {
+fn rgba_from_lemmings_rgb(rgb: u32) -> u32 {
     let r6: u8 = (rgb >> 16) as u8;
     let g6: u8 = (rgb >> 8) as u8; // 'as u8' simply truncates the red bits.
     let b6: u8 = rgb as u8;
     let r8: u8 = colour_upgrade(r6);
     let g8: u8 = colour_upgrade(g6);
     let b8: u8 = colour_upgrade(b6);
-    return (0xff << 24) + ((b8 as u32) << 16) + ((g8 as u32) << 8) + (r8 as u32);
+    return ((r8 as u32) << 24) + ((g8 as u32) << 16) + ((b8 as u32) << 8) + 0xff;
 }
 
-fn abgr_from_rgb(rgb: u32) -> u32 {
+fn rgba_from_rgb(rgb: u32) -> u32 {
     let r: u8 = (rgb >> 16) as u8;
     let g: u8 = (rgb >> 8) as u8; // 'as u8' simply truncates the red bits.
     let b: u8 = rgb as u8;
-    return (0xff << 24) + ((b as u32) << 16) + ((g as u32) << 8) + (r as u32);
+    return ((r as u32) << 24) + ((g as u32) << 16) + ((b as u32) << 8) + 0xff;
 }
 
 impl Palettes {
     // Converts the palette to 0xaabbggrr format to suit the 'image' crate.
-    pub fn as_abgr(&self) -> [u32; 16] {
+    pub fn as_rgba(&self) -> [u32; 16] {
         return [
-            abgr_from_lemmings_rgb(0x000000), // black.
-            abgr_from_lemmings_rgb(0x101038), // blue, used for the lemmings' bodies.
-            abgr_from_lemmings_rgb(0x002C00), // green, used for hair.
-            abgr_from_lemmings_rgb(0x3C3434), // white, used for skin.
-            abgr_from_lemmings_rgb(0x2C2C00), // dirty yellow, used in the skill panel.
-            abgr_from_lemmings_rgb(0x3C0808), // red, used in the nuke icon.
-            abgr_from_lemmings_rgb(0x202020), // gray, used in the skill panel.
-            abgr_from_rgb(self.vga_custom[0]), // Game duplicates custom[0] twice, oddly.
-            abgr_from_rgb(self.vga_custom[0]),
-            abgr_from_rgb(self.vga_custom[1]),
-            abgr_from_rgb(self.vga_custom[2]),
-            abgr_from_rgb(self.vga_custom[3]),
-            abgr_from_rgb(self.vga_custom[4]),
-            abgr_from_rgb(self.vga_custom[5]),
-            abgr_from_rgb(self.vga_custom[6]),
-            abgr_from_rgb(self.vga_custom[7]),
+            rgba_from_lemmings_rgb(0x000000), // black.
+            rgba_from_lemmings_rgb(0x101038), // blue, used for the lemmings' bodies.
+            rgba_from_lemmings_rgb(0x002C00), // green, used for hair.
+            rgba_from_lemmings_rgb(0x3C3434), // white, used for skin.
+            rgba_from_lemmings_rgb(0x2C2C00), // dirty yellow, used in the skill panel.
+            rgba_from_lemmings_rgb(0x3C0808), // red, used in the nuke icon.
+            rgba_from_lemmings_rgb(0x202020), // gray, used in the skill panel.
+            rgba_from_rgb(self.vga_custom[0]), // Game duplicates custom[0] twice, oddly.
+            rgba_from_rgb(self.vga_custom[0]),
+            rgba_from_rgb(self.vga_custom[1]),
+            rgba_from_rgb(self.vga_custom[2]),
+            rgba_from_rgb(self.vga_custom[3]),
+            rgba_from_rgb(self.vga_custom[4]),
+            rgba_from_rgb(self.vga_custom[5]),
+            rgba_from_rgb(self.vga_custom[6]),
+            rgba_from_rgb(self.vga_custom[7]),
         ];
     }
 }
@@ -367,6 +367,7 @@ pub type SpecialMap = HashMap<i32, Image>;
 pub struct Game {
     pub name: String, // Eg 'Oh No More Lemmings'
     pub id: String, // Eg 'ohnomore'
+    pub path: String, // Eg '/Users/foo/Lemmings/ohnomore'
     pub levels: LevelMap,
     pub specials: SpecialMap,
     pub grounds: GroundMap,
