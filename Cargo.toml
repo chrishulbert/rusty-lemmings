@@ -5,5 +5,8 @@ authors = ["Chris Hulbert <chris.hulbert@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-quicksilver = "*"
-image = "*"
+bevy = "0.7" # For release.
+# bevy = { version = "0.7.0", features = ["dynamic"] } # For development, see: https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
+
+[workspace]
+resolver = "2" # Important! wgpu/Bevy needs this!

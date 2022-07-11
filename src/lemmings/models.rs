@@ -410,3 +410,93 @@ impl Games {
         return v;
     }
 }
+
+/////////////////////////////////////////////////////////
+/// For iterating through all the assets for pre-scaling. 
+impl Game {
+    pub fn all_assets(&self) -> Vec<AssetToPreProcess> {
+        let mut all = Vec::<AssetToPreProcess>::new();        
+
+        all.push(AssetToPreProcess{name: "lemming.walking_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.walking_right),});
+        all.push(AssetToPreProcess{name: "lemming.jumping_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.jumping_right),});
+        all.push(AssetToPreProcess{name: "lemming.walking_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.walking_left),});
+        all.push(AssetToPreProcess{name: "lemming.jumping_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.jumping_left),});
+        all.push(AssetToPreProcess{name: "lemming.digging".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.digging),});
+        all.push(AssetToPreProcess{name: "lemming.climbing_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.climbing_right),});
+        all.push(AssetToPreProcess{name: "lemming.climbing_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.climbing_left),});
+        all.push(AssetToPreProcess{name: "lemming.drowning".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.drowning),});
+        all.push(AssetToPreProcess{name: "lemming.post_climb_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.post_climb_right),});
+        all.push(AssetToPreProcess{name: "lemming.post_climb_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.post_climb_left),});
+        all.push(AssetToPreProcess{name: "lemming.brick_laying_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.brick_laying_right),});
+        all.push(AssetToPreProcess{name: "lemming.brick_laying_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.brick_laying_left),});
+        all.push(AssetToPreProcess{name: "lemming.bashing_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.bashing_right),});
+        all.push(AssetToPreProcess{name: "lemming.bashing_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.bashing_left),});
+        all.push(AssetToPreProcess{name: "lemming.mining_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.mining_right),});
+        all.push(AssetToPreProcess{name: "lemming.mining_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.mining_left),});
+        all.push(AssetToPreProcess{name: "lemming.falling_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.falling_right),});
+        all.push(AssetToPreProcess{name: "lemming.falling_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.falling_left),});
+        all.push(AssetToPreProcess{name: "lemming.pre_umbrella_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.pre_umbrella_right),});
+        all.push(AssetToPreProcess{name: "lemming.umbrella_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.umbrella_right),});
+        all.push(AssetToPreProcess{name: "lemming.pre_umbrella_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.pre_umbrella_left),});
+        all.push(AssetToPreProcess{name: "lemming.umbrella_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.umbrella_left),});
+        all.push(AssetToPreProcess{name: "lemming.splatting".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.splatting),});
+        all.push(AssetToPreProcess{name: "lemming.exiting".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.exiting),});
+        all.push(AssetToPreProcess{name: "lemming.fried".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.fried),});
+        all.push(AssetToPreProcess{name: "lemming.blocking".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.blocking),});
+        all.push(AssetToPreProcess{name: "lemming.shrugging_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.shrugging_right),});
+        all.push(AssetToPreProcess{name: "lemming.shrugging_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.shrugging_left),});
+        all.push(AssetToPreProcess{name: "lemming.oh_no_ing".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.oh_no_ing),});
+        all.push(AssetToPreProcess{name: "lemming.explosion".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.explosion),});
+
+        all.push(AssetToPreProcess{name: "font.percent".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.percent),});
+        all.push(AssetToPreProcess{name: "font.dash".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.dash),});
+        all.push(AssetToPreProcess{name: "font.0".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[0]),});
+        all.push(AssetToPreProcess{name: "font.1".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[1]),});
+        all.push(AssetToPreProcess{name: "font.2".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[2]),});
+        all.push(AssetToPreProcess{name: "font.3".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[3]),});
+        all.push(AssetToPreProcess{name: "font.4".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[4]),});
+        all.push(AssetToPreProcess{name: "font.5".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[5]),});
+        all.push(AssetToPreProcess{name: "font.6".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[6]),});
+        all.push(AssetToPreProcess{name: "font.7".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[7]),});
+        all.push(AssetToPreProcess{name: "font.8".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[8]),});
+        all.push(AssetToPreProcess{name: "font.9".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.digits[9]),});
+        all.push(AssetToPreProcess{name: "font.a".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[0]),});
+        all.push(AssetToPreProcess{name: "font.b".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[1]),});
+        all.push(AssetToPreProcess{name: "font.c".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[2]),});
+        all.push(AssetToPreProcess{name: "font.d".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[3]),});
+        all.push(AssetToPreProcess{name: "font.e".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[4]),});
+        all.push(AssetToPreProcess{name: "font.f".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[5]),});
+        all.push(AssetToPreProcess{name: "font.g".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[6]),});
+        all.push(AssetToPreProcess{name: "font.h".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[7]),});
+        all.push(AssetToPreProcess{name: "font.i".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[8]),});
+        all.push(AssetToPreProcess{name: "font.j".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[9]),});
+        all.push(AssetToPreProcess{name: "font.k".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[10]),});
+        all.push(AssetToPreProcess{name: "font.l".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[11]),});
+        all.push(AssetToPreProcess{name: "font.m".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[12]),});
+        all.push(AssetToPreProcess{name: "font.n".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[13]),});
+        all.push(AssetToPreProcess{name: "font.o".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[14]),});
+        all.push(AssetToPreProcess{name: "font.p".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[15]),});
+        all.push(AssetToPreProcess{name: "font.q".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[16]),});
+        all.push(AssetToPreProcess{name: "font.r".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[17]),});
+        all.push(AssetToPreProcess{name: "font.s".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[18]),});
+        all.push(AssetToPreProcess{name: "font.t".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[19]),});
+        all.push(AssetToPreProcess{name: "font.u".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[20]),});
+        all.push(AssetToPreProcess{name: "font.v".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[21]),});
+        all.push(AssetToPreProcess{name: "font.w".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[22]),});
+        all.push(AssetToPreProcess{name: "font.x".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[23]),});
+        all.push(AssetToPreProcess{name: "font.y".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[24]),});
+        all.push(AssetToPreProcess{name: "font.z".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.letters[25]),});
+
+        all
+    }
+}
+
+pub struct AssetToPreProcess<'a> {
+    pub name: String,
+    pub content: AnimationOrImage<'a>,
+}
+
+pub enum AnimationOrImage<'a> {
+    Animation(&'a Animation),
+    Image(&'a Image),
+}
