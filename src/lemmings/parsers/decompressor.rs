@@ -50,7 +50,7 @@ fn from_end(vec: &Vec<u8>, offset: isize) -> io::Result<u8> {
 }
 
 // Exposes the 'next' as a result so you can use '?'.
-fn read_bit(bits: &mut Iterator<Item = u8>) -> io::Result<u8> {
+fn read_bit(bits: &mut dyn Iterator<Item = u8>) -> io::Result<u8> {
     match bits.next() {
         Some(t) => Ok(t),
         None => Err(Error::new(ErrorKind::UnexpectedEof, "No bits remaining")),
@@ -58,11 +58,11 @@ fn read_bit(bits: &mut Iterator<Item = u8>) -> io::Result<u8> {
 }
 
 // Converts the bit to a bool for typesafe matching without default clauses.
-fn read_bool(bits: &mut Iterator<Item = u8>) -> io::Result<bool> {
+fn read_bool(bits: &mut dyn Iterator<Item = u8>) -> io::Result<bool> {
     Ok(read_bit(bits)? == 1)
 }
 
-fn read_byte(bits: &mut Iterator<Item = u8>) -> io::Result<u8> {
+fn read_byte(bits: &mut dyn Iterator<Item = u8>) -> io::Result<u8> {
     let b1 = read_bit(bits)?;
     let b2 = read_bit(bits)?;
     let b3 = read_bit(bits)?;

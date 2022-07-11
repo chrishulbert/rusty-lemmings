@@ -9,11 +9,11 @@ use quicksilver::{
     input::MouseButton,
 };
 
-use lemmings::models::*;
+use crate::lemmings::models::*;
 use Scene;
 use super::EventAction;
 use qs_helpers::*;
-use lemmings::level_renderer;
+use crate::lemmings::level_renderer;
 use scenes::level::LevelScene;
 
 // This previews a level before you play it.

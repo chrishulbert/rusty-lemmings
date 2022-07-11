@@ -3,11 +3,11 @@
 
 use std::io::{Error, ErrorKind, Result};
 use std::slice::Iter;
-use lemmings::models::*;
+use crate::lemmings::models::*;
 use super::helpers::BitsIterMS;
 
 // Creates a bit iterator from [u8].
-macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new); } }
+macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new) } }
 
 // Reads a byte, failing gracefully if none are left.
 fn read_u8(data: &mut Iter<u8>) -> Result<u8> {

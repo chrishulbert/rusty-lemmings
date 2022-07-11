@@ -17,11 +17,11 @@ use quicksilver::{
 };
 
 use std::collections::HashMap;
-use lemmings::models::*;
+use crate::lemmings::models::*;
 use Scene;
 use EventAction;
 use qs_helpers::*;
-use lemmings::level_renderer::{self, RenderedLevel};
+use crate::lemmings::level_renderer::{self, RenderedLevel};
 use xbrz;
 
 const SKILL_PANEL_SCALE: u8 = 5;

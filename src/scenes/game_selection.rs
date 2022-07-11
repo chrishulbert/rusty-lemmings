@@ -7,7 +7,7 @@ use quicksilver::{
     input::MouseButton,
 };
 
-use lemmings::{loader, models::*};
+use crate::lemmings::{loader, models::*};
 use Scene;
 use super::EventAction;
 use super::skill_selection::SkillSelection;

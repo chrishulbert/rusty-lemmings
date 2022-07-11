@@ -594,7 +594,7 @@ fn pre_process_corners(ker: &Kernel4x4) -> BlendResult {
 }
 
 /// TODO use some kind of compile-time generics/templates instead.
-fn select_scaler(scale: u8) -> Box<Scaler> {
+fn select_scaler(scale: u8) -> Box<dyn Scaler> {
     if scale == 2 {
         return Box::new(Scaler2x {});
     } else if scale == 3 {
@@ -611,7 +611,7 @@ fn select_scaler(scale: u8) -> Box<Scaler> {
 }
 
 fn blend_pixel(scale: u8,
-                scaler: &Box<Scaler>,
+                scaler: &Box<dyn Scaler>,
                 rot_deg: RotationDegree,
                 ker: &Kernel3x3,
                 target: *mut u32,

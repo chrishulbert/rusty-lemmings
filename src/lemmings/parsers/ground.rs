@@ -5,7 +5,7 @@ use std::io;
 use std::io::Error;
 use std::io::ErrorKind;
 use std::slice;
-use lemmings::models::*;
+use crate::lemmings::models::*;
 
 impl Default for Ground {
     fn default() -> Ground {

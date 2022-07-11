@@ -5,8 +5,8 @@ use std::fs;
 use std::io::Result;
 use std::path::Path;
 
-use lemmings::models::*;
-use lemmings::parsers::*;
+use crate::lemmings::models::*;
+use crate::lemmings::parsers::*;
 
 // Load a ground file and its associated vga graphics.
 fn load_ground_and_sprites(dir: &str, index: i32) -> Result<GroundCombined> {
@@ -122,7 +122,8 @@ fn load_game(dir: &str, sub_dir: &str, name: &str) -> Result<Option<Game>> {
 }
 
 pub fn load() -> Result<Games> {
-    let data_root = format!("{}/Lemmings", env::home_dir().unwrap().to_str().unwrap());
+    let home = env::var("HOME").unwrap_or("~".to_string());
+    let data_root = format!("{}/Lemmings", home);
     return Ok(Games {
         lemmings: load_game(&data_root, "lemmings", "Lemmings")?,
         oh_no_more: load_game(&data_root, "ohnomore", "Oh no! More Lemmings")?,

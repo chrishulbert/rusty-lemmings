@@ -2,6 +2,7 @@
 name = "rusty-lemmings"
 version = "0.1.0"
 authors = ["Chris Hulbert <chris.hulbert@gmail.com>"]
+edition = "2021"
 
 [dependencies]
 quicksilver = "*"

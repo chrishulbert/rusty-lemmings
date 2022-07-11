@@ -4,7 +4,7 @@
 use std::io::{Error, ErrorKind, Result};
 use std::slice::Iter;
 
-use lemmings::models::*;
+use crate::lemmings::models::*;
 
 impl ObjectModifier {
     fn from_lvl(lvl: u8) -> ObjectModifier {

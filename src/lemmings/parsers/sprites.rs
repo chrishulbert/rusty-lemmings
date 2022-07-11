@@ -2,10 +2,10 @@
 
 use super::helpers::BitsIterMS;
 
-use lemmings::models::*;
+use crate::lemmings::models::*;
 
 // Creates a bit iterator from [u8].
-macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new); } }
+macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new) } }
 
 // Extract a single sprite.
 // Sprites are stored as 4 planes, eg all the 1 bits, then all the 2 bits, then so on. It seems they did this so

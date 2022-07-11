@@ -7,7 +7,7 @@ use quicksilver::{
     input::MouseButton,
 };
 
-use lemmings::models::*;
+use crate::lemmings::models::*;
 use Scene;
 use super::EventAction;
 use qs_helpers::*;

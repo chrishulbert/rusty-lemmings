@@ -10,8 +10,8 @@ use quicksilver::{
     input::MouseButton,
 };
 
-use lemmings::models::*;
-use lemmings::levels_per_game_and_skill;
+use crate::lemmings::models::*;
+use crate::lemmings::levels_per_game_and_skill;
 use Scene;
 use super::EventAction;
 use qs_helpers::*;

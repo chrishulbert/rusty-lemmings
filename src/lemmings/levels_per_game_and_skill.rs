@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use lemmings::models::*;
+use crate::lemmings::models::*;
 
 // Lemmings 1 is a bit lousy: there are 30 levels per each of 4 difficulties (120) but only 80 level files - many are re-used with different skill numbers and names.
 // Here i'm just matching them by the names in the level files, so it'll skip some, but it's only skipping the renamed duplicate ones so no big loss.
