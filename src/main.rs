@@ -50,6 +50,55 @@ impl Plugin for HelloPlugin {
     }
 }
 
+struct MyAtlas {
+    data: Vec<u32>,
+    cols: usize,
+    rows: usize,
+    width: usize,
+    height: usize,
+}
+fn make_atlas_from_frames(frames: &Vec<Vec<u32>>, width: usize, height: usize) -> MyAtlas {
+    // Figure out the size to go for for the atlas.
+    // TODO special case if only one treat as not an anim? Handle that in the parser?
+    let len = frames.len();
+    let lenf = len as f32;
+    let cols = lenf.sqrt().round() as usize;
+    let divides_perfectly = len % cols == 0;
+    let rows = if divides_perfectly { len / cols } else { len / cols + 1};
+    let atlas_width = width * cols + (cols - 1); // 1px gap between each.
+    let atlas_height = height * rows + (rows - 1);
+    let mut atlas = Vec::<u32>::new();
+    atlas.resize(atlas_width * atlas_height, 0);
+    let mut col: usize = 0;
+    let mut row: usize = 0;
+    for frame in frames {
+        let start_atlas_x = col * (width + 1);
+        let mut atlas_y = row * (height + 1);
+        for frame_y in 0..height {
+            let mut atlas_x = start_atlas_x;
+            for frame_x in 0..width {
+                atlas[atlas_y * atlas_width + atlas_x] = frame[frame_y * width + frame_x];
+                atlas_x += 1;
+            }
+            atlas_y += 1;
+        }
+
+        // Move to the next slot.
+        col += 1;
+        if col >= cols {
+            col = 0;
+            row += 1;
+        }
+    }
+    MyAtlas{
+        data: atlas,
+        cols,
+        rows,
+        width: atlas_width,
+        height: atlas_height,
+    }
+}
+
 fn main() {
     // 4k is 3840x2160
     // 5K is 5120x2880
@@ -57,6 +106,7 @@ fn main() {
     // 5k ratio is 14.4x high
     // 4k is 10.8x high
     // Do 6x then 3x to get 18.
+    // Realistically: 6x then 2x to get 12: good enough for 4k.
     let games = loader::load().unwrap();
     let game = games.lemmings.unwrap();
     let rusty_path = format!("{}/rusty", game.path);
@@ -65,41 +115,10 @@ fn main() {
         let filename_base = format!("{}/{}", rusty_path, asset.name);
         match asset.content {
             lemmings::models::AnimationOrImage::Animation(a) => {
-                // Figure out the size to go for for the atlas.
-                // TODO special case if only one treat as not an anim? Handle that in the parser?
-                let len = a.frames.len();
-                let lenf = len as f32;
-                let cols = lenf.sqrt().round() as usize;
-                let divides_perfectly = len % cols == 0;
-                let rows = if divides_perfectly { len / cols } else { len / cols + 1};
-                let atlas_width = a.width * cols + (cols - 1); // 1px gap between each.
-                let atlas_height = a.height * rows + (rows - 1);
-                let mut atlas = Vec::<u32>::new();
-                atlas.resize(atlas_width * atlas_height, 0);
-                let mut col: usize = 0;
-                let mut row: usize = 0;
-                for frame in &a.frames {
-                    let start_atlas_x = col * (a.width + 1);
-                    let mut atlas_y = row * (a.height + 1);
-                    for frame_y in 0..a.height {
-                        let mut atlas_x = start_atlas_x;
-                        for frame_x in 0..a.width {
-                            atlas[atlas_y * atlas_width + atlas_x] = frame[frame_y * a.width + frame_x];
-                            atlas_x += 1;
-                        }
-                        atlas_y += 1;
-                    }
-
-                    // Move to the next slot.
-                    col += 1;
-                    if col >= cols {
-                        col = 0;
-                        row += 1;
-                    }
-                }
-                let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, cols, rows, a.width, a.height);
+                let atlas = make_atlas_from_frames(&a.frames, a.width, a.height);
+                let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, a.width, a.height);
                 if !path::Path::new(&filename).exists() {
-                    let png = png::png_data(atlas_width as u32, atlas_height as u32, &atlas);
+                    let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
                     fs::write(filename, png).unwrap();
                 }
 
