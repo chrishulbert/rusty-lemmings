@@ -133,11 +133,22 @@ fn main() {
         let filename_base = format!("{}/{}", rusty_path, asset.name);
         match asset.content {
             lemmings::models::AnimationOrImage::Animation(a) => {
-                let atlas = make_atlas_from_frames(&a.frames, a.width, a.height);
-                let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, a.width, a.height);
-                if !path::Path::new(&filename).exists() {
-                    let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
-                    fs::write(filename, png).unwrap();
+                {
+                    let atlas = make_atlas_from_frames(&a.frames, a.width, a.height);
+                    let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, a.width, a.height);
+                    if !path::Path::new(&filename).exists() {
+                        let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
+                        fs::write(filename, png).unwrap();
+                    }
+                }
+                {
+                    let scaled = scale_animation(&a);
+                    let atlas = make_atlas_from_frames(&scaled.frames, scaled.width, scaled.height);
+                    let filename = format!("{}.scaled.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, scaled.width, scaled.height);
+                    if !path::Path::new(&filename).exists() {
+                        let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
+                        fs::write(filename, png).unwrap();
+                    }
                 }
 
                 // for (index, frame) in a.frames.iter().enumerate() {
