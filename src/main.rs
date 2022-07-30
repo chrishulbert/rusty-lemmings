@@ -65,24 +65,62 @@ fn main() {
         let filename_base = format!("{}/{}", rusty_path, asset.name);
         match asset.content {
             lemmings::models::AnimationOrImage::Animation(a) => {
-                for (index, frame) in a.frames.iter().enumerate() {
-                    {
-                        let filename = format!("{}.original.{}.png", filename_base, index);
-                        if !path::Path::new(&filename).exists() {
-                            let png = png::png_data(a.width as u32, a.height as u32, &frame);
-                            fs::write(filename, png).unwrap();
+                // Figure out the size to go for for the atlas.
+                // TODO special case if only one treat as not an anim? Handle that in the parser?
+                let len = a.frames.len();
+                let lenf = len as f32;
+                let cols = lenf.sqrt().round() as usize;
+                let divides_perfectly = len % cols == 0;
+                let rows = if divides_perfectly { len / cols } else { len / cols + 1};
+                let atlas_width = a.width * cols + (cols - 1); // 1px gap between each.
+                let atlas_height = a.height * rows + (rows - 1);
+                let mut atlas = Vec::<u32>::new();
+                atlas.resize(atlas_width * atlas_height, 0);
+                let mut col: usize = 0;
+                let mut row: usize = 0;
+                for frame in &a.frames {
+                    let start_atlas_x = col * (a.width + 1);
+                    let mut atlas_y = row * (a.height + 1);
+                    for frame_y in 0..a.height {
+                        let mut atlas_x = start_atlas_x;
+                        for frame_x in 0..a.width {
+                            atlas[atlas_y * atlas_width + atlas_x] = frame[frame_y * a.width + frame_x];
+                            atlas_x += 1;
                         }
+                        atlas_y += 1;
                     }
-                    {
-                        let filename = format!("{}.scaled.{}.png", filename_base, index);
-                        if !path::Path::new(&filename).exists() {
-                            let bigger = xbrz::scale(6, &frame, a.width as u32, a.height as u32);
-                            let biggest = xbrz::scale(3, &bigger, (a.width * 6) as u32, (a.height * 6) as u32);
-                            let png = png::png_data((a.width * 6 * 3) as u32, (a.height * 6 * 3) as u32, &biggest);
-                            fs::write(filename, png).unwrap();
-                        }
+
+                    // Move to the next slot.
+                    col += 1;
+                    if col >= cols {
+                        col = 0;
+                        row += 1;
                     }
                 }
+                let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, cols, rows, a.width, a.height);
+                if !path::Path::new(&filename).exists() {
+                    let png = png::png_data(atlas_width as u32, atlas_height as u32, &atlas);
+                    fs::write(filename, png).unwrap();
+                }
+
+                // for (index, frame) in a.frames.iter().enumerate() {
+                //     {
+                //         let filename = format!("{}.original.{}.png", filename_base, index);
+                //         if !path::Path::new(&filename).exists() {
+                //             let png = png::png_data(a.width as u32, a.height as u32, &frame);
+                //             fs::write(filename, png).unwrap();
+                //         }
+                //     }
+                //     {
+                //         let filename = format!("{}.scaled.{}.png", filename_base, index);
+                //         if !path::Path::new(&filename).exists() {
+                //             let bigger = xbrz::scale(6, &frame, a.width as u32, a.height as u32);
+                //             let biggest = xbrz::scale(3, &bigger, (a.width * 6) as u32, (a.height * 6) as u32);
+                //             let png = png::png_data((a.width * 6 * 3) as u32, (a.height * 6 * 3) as u32, &biggest);
+                //             fs::write(filename, png).unwrap();
+                //         }
+                //     }
+                // }
             },
             lemmings::models::AnimationOrImage::Image(i) => {
                 {
