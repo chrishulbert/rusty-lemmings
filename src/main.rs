@@ -8,6 +8,7 @@ use bevy::{
     prelude::*,
     window::PresentMode,
 };
+use lemmings::models::Animation;
 
 use crate::lemmings::{loader, png};
 
@@ -99,14 +100,31 @@ fn make_atlas_from_frames(frames: &Vec<Vec<u32>>, width: usize, height: usize) -
     }
 }
 
+// 4k is 3840x2160
+// 5K is 5120x2880
+// Original game is 320x200
+// Since it scrolls horizontally, i only care about height for scaling.
+// 5k ratio is 14.4x high: could do 6x then 3x to get 18.
+// 4k is 10.8x high
+// Realistically: 6x then 2x to get 12: good enough for 4k.
+// Or should we do 5x then 2x to get 10 and have a little margin for 4k?
+fn scale_animation(a: &Animation) -> Animation {
+    let scale_a: usize = 6;
+    let scale_b: usize = 2;
+    let mut big_frames = Vec::<Vec<u32>>::new();
+    for frame in &a.frames {
+        let bigger = xbrz::scale(scale_a as u8, frame, a.width as u32, a.height as u32);
+        let biggest = xbrz::scale(scale_b as u8, &bigger, (a.width * scale_a) as u32, (a.height * scale_a) as u32);
+        big_frames.push(biggest);
+    }
+    Animation{
+        frames: big_frames,
+        width: a.width * scale_a * scale_b,
+        height: a.height * scale_a * scale_b,
+    }
+}
+
 fn main() {
-    // 4k is 3840x2160
-    // 5K is 5120x2880
-    // Original game is 320x200
-    // 5k ratio is 14.4x high
-    // 4k is 10.8x high
-    // Do 6x then 3x to get 18.
-    // Realistically: 6x then 2x to get 12: good enough for 4k.
     let games = loader::load().unwrap();
     let game = games.lemmings.unwrap();
     let rusty_path = format!("{}/rusty", game.path);
