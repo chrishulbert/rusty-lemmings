@@ -1,6 +1,7 @@
 #![allow(dead_code)] // TODO disable once the app is mostly complete.
 
 mod lemmings;
+mod lemmings_to_bevy;
 mod xbrz;
 
 use std::{fs, path};
@@ -13,9 +14,7 @@ use lemmings::models::Animation;
 use crate::lemmings::{loader, png};
 
 fn setup(mut commands: Commands) {
-    // Cameras
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(Camera2dBundle::default());
 }
 
 #[derive(Component)]
@@ -209,7 +208,9 @@ fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
             title: "Rusty Lemmings".to_string(),
-            present_mode: PresentMode::Fifo,
+            width: 1280.,
+            height: 720.,
+            present_mode: PresentMode::Fifo, // Battery-friendly vsync.
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
