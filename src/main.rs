@@ -10,11 +10,21 @@ use bevy::{
     window::PresentMode,
 };
 use lemmings::models::Animation;
+use lemmings_to_bevy::load_lemmings_textures::GameTextures;
 
 use crate::lemmings::{loader, png};
 
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    mut game_textures: Res<GameTextures>,
+) {
     commands.spawn_bundle(Camera2dBundle::default());
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: game_textures.mining_right.clone(),
+            transform: Transform::from_scale(Vec3::splat(6.0)),
+            ..default()
+        });
 }
 
 #[derive(Component)]
@@ -124,86 +134,86 @@ fn scale_animation(a: &Animation) -> Animation {
 }
 
 fn main() {
-    let games = loader::load().unwrap();
-    let game = games.lemmings.unwrap();
-    let rusty_path = format!("{}/rusty", game.path);
-    fs::create_dir_all(&rusty_path).unwrap();
-    for asset in game.all_assets() {
-        let filename_base = format!("{}/{}", rusty_path, asset.name);
-        match asset.content {
-            lemmings::models::AnimationOrImage::Animation(a) => {
-                {
-                    let atlas = make_atlas_from_frames(&a.frames, a.width, a.height);
-                    let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, a.width, a.height);
-                    if !path::Path::new(&filename).exists() {
-                        let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
-                        fs::write(filename, png).unwrap();
-                    }
-                }
-                {
-                    let scaled = scale_animation(&a);
-                    let atlas = make_atlas_from_frames(&scaled.frames, scaled.width, scaled.height);
-                    let filename = format!("{}.scaled.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, scaled.width, scaled.height);
-                    if !path::Path::new(&filename).exists() {
-                        let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
-                        fs::write(filename, png).unwrap();
-                    }
-                }
+    // let games = loader::load().unwrap();
+    // let game = games.lemmings.unwrap();
+    // let rusty_path = format!("{}/rusty", game.path);
+    // fs::create_dir_all(&rusty_path).unwrap();
+    // for asset in game.all_assets() {
+    //     let filename_base = format!("{}/{}", rusty_path, asset.name);
+    //     match asset.content {
+    //         lemmings::models::AnimationOrImage::Animation(a) => {
+    //             {
+    //                 let atlas = make_atlas_from_frames(&a.frames, a.width, a.height);
+    //                 let filename = format!("{}.original.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, a.width, a.height);
+    //                 if !path::Path::new(&filename).exists() {
+    //                     let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
+    //                     fs::write(filename, png).unwrap();
+    //                 }
+    //             }
+    //             {
+    //                 let scaled = scale_animation(&a);
+    //                 let atlas = make_atlas_from_frames(&scaled.frames, scaled.width, scaled.height);
+    //                 let filename = format!("{}.scaled.{}r.{}c.{}w.{}h.png", filename_base, atlas.cols, atlas.rows, scaled.width, scaled.height);
+    //                 if !path::Path::new(&filename).exists() {
+    //                     let png = png::png_data(atlas.width as u32, atlas.height as u32, &atlas.data);
+    //                     fs::write(filename, png).unwrap();
+    //                 }
+    //             }
 
-                // for (index, frame) in a.frames.iter().enumerate() {
-                //     {
-                //         let filename = format!("{}.original.{}.png", filename_base, index);
-                //         if !path::Path::new(&filename).exists() {
-                //             let png = png::png_data(a.width as u32, a.height as u32, &frame);
-                //             fs::write(filename, png).unwrap();
-                //         }
-                //     }
-                //     {
-                //         let filename = format!("{}.scaled.{}.png", filename_base, index);
-                //         if !path::Path::new(&filename).exists() {
-                //             let bigger = xbrz::scale(6, &frame, a.width as u32, a.height as u32);
-                //             let biggest = xbrz::scale(3, &bigger, (a.width * 6) as u32, (a.height * 6) as u32);
-                //             let png = png::png_data((a.width * 6 * 3) as u32, (a.height * 6 * 3) as u32, &biggest);
-                //             fs::write(filename, png).unwrap();
-                //         }
-                //     }
-                // }
-            },
-            lemmings::models::AnimationOrImage::Image(i) => {
-                {
-                    let filename = format!("{}.original.png", filename_base);
-                    if !path::Path::new(&filename).exists() {
-                        let png = png::png_data(i.width as u32, i.height as u32, &i.bitmap);
-                        fs::write(filename, png).unwrap();
-                    }
-                }
-                {
-                    let filename = format!("{}.scaled.png", filename_base);
-                    if !path::Path::new(&filename).exists() {
-                        let bigger = xbrz::scale(6, &i.bitmap, i.width as u32, i.height as u32);
-                        let biggest = xbrz::scale(3, &bigger, (i.width * 6) as u32, (i.height * 6) as u32);
-                        let png = png::png_data((i.width * 6 * 3) as u32, (i.height * 6 * 3) as u32, &biggest);
-                        fs::write(filename, png).unwrap();
-                    }
-                }
-            }
-        }
-
-    }
-    // let bl = &game.main.lemming_animations.bashing_left;
-    // for (index, frame) in bl.frames.iter().enumerate() {
-    //     let filename = format!("{}/lemming_bashing_left_original_{}.png", rusty_path, index);
-    //     if !path::Path::new(&filename).exists() {
+    //             // for (index, frame) in a.frames.iter().enumerate() {
+    //             //     {
+    //             //         let filename = format!("{}.original.{}.png", filename_base, index);
+    //             //         if !path::Path::new(&filename).exists() {
+    //             //             let png = png::png_data(a.width as u32, a.height as u32, &frame);
+    //             //             fs::write(filename, png).unwrap();
+    //             //         }
+    //             //     }
+    //             //     {
+    //             //         let filename = format!("{}.scaled.{}.png", filename_base, index);
+    //             //         if !path::Path::new(&filename).exists() {
+    //             //             let bigger = xbrz::scale(6, &frame, a.width as u32, a.height as u32);
+    //             //             let biggest = xbrz::scale(3, &bigger, (a.width * 6) as u32, (a.height * 6) as u32);
+    //             //             let png = png::png_data((a.width * 6 * 3) as u32, (a.height * 6 * 3) as u32, &biggest);
+    //             //             fs::write(filename, png).unwrap();
+    //             //         }
+    //             //     }
+    //             // }
+    //         },
+    //         lemmings::models::AnimationOrImage::Image(i) => {
+    //             {
+    //                 let filename = format!("{}.original.png", filename_base);
+    //                 if !path::Path::new(&filename).exists() {
+    //                     let png = png::png_data(i.width as u32, i.height as u32, &i.bitmap);
+    //                     fs::write(filename, png).unwrap();
+    //                 }
+    //             }
+    //             {
+    //                 let filename = format!("{}.scaled.png", filename_base);
+    //                 if !path::Path::new(&filename).exists() {
+    //                     let bigger = xbrz::scale(6, &i.bitmap, i.width as u32, i.height as u32);
+    //                     let biggest = xbrz::scale(3, &bigger, (i.width * 6) as u32, (i.height * 6) as u32);
+    //                     let png = png::png_data((i.width * 6 * 3) as u32, (i.height * 6 * 3) as u32, &biggest);
+    //                     fs::write(filename, png).unwrap();
+    //                 }
+    //             }
+    //         }
     //     }
 
-    //     let filename = format!("{}/lemming_bashing_left_scaled_{}.png", rusty_path, index);
-    //     if !path::Path::new(&filename).exists() {
-    //         let bigger = xbrz::scale(6, frame, bl.width as u32, bl.height as u32);
-    //         let biggest = xbrz::scale(3, &bigger, (bl.width * 6) as u32, (bl.height * 6) as u32);
-    //         let png = png::png_data((bl.width * 6 * 3) as u32, (bl.height * 6 * 3) as u32, &biggest);
-    //         fs::write(filename, png).unwrap();
-    //     }
     // }
+    // // let bl = &game.main.lemming_animations.bashing_left;
+    // // for (index, frame) in bl.frames.iter().enumerate() {
+    // //     let filename = format!("{}/lemming_bashing_left_original_{}.png", rusty_path, index);
+    // //     if !path::Path::new(&filename).exists() {
+    // //     }
+
+    // //     let filename = format!("{}/lemming_bashing_left_scaled_{}.png", rusty_path, index);
+    // //     if !path::Path::new(&filename).exists() {
+    // //         let bigger = xbrz::scale(6, frame, bl.width as u32, bl.height as u32);
+    // //         let biggest = xbrz::scale(3, &bigger, (bl.width * 6) as u32, (bl.height * 6) as u32);
+    // //         let png = png::png_data((bl.width * 6 * 3) as u32, (bl.height * 6 * 3) as u32, &biggest);
+    // //         fs::write(filename, png).unwrap();
+    // //     }
+    // // }
 
     App::new()
         .insert_resource(WindowDescriptor {
@@ -216,6 +226,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
         .add_plugin(HelloPlugin)
+        .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
         .run();
 }
 
