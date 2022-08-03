@@ -145,15 +145,16 @@ impl Animation {
         return Animation { frames: frames, width: width, height: height };
     }
 
-    fn parse(data: &[u8], frames: usize, width: usize, height: usize, palette: [u32; 16], bpp: u8) -> io::Result<Animation> {
+    fn parse(data: &[u8], frames: usize, width: usize, height: usize, palette: [u32; 16], bpp: u8) -> Animation {
+        debug_assert!(frames > 1, "Should be an image not an animation.");
         if bpp == 2 {
-            Ok(Animation::parse_2bpp(data, frames, width, height, palette))
+            Animation::parse_2bpp(data, frames, width, height, palette)
         } else if bpp == 3 {
-            Ok(Animation::parse_3bpp(data, frames, width, height, palette))
+            Animation::parse_3bpp(data, frames, width, height, palette)
         } else if bpp == 4 {
-            Ok(Animation::parse_4bpp(data, frames, width, height, palette))
+            Animation::parse_4bpp(data, frames, width, height, palette)
         } else {
-            Err(Error::new(ErrorKind::InvalidInput, "Unsupported BPP"))
+            panic!("Unsupported BPP")
         }
     }
 }
@@ -161,36 +162,36 @@ impl Animation {
 impl LemmingAnimations {
     fn parse(data: &[u8], palette: [u32; 16]) -> io::Result<LemmingAnimations> {
         Ok(LemmingAnimations {
-            walking_right: Animation::parse(&data[0x0000..], 8, 16, 10, palette, 2)?,
-            jumping_right: Animation::parse(&data[0x0140..], 1, 16, 10, palette, 2)?,
-            walking_left: Animation::parse(&data[0x0168..], 8, 16, 10, palette, 2)?,
-            jumping_left: Animation::parse(&data[0x02A8..], 1, 16, 10, palette, 2)?,
-            digging: Animation::parse(&data[0x02D0..], 16, 16, 14, palette, 3)?,
-            climbing_right: Animation::parse(&data[0x0810..], 8, 16, 12, palette, 2)?,
-            climbing_left: Animation::parse(&data[0x0990..], 8, 16, 12, palette, 2)?,
-            drowning: Animation::parse(&data[0x0B10..], 16, 16, 10, palette, 2)?,
-            post_climb_right: Animation::parse(&data[0x0D90..], 8, 16, 12, palette, 2)?,
-            post_climb_left: Animation::parse(&data[0x0F10..], 8, 16, 12, palette, 2)?,
-            brick_laying_right: Animation::parse(&data[0x1090..], 16, 16, 13, palette, 3)?,
-            brick_laying_left: Animation::parse(&data[0x1570..], 16, 16, 13, palette, 3)?, 
-            bashing_right: Animation::parse(&data[0x1A50..], 32, 16, 10, palette, 3)?, 
-            bashing_left: Animation::parse(&data[0x21D0..], 32, 16, 10, palette, 3)?, 
-            mining_right: Animation::parse(&data[0x2950..], 24, 16, 13, palette, 3)?, 
-            mining_left: Animation::parse(&data[0x30A0..], 24, 16, 13, palette, 3)?, 
-            falling_right: Animation::parse(&data[0x37F0..], 4, 16, 10, palette, 2)?, 
-            falling_left: Animation::parse(&data[0x3890..], 4, 16, 10, palette, 2)?, 
-            pre_umbrella_right: Animation::parse(&data[0x3930..], 4, 16, 16, palette, 3)?,
-            umbrella_right: Animation::parse(&data[0x3AB0..], 4, 16, 16, palette, 3)?, 
-            pre_umbrella_left: Animation::parse(&data[0x3C30..], 4, 16, 16, palette, 3)?, 
-            umbrella_left: Animation::parse(&data[0x3DB0..], 4, 16, 16, palette, 3)?,
-            splatting: Animation::parse(&data[0x3F30..], 16, 16, 10, palette, 2)?, 
-            exiting: Animation::parse(&data[0x41B0..], 8, 16, 13, palette, 2)?, 
-            fried: Animation::parse(&data[0x4350 ..], 14, 16, 14, palette, 4)?, 
-            blocking: Animation::parse(&data[0x4970..], 16, 16, 10, palette, 2)?, 
-            shrugging_right: Animation::parse(&data[0x4BF0..], 8, 16, 10, palette, 2)?, 
-            shrugging_left: Animation::parse(&data[0x4D30..], 8, 16, 10, palette, 2)?, 
-            oh_no_ing: Animation::parse(&data[0x4E70..], 16, 16, 10, palette, 2)?, 
-            explosion: Animation::parse(&data[0x50F0..], 1, 32, 32, palette, 3)?,
+            walking_right: Animation::parse(&data[0x0000..], 8, 16, 10, palette, 2),
+            jumping_right: Image::parse_2bpp(&data[0x0140..], 16, 10, palette),
+            walking_left: Animation::parse(&data[0x0168..], 8, 16, 10, palette, 2),
+            jumping_left: Image::parse_2bpp(&data[0x02A8..], 16, 10, palette),
+            digging: Animation::parse(&data[0x02D0..], 16, 16, 14, palette, 3),
+            climbing_right: Animation::parse(&data[0x0810..], 8, 16, 12, palette, 2),
+            climbing_left: Animation::parse(&data[0x0990..], 8, 16, 12, palette, 2),
+            drowning: Animation::parse(&data[0x0B10..], 16, 16, 10, palette, 2),
+            post_climb_right: Animation::parse(&data[0x0D90..], 8, 16, 12, palette, 2),
+            post_climb_left: Animation::parse(&data[0x0F10..], 8, 16, 12, palette, 2),
+            brick_laying_right: Animation::parse(&data[0x1090..], 16, 16, 13, palette, 3),
+            brick_laying_left: Animation::parse(&data[0x1570..], 16, 16, 13, palette, 3), 
+            bashing_right: Animation::parse(&data[0x1A50..], 32, 16, 10, palette, 3), 
+            bashing_left: Animation::parse(&data[0x21D0..], 32, 16, 10, palette, 3), 
+            mining_right: Animation::parse(&data[0x2950..], 24, 16, 13, palette, 3), 
+            mining_left: Animation::parse(&data[0x30A0..], 24, 16, 13, palette, 3), 
+            falling_right: Animation::parse(&data[0x37F0..], 4, 16, 10, palette, 2), 
+            falling_left: Animation::parse(&data[0x3890..], 4, 16, 10, palette, 2), 
+            pre_umbrella_right: Animation::parse(&data[0x3930..], 4, 16, 16, palette, 3),
+            umbrella_right: Animation::parse(&data[0x3AB0..], 4, 16, 16, palette, 3), 
+            pre_umbrella_left: Animation::parse(&data[0x3C30..], 4, 16, 16, palette, 3), 
+            umbrella_left: Animation::parse(&data[0x3DB0..], 4, 16, 16, palette, 3),
+            splatting: Animation::parse(&data[0x3F30..], 16, 16, 10, palette, 2), 
+            exiting: Animation::parse(&data[0x41B0..], 8, 16, 13, palette, 2), 
+            fried: Animation::parse(&data[0x4350 ..], 14, 16, 14, palette, 4), 
+            blocking: Animation::parse(&data[0x4970..], 16, 16, 10, palette, 2), 
+            shrugging_right: Animation::parse(&data[0x4BF0..], 8, 16, 10, palette, 2), 
+            shrugging_left: Animation::parse(&data[0x4D30..], 8, 16, 10, palette, 2), 
+            oh_no_ing: Animation::parse(&data[0x4E70..], 16, 16, 10, palette, 2), 
+            explosion: Image::parse_3bpp(&data[0x50F0..], 32, 32, palette),
         })
     }
 }

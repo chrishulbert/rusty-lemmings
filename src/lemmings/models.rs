@@ -242,9 +242,9 @@ pub struct Mask {
 #[derive(Clone)]
 pub struct LemmingAnimations {
     pub walking_right: Animation,
-    pub jumping_right: Animation, // Walking up a step 3-6px tall.
+    pub jumping_right: Image, // Walking up a step 3-6px tall.
     pub walking_left: Animation,
-    pub jumping_left: Animation,
+    pub jumping_left: Image,
     pub digging: Animation,
     pub climbing_right: Animation,
     pub climbing_left: Animation,
@@ -270,7 +270,7 @@ pub struct LemmingAnimations {
     pub shrugging_right: Animation, // Builder running out of bricks.
     pub shrugging_left: Animation,
     pub oh_no_ing: Animation,
-    pub explosion: Animation,
+    pub explosion: Image,
 }
 
 #[derive(Clone)]
@@ -418,9 +418,9 @@ impl Game {
         let mut all = Vec::<AssetToPreProcess>::new();        
 
         all.push(AssetToPreProcess{name: "lemming.walking_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.walking_right),});
-        all.push(AssetToPreProcess{name: "lemming.jumping_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.jumping_right),});
+        all.push(AssetToPreProcess{name: "lemming.jumping_right".to_string(), content: AnimationOrImage::Image(&self.main.lemming_animations.jumping_right),});
         all.push(AssetToPreProcess{name: "lemming.walking_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.walking_left),});
-        all.push(AssetToPreProcess{name: "lemming.jumping_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.jumping_left),});
+        all.push(AssetToPreProcess{name: "lemming.jumping_left".to_string(), content: AnimationOrImage::Image(&self.main.lemming_animations.jumping_left),});
         all.push(AssetToPreProcess{name: "lemming.digging".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.digging),});
         all.push(AssetToPreProcess{name: "lemming.climbing_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.climbing_right),});
         all.push(AssetToPreProcess{name: "lemming.climbing_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.climbing_left),});
@@ -446,7 +446,7 @@ impl Game {
         all.push(AssetToPreProcess{name: "lemming.shrugging_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.shrugging_right),});
         all.push(AssetToPreProcess{name: "lemming.shrugging_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.shrugging_left),});
         all.push(AssetToPreProcess{name: "lemming.oh_no_ing".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.oh_no_ing),});
-        all.push(AssetToPreProcess{name: "lemming.explosion".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.explosion),});
+        all.push(AssetToPreProcess{name: "lemming.explosion".to_string(), content: AnimationOrImage::Image(&self.main.lemming_animations.explosion),});
 
         all.push(AssetToPreProcess{name: "font.percent".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.percent),});
         all.push(AssetToPreProcess{name: "font.dash".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.dash),});

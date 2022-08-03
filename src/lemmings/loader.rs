@@ -127,10 +127,10 @@ pub fn load() -> Result<Games> {
     let data_root = format!("{}/Lemmings", home);
     return Ok(Games {
         lemmings: load_game(&data_root, "lemmings", "Lemmings")?,
-        oh_no_more: load_game(&data_root, "ohnomore", "Oh no! More Lemmings")?,
-        christmas_91: load_game(&data_root, "christmas1991", "Xmas Lemmings '91")?,
-        christmas_92: load_game(&data_root, "christmas1992", "Xmas Lemmings '92")?,
-        holiday_93: load_game(&data_root, "holiday1993", "Holiday Lemmings '93")?,
-        holiday_94: load_game(&data_root, "holiday1994", "Holiday Lemmings '94")?,
+        oh_no_more: None, // load_game(&data_root, "ohnomore", "Oh no! More Lemmings")?,
+        christmas_91: None, // load_game(&data_root, "christmas1991", "Xmas Lemmings '91")?,
+        christmas_92: None, // load_game(&data_root, "christmas1992", "Xmas Lemmings '92")?,
+        holiday_93: None, // load_game(&data_root, "holiday1993", "Holiday Lemmings '93")?,
+        holiday_94: None, // load_game(&data_root, "holiday1994", "Holiday Lemmings '94")?,
     })
 }
