@@ -34,8 +34,53 @@ const SCALE: usize = 12; // Must be A*B.
 const SCALE_A: usize = 6;
 const SCALE_B: usize = 2;
 
+fn add_1_margin(image: &[u32], width: usize, height: usize) -> (Vec<u32>, usize, usize) {
+    let margin_width = width + 2;
+    let margin_height = height + 2;
+    let margin_pixels = margin_width * margin_height;
+    let mut image_with_margin = Vec::<u32>::with_capacity(margin_pixels);
+    image_with_margin.resize(margin_pixels, 0);
+    let mut in_offset: usize = 0;
+    let mut out_offset: usize = margin_width + 1;
+    for _y in 0..height {
+        for _x in 0..width {
+            image_with_margin[out_offset] = image[in_offset];
+            out_offset += 1;
+            in_offset += 1;
+        }
+        out_offset += 2;
+    }
+    (image_with_margin, margin_width, margin_height)
+}
+
+fn remove_scale_margin(image: &[u32], width: usize, height: usize) -> Vec<u32> {
+    let smaller_width = width - 2 * SCALE;
+    let smaller_height = height - 2 * SCALE;
+    let smaller_pixels = smaller_width * smaller_height;
+    let mut smaller_image = Vec::<u32>::with_capacity(smaller_pixels);
+    smaller_image.resize(smaller_pixels, 0);
+    let mut in_offset: usize = width * SCALE + SCALE;
+    let mut out_offset: usize = 0;
+    for _y in 0..smaller_height {
+        for _x in 0..smaller_width {
+            smaller_image[out_offset] = image[in_offset];
+            out_offset += 1;
+            in_offset += 1;
+        }
+        in_offset += 2 * SCALE;
+    }
+    smaller_image
+}
+
 // Multi-step scale-up.
-fn multi_scale(image: &[u32], width: usize, height: usize) -> Vec<u32> {
+// should_add_then_remove_margin removes artifacts from sprites (eg not things that are expected to tile) where they don't
+// 'round off' near the edge properly.
+fn multi_scale(image: &[u32], width: usize, height: usize, should_add_then_remove_margin: bool) -> Vec<u32> {
+    if should_add_then_remove_margin {
+        let (image_with_margin, margin_width, margin_height) = add_1_margin(image, width, height);
+        let scaled = multi_scale(&image_with_margin, margin_width, margin_height, false);
+        return remove_scale_margin(&scaled, margin_width * SCALE, margin_height * SCALE);
+    }
     let bigger = xbrz::scale(SCALE_A as u8, image, width as u32, height as u32);
     xbrz::scale(SCALE_B as u8, &bigger, (width * SCALE_A) as u32, (height * SCALE_A) as u32)
 }
@@ -66,7 +111,7 @@ fn make_atlas_from_animation(
     let mut row: usize = 0;
     let mut sprite_rects = Vec::<Rect>::with_capacity(animation.frames.len());
     for small_frame in &animation.frames {
-        let scaled_frame = multi_scale(small_frame, animation.width, animation.height);
+        let scaled_frame = multi_scale(small_frame, animation.width, animation.height, true);
         let start_atlas_x = col * (scaled_width + 1);
         let mut atlas_y = row * (scaled_height + 1);
 
@@ -109,7 +154,7 @@ fn make_image(
     image: &crate::lemmings::models::Image,
     images: &mut ResMut<Assets<Image>>,
 ) -> Handle<Image> {
-    let scaled = multi_scale(&image.bitmap, image.width, image.height);
+    let scaled = multi_scale(&image.bitmap, image.width, image.height, true);
     let u8_data = u32_to_rgba_u8(&scaled);
     let image = Image::new(Extent3d{width: (image.width * SCALE) as u32, height: (image.height * SCALE) as u32, depth_or_array_layers: 1},
         bevy::render::render_resource::TextureDimension::D2,
