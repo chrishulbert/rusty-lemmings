@@ -51,10 +51,9 @@ fn cols_rows_for_frames(frame_count: usize) -> (usize, usize) {
 
 fn make_atlas_from_animation(
     animation: &Animation,
-    mut images: ResMut<Assets<Image>>,
-	mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    images: &mut ResMut<Assets<Image>>,
+	texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
 ) -> Handle<TextureAtlas> {
-    // TODO special case if only one treat as not an anim? Handle that in the parser?
     let (cols, rows) = cols_rows_for_frames(animation.frames.len());
     let scaled_width = animation.width * SCALE;
     let scaled_height = animation.height * SCALE;
@@ -106,20 +105,92 @@ fn make_atlas_from_animation(
     ta_handle
 }
 
+fn make_image(
+    image: &crate::lemmings::models::Image,
+    images: &mut ResMut<Assets<Image>>,
+) -> Handle<Image> {
+    let scaled = multi_scale(&image.bitmap, image.width, image.height);
+    let u8_data = u32_to_rgba_u8(&scaled);
+    let image = Image::new(Extent3d{width: (image.width * SCALE) as u32, height: (image.height * SCALE) as u32, depth_or_array_layers: 1},
+        bevy::render::render_resource::TextureDimension::D2,
+        u8_data,
+        bevy::render::render_resource::TextureFormat::Rgba8Unorm);
+    let image_handle = images.add(image);
+    image_handle
+}
+
 fn load_lemmings_textures_startup(
 	mut commands: Commands,
-	images: ResMut<Assets<Image>>,
-	texture_atlases: ResMut<Assets<TextureAtlas>>,
+	mut images: ResMut<Assets<Image>>,
+	mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let games = loader::load().unwrap();
     let game = games.lemmings.unwrap();
 	let game_textures = GameTextures {
-		mining_right: make_atlas_from_animation(&game.main.lemming_animations.mining_right, images, texture_atlases),
+        walking_right: make_atlas_from_animation(&game.main.lemming_animations.walking_right, &mut images, &mut texture_atlases),
+        jumping_right: make_image(&game.main.lemming_animations.jumping_right, &mut images),
+        walking_left: make_atlas_from_animation(&game.main.lemming_animations.walking_left, &mut images, &mut texture_atlases),
+        jumping_left: make_image(&game.main.lemming_animations.jumping_left, &mut images),
+        digging: make_atlas_from_animation(&game.main.lemming_animations.digging, &mut images, &mut texture_atlases),
+        climbing_right: make_atlas_from_animation(&game.main.lemming_animations.climbing_right, &mut images, &mut texture_atlases),
+        climbing_left: make_atlas_from_animation(&game.main.lemming_animations.climbing_left, &mut images, &mut texture_atlases),
+        drowning: make_atlas_from_animation(&game.main.lemming_animations.drowning, &mut images, &mut texture_atlases),
+        post_climb_right: make_atlas_from_animation(&game.main.lemming_animations.post_climb_right, &mut images, &mut texture_atlases),
+        post_climb_left: make_atlas_from_animation(&game.main.lemming_animations.post_climb_left, &mut images, &mut texture_atlases),
+        brick_laying_right: make_atlas_from_animation(&game.main.lemming_animations.brick_laying_right, &mut images, &mut texture_atlases),
+        brick_laying_left: make_atlas_from_animation(&game.main.lemming_animations.brick_laying_left, &mut images, &mut texture_atlases),
+        bashing_right: make_atlas_from_animation(&game.main.lemming_animations.bashing_right, &mut images, &mut texture_atlases),
+        bashing_left: make_atlas_from_animation(&game.main.lemming_animations.bashing_left, &mut images, &mut texture_atlases),
+        mining_right: make_atlas_from_animation(&game.main.lemming_animations.mining_right, &mut images, &mut texture_atlases),
+        mining_left: make_atlas_from_animation(&game.main.lemming_animations.mining_left, &mut images, &mut texture_atlases),
+        falling_right: make_atlas_from_animation(&game.main.lemming_animations.falling_right, &mut images, &mut texture_atlases),
+        falling_left: make_atlas_from_animation(&game.main.lemming_animations.falling_left, &mut images, &mut texture_atlases),
+        pre_umbrella_right: make_atlas_from_animation(&game.main.lemming_animations.pre_umbrella_right, &mut images, &mut texture_atlases),
+        umbrella_right: make_atlas_from_animation(&game.main.lemming_animations.umbrella_right, &mut images, &mut texture_atlases),
+        pre_umbrella_left: make_atlas_from_animation(&game.main.lemming_animations.pre_umbrella_left, &mut images, &mut texture_atlases),
+        umbrella_left: make_atlas_from_animation(&game.main.lemming_animations.umbrella_left, &mut images, &mut texture_atlases),
+        splatting: make_atlas_from_animation(&game.main.lemming_animations.splatting, &mut images, &mut texture_atlases),
+        exiting: make_atlas_from_animation(&game.main.lemming_animations.exiting, &mut images, &mut texture_atlases),
+        fried: make_atlas_from_animation(&game.main.lemming_animations.fried, &mut images, &mut texture_atlases),
+        blocking: make_atlas_from_animation(&game.main.lemming_animations.blocking, &mut images, &mut texture_atlases),
+        shrugging_right: make_atlas_from_animation(&game.main.lemming_animations.shrugging_right, &mut images, &mut texture_atlases), // Builder running out of bricks.
+        shrugging_left: make_atlas_from_animation(&game.main.lemming_animations.shrugging_left, &mut images, &mut texture_atlases),
+        oh_no_ing: make_atlas_from_animation(&game.main.lemming_animations.oh_no_ing, &mut images, &mut texture_atlases),
+        explosion: make_image(&game.main.lemming_animations.explosion, &mut images),
 	};
 	commands.insert_resource(game_textures);
 }
 
 pub struct GameTextures {
-	pub mining_right: Handle<TextureAtlas>,
+    pub walking_right: Handle<TextureAtlas>,
+    pub jumping_right: Handle<Image>, // Walking up a step 3-6px tall.
+    pub walking_left: Handle<TextureAtlas>,
+    pub jumping_left: Handle<Image>,
+    pub digging: Handle<TextureAtlas>,
+    pub climbing_right: Handle<TextureAtlas>,
+    pub climbing_left: Handle<TextureAtlas>,
+    pub drowning: Handle<TextureAtlas>,
+    pub post_climb_right: Handle<TextureAtlas>,
+    pub post_climb_left: Handle<TextureAtlas>,
+    pub brick_laying_right: Handle<TextureAtlas>,
+    pub brick_laying_left: Handle<TextureAtlas>,
+    pub bashing_right: Handle<TextureAtlas>,
+    pub bashing_left: Handle<TextureAtlas>,
+    pub mining_right: Handle<TextureAtlas>,
+    pub mining_left: Handle<TextureAtlas>,
+    pub falling_right: Handle<TextureAtlas>,
+    pub falling_left: Handle<TextureAtlas>,
+    pub pre_umbrella_right: Handle<TextureAtlas>,
+    pub umbrella_right: Handle<TextureAtlas>,
+    pub pre_umbrella_left: Handle<TextureAtlas>,
+    pub umbrella_left: Handle<TextureAtlas>,
+    pub splatting: Handle<TextureAtlas>,
+    pub exiting: Handle<TextureAtlas>,
+    pub fried: Handle<TextureAtlas>,
+    pub blocking: Handle<TextureAtlas>,
+    pub shrugging_right: Handle<TextureAtlas>, // Builder running out of bricks.
+    pub shrugging_left: Handle<TextureAtlas>,
+    pub oh_no_ing: Handle<TextureAtlas>,
+    pub explosion: Handle<Image>,
 }
 
