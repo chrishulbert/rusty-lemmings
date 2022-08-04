@@ -4,6 +4,28 @@ mod lemmings;
 mod lemmings_to_bevy;
 mod xbrz;
 
+// Tested by watching frame-by-frame youtube captures.
+const FPS: f32 = 15.;
+const FRAME_DURATION: f32 = 1. / FPS;
+
+// 4k is 3840x2160
+// 5K is 5120x2880
+// Original game is 320x200
+// Since it scrolls horizontally, i only care about height for scaling.
+// 5k ratio is 14.4x high: could do 6x then 3x to get 18.
+// 4k is 10.8x high
+// Realistically: 6x then 2x to get 12: good enough for 4k.
+// Or should we do 5x then 2x to get 10 and have a little margin for 4k?
+// For a 720p window, we want an original pixels to be 720/200 = 3.6high. Divided by scale that is 0.3.
+const SCALE: usize = 12; // Must be A*B.
+const SCALE_A: usize = 6;
+const SCALE_B: usize = 2;
+
+const RES_W: usize = 1280;
+const RES_H: usize = 720;
+const ORIGINAL_GAME_H: usize = 200;
+const TEXTURE_SCALE: f32 = (RES_H as f32) / (ORIGINAL_GAME_H as f32) / (SCALE as f32);
+
 // use std::{fs, path};
 use bevy::{
     prelude::*,
@@ -32,7 +54,7 @@ fn animate_sprite(
     }
 }
 
-fn setup(
+fn post_startup_setup(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
 ) {
@@ -40,10 +62,25 @@ fn setup(
     commands
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: game_textures.mining_right.clone(),
-            transform: Transform::from_scale(Vec3::splat(0.5)),
+            transform: Transform{
+                translation: Vec3::new(-100., 0., 0.),
+                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                ..default()
+            },        
             ..default()
         })
-        .insert(AnimationTimer(Timer::from_seconds(1. / 15., true)));
+        .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: game_textures.blocking.clone(),
+            transform: Transform{
+                translation: Vec3::new(100., 0., 0.),
+                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                ..default()
+            },     
+            ..default()
+        })
+        .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
 }
 
 #[derive(Component)]
@@ -83,13 +120,14 @@ fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
             title: "Rusty Lemmings".to_string(),
-            width: 1280.,
-            height: 720.,
+            width: RES_W as f32,
+            height: RES_H as f32,
+            resizable: false,
             present_mode: PresentMode::Fifo, // Battery-friendly vsync.
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_startup_system(setup) // Post-normal stage?
+        .add_startup_system_to_stage(StartupStage::PostStartup, post_startup_setup)
         .add_plugin(HelloPlugin)
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
         .add_system(animate_sprite)

@@ -2,6 +2,7 @@ use bevy::{prelude::*, render::render_resource::{Extent3d}, sprite::Rect};
 use crate::lemmings::*;
 use crate::lemmings::models::Animation;
 use crate::xbrz;
+use crate::{SCALE, SCALE_A, SCALE_B};
 
 pub struct LoadLemmingsTexturesPlugin;
 
@@ -21,18 +22,6 @@ fn u32_to_rgba_u8(u32s: &[u32]) -> Vec<u8> {
     }
     u8s
 }
-
-// 4k is 3840x2160
-// 5K is 5120x2880
-// Original game is 320x200
-// Since it scrolls horizontally, i only care about height for scaling.
-// 5k ratio is 14.4x high: could do 6x then 3x to get 18.
-// 4k is 10.8x high
-// Realistically: 6x then 2x to get 12: good enough for 4k.
-// Or should we do 5x then 2x to get 10 and have a little margin for 4k?
-const SCALE: usize = 12; // Must be A*B.
-const SCALE_A: usize = 6;
-const SCALE_B: usize = 2;
 
 fn add_1_margin(image: &[u32], width: usize, height: usize) -> (Vec<u32>, usize, usize) {
     let margin_width = width + 2;
