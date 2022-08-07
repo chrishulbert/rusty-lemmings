@@ -181,9 +181,19 @@ fn spawn_menu_logo(
 
         commands
         .spawn_bundle(SpriteBundle {
-            texture: game_textures.mayhem.clone(),
+            texture: game_textures.f1.clone(),
             transform: Transform{
                 translation: Vec3::new(0., 0., 2.),
+                scale,
+                ..default()
+            },        
+            ..default()
+        });
+        commands
+        .spawn_bundle(SpriteBundle {
+            texture: game_textures.mayhem.clone(),
+            transform: Transform{
+                translation: Vec3::new(0., -5. * POINT_SIZE, 3.),
                 scale,
                 ..default()
             },        
@@ -292,7 +302,7 @@ fn main() {
             title: "Rusty Lemmings".to_string(),
             width: RES_W as f32,
             height: RES_H as f32,
-            resizable: false,
+            //resizable: false,
             present_mode: PresentMode::Fifo, // Battery-friendly vsync.
             ..Default::default()
         })

@@ -2,3 +2,4 @@
 // Eg convert some lemmings animation into a bevy texture atlas.
 
 pub mod load_lemmings_textures;
+pub mod image_doctor;
