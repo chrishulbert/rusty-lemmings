@@ -181,9 +181,9 @@ fn spawn_menu_logo(
 
         commands
         .spawn_bundle(SpriteBundle {
-            texture: game_textures.f2.clone(),
+            texture: game_textures.f1.clone(),
             transform: Transform{
-                translation: Vec3::new(0., 0., 2.),
+                translation: Vec3::new(-100. * POINT_SIZE, 0., 2.),
                 scale,
                 ..default()
             },        
@@ -191,14 +191,64 @@ fn spawn_menu_logo(
         });
         commands
         .spawn_bundle(SpriteBundle {
-            texture: game_textures.mayhem.clone(),
+            texture: game_textures.f2.clone(),
             transform: Transform{
-                translation: Vec3::new(0., -5. * POINT_SIZE, 3.),
+                translation: Vec3::new(-33. * POINT_SIZE, 0., 2.),
                 scale,
                 ..default()
             },        
             ..default()
         });
+        commands
+        .spawn_bundle(SpriteBundle {
+            texture: game_textures.f3.clone(),
+            transform: Transform{
+                translation: Vec3::new(33. * POINT_SIZE, 0., 2.),
+                scale,
+                ..default()
+            },        
+            ..default()
+        });
+        commands
+        .spawn_bundle(SpriteBundle {
+            texture: game_textures.level_rating.clone(),
+            transform: Transform{
+                translation: Vec3::new(100. * POINT_SIZE, 0., 2.),
+                scale,
+                ..default()
+            },        
+            ..default()
+        });
+        commands
+        .spawn_bundle(SpriteBundle {
+            texture: game_textures.exit_to_dos.clone(),
+            transform: Transform{
+                translation: Vec3::new(-33. * POINT_SIZE, -50. * POINT_SIZE, 2.),
+                scale,
+                ..default()
+            },        
+            ..default()
+        });
+        commands
+        .spawn_bundle(SpriteBundle {
+            texture: game_textures.f4.clone(),
+            transform: Transform{
+                translation: Vec3::new(33. * POINT_SIZE, -50. * POINT_SIZE, 2.),
+                scale,
+                ..default()
+            },        
+            ..default()
+        });
+        // commands
+        // .spawn_bundle(SpriteBundle {
+        //     texture: game_textures.fun.clone(),
+        //     transform: Transform{
+        //         translation: Vec3::new(-100. * POINT_SIZE, -5. * POINT_SIZE, 3.),
+        //         scale,
+        //         ..default()
+        //     },        
+        //     ..default()
+        // });
 }
 
 fn spawn_menu_background(
@@ -235,28 +285,28 @@ fn post_startup_setup(
     game_textures: Res<GameTextures>,
 ) {
     commands.spawn_bundle(Camera2dBundle::default());
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: game_textures.mining_right.clone(),
-            transform: Transform{
-                translation: Vec3::new(0., 0., 1.),
-                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                ..default()
-            },        
-            ..default()
-        })
-        .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: game_textures.blocking.clone(),
-            transform: Transform{
-                translation: Vec3::new(100., 0., 1.),
-                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                ..default()
-            },     
-            ..default()
-        })
-        .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
+    // commands
+    //     .spawn_bundle(SpriteSheetBundle {
+    //         texture_atlas: game_textures.mining_right.clone(),
+    //         transform: Transform{
+    //             translation: Vec3::new(0., 0., 1.),
+    //             scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+    //             ..default()
+    //         },        
+    //         ..default()
+    //     })
+    //     .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
+    // commands
+    //     .spawn_bundle(SpriteSheetBundle {
+    //         texture_atlas: game_textures.blocking.clone(),
+    //         transform: Transform{
+    //             translation: Vec3::new(100., 0., 1.),
+    //             scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+    //             ..default()
+    //         },     
+    //         ..default()
+    //     })
+    //     .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
 }
 
 #[derive(Component)]
