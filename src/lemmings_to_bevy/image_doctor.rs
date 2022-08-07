@@ -76,6 +76,13 @@ pub fn doctor_level_rating(original: &Image) -> Image {
     remove_rect(23, 26, 80, 27, &mut doctored, RectRemovalSource::TopRight); // "FUN".
     doctored
 }
+pub fn doctor_exit_to_dos(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    remove_rect(10, 19, 19, 20, &mut doctored, RectRemovalSource::TopRight);
+    remove_rect(8, 21, 2, 11, &mut doctored, RectRemovalSource::TopRight);
+    remove_rect(9, 20, 1, 1, &mut doctored, RectRemovalSource::TopRight);
+    doctored
+}
 
 enum RectRemovalSource {
     TopLeft,

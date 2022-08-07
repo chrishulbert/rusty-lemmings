@@ -172,6 +172,7 @@ fn load_lemmings_textures_startup(
     let f3 = doctor_f3(&game.main.main_menu.f3);
     let f4 = doctor_f4(&game.main.main_menu.f4);
     let level_rating = doctor_level_rating(&game.main.main_menu.level_rating);
+    let exit_to_dos = doctor_exit_to_dos(&game.main.main_menu.exit_to_dos);
     let mayhem = doctor_skill(&game.main.main_menu.mayhem);
     let taxing = doctor_skill(&game.main.main_menu.taxing);
     let tricky = doctor_skill(&game.main.main_menu.tricky);
@@ -195,7 +196,7 @@ fn load_lemmings_textures_startup(
         f3: make_image(&f3, &mut images, true),
         f4: make_image(&f4, &mut images, true),
         level_rating: make_image(&level_rating, &mut images, true),
-        exit_to_dos: make_image(&game.main.main_menu.exit_to_dos, &mut images, true),
+        exit_to_dos: make_image(&exit_to_dos, &mut images, true),
         music_note: make_image(&game.main.main_menu.music_note, &mut images, true),
         fx: make_image(&game.main.main_menu.fx, &mut images, true),
         blink1: make_atlas_from_animation(&game.main.main_menu.blink1, &mut images, &mut texture_atlases, false),
