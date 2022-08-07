@@ -178,14 +178,15 @@ fn load_lemmings_textures_startup(
     let tricky = doctor_skill(&game.main.main_menu.tricky);
     let fun = doctor_skill(&game.main.main_menu.fun);
 
-    {
-    let data = crate::lemmings::png::png_data(game.main.main_menu.level_rating.width as u32, game.main.main_menu.level_rating.height as u32, &game.main.main_menu.level_rating.bitmap);
-    std::fs::write("level_rating.original.png", &data).unwrap();
-}
-{
-    let data = crate::lemmings::png::png_data(level_rating.width as u32, level_rating.height as u32, &level_rating.bitmap);
-    std::fs::write("level_rating.doctored.png", &data).unwrap();
-}
+    // For inspecting the images conveniently:
+    // {
+    //     let data = crate::lemmings::png::png_data(game.main.main_menu.exit_to_dos.width as u32, game.main.main_menu.exit_to_dos.height as u32, &game.main.main_menu.exit_to_dos.bitmap);
+    //     std::fs::write("exit_to_dos.original.png", &data).unwrap();
+    // }
+    // {
+    //     let data = crate::lemmings::png::png_data(exit_to_dos.width as u32, exit_to_dos.height as u32, &exit_to_dos.bitmap);
+    //     std::fs::write("exit_to_dos.doctored.png", &data).unwrap();
+    // }
     
 	let game_textures = GameTextures {
         // Menu:
