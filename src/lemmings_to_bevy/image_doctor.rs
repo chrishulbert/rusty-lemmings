@@ -70,6 +70,12 @@ pub fn doctor_f4(original: &Image) -> Image {
     remove_rect(10, 19, 8, 1, &mut doctored, RectRemovalSource::BottomLeftDown1); // Hand outline.
     doctored
 }
+pub fn doctor_level_rating(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    remove_rect(12, 22, 21, 26, &mut doctored, RectRemovalSource::TopRight); // Arrows.
+    remove_rect(23, 26, 80, 27, &mut doctored, RectRemovalSource::TopRight); // "FUN".
+    doctored
+}
 
 enum RectRemovalSource {
     TopLeft,

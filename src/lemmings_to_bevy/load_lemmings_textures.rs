@@ -171,18 +171,19 @@ fn load_lemmings_textures_startup(
     let f2 = doctor_f2(&game.main.main_menu.f2);
     let f3 = doctor_f3(&game.main.main_menu.f3);
     let f4 = doctor_f4(&game.main.main_menu.f4);
+    let level_rating = doctor_level_rating(&game.main.main_menu.level_rating);
     let mayhem = doctor_skill(&game.main.main_menu.mayhem);
     let taxing = doctor_skill(&game.main.main_menu.taxing);
     let tricky = doctor_skill(&game.main.main_menu.tricky);
     let fun = doctor_skill(&game.main.main_menu.fun);
 
     {
-    let data = crate::lemmings::png::png_data(game.main.main_menu.f4.width as u32, game.main.main_menu.f4.height as u32, &game.main.main_menu.f4.bitmap);
-    std::fs::write("f4.original.png", &data).unwrap();
+    let data = crate::lemmings::png::png_data(game.main.main_menu.level_rating.width as u32, game.main.main_menu.level_rating.height as u32, &game.main.main_menu.level_rating.bitmap);
+    std::fs::write("level_rating.original.png", &data).unwrap();
 }
 {
-    let data = crate::lemmings::png::png_data(f4.width as u32, f4.height as u32, &f4.bitmap);
-    std::fs::write("f4.doctored.png", &data).unwrap();
+    let data = crate::lemmings::png::png_data(level_rating.width as u32, level_rating.height as u32, &level_rating.bitmap);
+    std::fs::write("level_rating.doctored.png", &data).unwrap();
 }
     
 	let game_textures = GameTextures {
@@ -193,7 +194,7 @@ fn load_lemmings_textures_startup(
         f2: make_image(&f2, &mut images, true),
         f3: make_image(&f3, &mut images, true),
         f4: make_image(&f4, &mut images, true),
-        level_rating: make_image(&game.main.main_menu.level_rating, &mut images, true),
+        level_rating: make_image(&level_rating, &mut images, true),
         exit_to_dos: make_image(&game.main.main_menu.exit_to_dos, &mut images, true),
         music_note: make_image(&game.main.main_menu.music_note, &mut images, true),
         fx: make_image(&game.main.main_menu.fx, &mut images, true),
