@@ -60,6 +60,17 @@ pub fn doctor_f3(original: &Image) -> Image {
     doctored
 }
 
+pub fn doctor_f4(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    remove_rect(8, 21, 21, 10, &mut doctored, RectRemovalSource::TopRight); // Most of F4.
+    remove_rect(9, 20, 19, 1, &mut doctored, RectRemovalSource::TopRight); // Second top row.
+    remove_rect(10, 19, 17, 1, &mut doctored, RectRemovalSource::TopRight); // Top row.
+    remove_rect(8, 21, 1, 2, &mut doctored, RectRemovalSource::BottomLeftDown1); // Hand outline.
+    remove_rect(9, 20, 1, 1, &mut doctored, RectRemovalSource::BottomLeftDown1); // Hand outline.
+    remove_rect(10, 19, 8, 1, &mut doctored, RectRemovalSource::BottomLeftDown1); // Hand outline.
+    doctored
+}
+
 enum RectRemovalSource {
     TopLeft,
     TopRight,
