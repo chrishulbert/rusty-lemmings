@@ -2,7 +2,7 @@
 
 use crate::lemmings::models::Image;
 
-pub fn doctor_background(original: &Image) -> Image {
+pub fn doctor_clear_to_black(original: &Image) -> Image {
     let mut doctored = original.clone();
     for i in 0..doctored.bitmap.len() {
         let a = doctored.bitmap[i] as u8;
@@ -23,16 +23,30 @@ pub fn doctor_f1(original: &Image) -> Image {
     doctored
 }
 
-enum RectRemovalSource {
-    TopRight,
-    TopLeft,
+pub fn doctor_f2(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    remove_rect(23, 27, 74, 27, &mut doctored, RectRemovalSource::TopRight); // Main area.
+    remove_rect(8, 19, 21, 11, &mut doctored, RectRemovalSource::TopRight); // F2.
+    remove_rect(9, 18, 19, 1, &mut doctored, RectRemovalSource::TopRight); // Top of F2.
+    remove_rect(8, 19, 1, 1, &mut doctored, RectRemovalSource::TopLeft); // Finish the top left triangle.
+    remove_rect(8, 20, 1, 2, &mut doctored, RectRemovalSource::BottomLeft); // Border around triangle.
+    remove_rect(9, 19, 1, 2, &mut doctored, RectRemovalSource::BottomLeft); // Border around triangle.
+    doctored
 }
+
+enum RectRemovalSource {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+}
+
 
 // Picks up the colour from the top right + 1.
 fn remove_rect(x: usize, y: usize, width: usize, height: usize, image: &mut Image, source: RectRemovalSource) {
     let fill: u32 = match source {
-        RectRemovalSource::TopLeft => image.bitmap[y * image.width + x - 1],
         RectRemovalSource::TopRight => image.bitmap[y * image.width + x + width],
+        RectRemovalSource::TopLeft => image.bitmap[y * image.width + x - 1],
+        RectRemovalSource::BottomLeft => image.bitmap[(y + height - 1) * image.width + x - 1],
     };
     for inside_y in 0..height {
         let mut offset = (y + inside_y) * image.width + x;

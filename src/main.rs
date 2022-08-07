@@ -181,7 +181,7 @@ fn spawn_menu_logo(
 
         commands
         .spawn_bundle(SpriteBundle {
-            texture: game_textures.f1.clone(),
+            texture: game_textures.f2.clone(),
             transform: Transform{
                 translation: Vec3::new(0., 0., 2.),
                 scale,

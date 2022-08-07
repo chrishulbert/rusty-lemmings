@@ -166,17 +166,23 @@ fn load_lemmings_textures_startup(
     let game = games.lemmings.unwrap();
 
     // Some of them need doctoring a bit.
-    let background = doctor_background(&&game.main.main_menu.background);
+    let background = doctor_clear_to_black(&game.main.main_menu.background);
     let f1 = doctor_f1(&game.main.main_menu.f1);
-    // let data = crate::lemmings::png::png_data(doctored.width as u32, doctored.height as u32, &doctored.bitmap);
-    // std::fs::write("f1.doctored.png", &data).unwrap();
+    let f2 = doctor_f2(&game.main.main_menu.f2);
+    let mayhem = doctor_clear_to_black(&game.main.main_menu.mayhem);
+    let taxing = doctor_clear_to_black(&game.main.main_menu.taxing);
+    let tricky = doctor_clear_to_black(&game.main.main_menu.tricky);
+    let fun = doctor_clear_to_black(&game.main.main_menu.fun);
+
+    let data = crate::lemmings::png::png_data(game.main.main_menu.f2.width as u32, game.main.main_menu.f2.height as u32, &game.main.main_menu.f2.bitmap);
+    std::fs::write("f2.original.png", &data).unwrap();
     
 	let game_textures = GameTextures {
         // Menu:
         background: make_image(&background, &mut images, false),
         logo: make_image(&game.main.main_menu.logo, &mut images, true),
         f1: make_image(&f1, &mut images, true),
-        f2: make_image(&game.main.main_menu.f2, &mut images, true),
+        f2: make_image(&f2, &mut images, true),
         f3: make_image(&game.main.main_menu.f3, &mut images, true),
         f4: make_image(&game.main.main_menu.f4, &mut images, true),
         level_rating: make_image(&game.main.main_menu.level_rating, &mut images, true),
@@ -193,10 +199,10 @@ fn load_lemmings_textures_startup(
         left_scroller: make_atlas_from_animation(&game.main.main_menu.left_scroller, &mut images, &mut texture_atlases, true),
         right_scroller: make_atlas_from_animation(&game.main.main_menu.right_scroller, &mut images, &mut texture_atlases, true),
         reel: make_image(&game.main.main_menu.reel, &mut images, true),
-        mayhem: make_image(&game.main.main_menu.mayhem, &mut images, true),
-        taxing: make_image(&game.main.main_menu.taxing, &mut images, true),
-        tricky: make_image(&game.main.main_menu.tricky, &mut images, true),
-        fun: make_image(&game.main.main_menu.fun, &mut images, true),
+        mayhem: make_image(&mayhem, &mut images, true),
+        taxing: make_image(&taxing, &mut images, true),
+        tricky: make_image(&tricky, &mut images, true),
+        fun: make_image(&fun, &mut images, true),
     
         // Lemmings:
         walking_right: make_atlas_from_animation(&game.main.lemming_animations.walking_right, &mut images, &mut texture_atlases, true),
