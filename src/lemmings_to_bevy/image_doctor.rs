@@ -2,6 +2,21 @@
 
 use crate::lemmings::models::Image;
 
+// Turn transparent to black, and remove the main colour.
+pub fn doctor_skill(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    let to_remove = doctored.bitmap[0];
+    for i in 0..doctored.bitmap.len() {
+        let c = doctored.bitmap[i];
+        if c == to_remove {
+            doctored.bitmap[i] = 0; // Transparent.
+        } else if (doctored.bitmap[i] as u8) == 0 {
+            doctored.bitmap[i] = 0xff; // Black.
+        }
+    }
+    doctored
+}
+
 pub fn doctor_clear_to_black(original: &Image) -> Image {
     let mut doctored = original.clone();
     for i in 0..doctored.bitmap.len() {
@@ -34,10 +49,22 @@ pub fn doctor_f2(original: &Image) -> Image {
     doctored
 }
 
+pub fn doctor_f3(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    remove_rect(7, 21, 21, 10, &mut doctored, RectRemovalSource::TopRight); // Most of F3.
+    remove_rect(8, 20, 20, 1, &mut doctored, RectRemovalSource::TopRight); // Second top row.
+    remove_rect(9, 19, 20, 1, &mut doctored, RectRemovalSource::TopRight); // Top row.
+    remove_rect(7, 21, 1, 3, &mut doctored, RectRemovalSource::BottomLeftDown1); // Outline of hand.
+    remove_rect(8, 20, 1, 1, &mut doctored, RectRemovalSource::BottomLeftDown1); // Outline of hand.
+    remove_rect(9, 19, 9, 1, &mut doctored, RectRemovalSource::BottomLeftDown1); // Outline of hand.
+    doctored
+}
+
 enum RectRemovalSource {
     TopLeft,
     TopRight,
     BottomLeft,
+    BottomLeftDown1,
 }
 
 
@@ -47,6 +74,7 @@ fn remove_rect(x: usize, y: usize, width: usize, height: usize, image: &mut Imag
         RectRemovalSource::TopRight => image.bitmap[y * image.width + x + width],
         RectRemovalSource::TopLeft => image.bitmap[y * image.width + x - 1],
         RectRemovalSource::BottomLeft => image.bitmap[(y + height - 1) * image.width + x - 1],
+        RectRemovalSource::BottomLeftDown1 => image.bitmap[(y + height) * image.width + x - 1],
     };
     for inside_y in 0..height {
         let mut offset = (y + inside_y) * image.width + x;
