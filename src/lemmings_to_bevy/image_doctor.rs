@@ -2,6 +2,17 @@
 
 use crate::lemmings::models::Image;
 
+pub fn doctor_background(original: &Image) -> Image {
+    let mut doctored = original.clone();
+    for i in 0..doctored.bitmap.len() {
+        let a = doctored.bitmap[i] as u8;
+        if a == 0 {
+            doctored.bitmap[i] = 0xff; // Black.
+        }
+    }
+    doctored
+}
+
 pub fn doctor_f1(original: &Image) -> Image {
     let mut doctored = original.clone();
     remove_rect(7, 26, 94, 25, &mut doctored, RectRemovalSource::TopRight); // Main area.

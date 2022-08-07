@@ -3,6 +3,7 @@ use crate::lemmings::*;
 use crate::lemmings::models::Animation;
 use crate::xbrz;
 use crate::{SCALE, SCALE_A, SCALE_B};
+use crate::lemmings_to_bevy::image_doctor::*;
 
 pub struct LoadLemmingsTexturesPlugin;
 
@@ -165,13 +166,14 @@ fn load_lemmings_textures_startup(
     let game = games.lemmings.unwrap();
 
     // Some of them need doctoring a bit.
-    let f1 = crate::lemmings_to_bevy::image_doctor::doctor_f1(&game.main.main_menu.f1);
+    let background = doctor_background(&&game.main.main_menu.background);
+    let f1 = doctor_f1(&game.main.main_menu.f1);
     // let data = crate::lemmings::png::png_data(doctored.width as u32, doctored.height as u32, &doctored.bitmap);
     // std::fs::write("f1.doctored.png", &data).unwrap();
     
 	let game_textures = GameTextures {
         // Menu:
-        background: make_image(&game.main.main_menu.background, &mut images, false),
+        background: make_image(&background, &mut images, false),
         logo: make_image(&game.main.main_menu.logo, &mut images, true),
         f1: make_image(&f1, &mut images, true),
         f2: make_image(&game.main.main_menu.f2, &mut images, true),
