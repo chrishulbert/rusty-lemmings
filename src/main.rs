@@ -90,45 +90,45 @@ fn startup(
     //     .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
 }
 
-#[derive(Component)]
-struct Person;
+// #[derive(Component)]
+// struct Person;
 
-#[derive(Component)]
-struct Name(String);
+// #[derive(Component)]
+// struct Name(String);
 
-fn add_people(mut commands: Commands) {
-    commands.spawn().insert(Person).insert(Name("Elaina Proctor".to_string()));
-    commands.spawn().insert(Person).insert(Name("Renzo Hume".to_string()));
-    commands.spawn().insert(Person).insert(Name("Zayna Nieves".to_string()));
-}
+// fn add_people(mut commands: Commands) {
+//     commands.spawn().insert(Person).insert(Name("Elaina Proctor".to_string()));
+//     commands.spawn().insert(Person).insert(Name("Renzo Hume".to_string()));
+//     commands.spawn().insert(Person).insert(Name("Zayna Nieves".to_string()));
+// }
 
-struct GreetTimer(Timer);
+// struct GreetTimer(Timer);
 
-fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
-    if timer.0.tick(time.delta()).just_finished() {
-        for name in query.iter() {
-            println!("hello {}!", name.0);
-        }
-    }
-}
+// fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
+//     if timer.0.tick(time.delta()).just_finished() {
+//         for name in query.iter() {
+//             println!("hello {}!", name.0);
+//         }
+//     }
+// }
 
-pub struct HelloPlugin;
+// pub struct HelloPlugin;
 
-impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            .insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-            .add_startup_system(add_people)
-            .add_system(greet_people);
-    }
-}
+// impl Plugin for HelloPlugin {
+//     fn build(&self, app: &mut App) {
+//         app
+//             .insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
+//             .add_startup_system(add_people)
+//             .add_system(greet_people);
+//     }
+// }
 
 fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
         .add_state(GameState::MainMenu)
-        .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(WindowDescriptor {
             title: "Rusty Lemmings".to_string(),
             width: RES_W as f32,
@@ -138,10 +138,9 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_startup_system(startup)
-        .add_plugin(HelloPlugin)
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
         .add_plugin(main_menu::MainMenuPlugin)
+        .add_startup_system(startup)
         .add_system(animate_sprite)
         .run();
 }
