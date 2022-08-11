@@ -16,7 +16,7 @@ impl Plugin for LevelSelectionMenuPlugin {
                 .with_system(spawn_menu_background)
         );
         app.add_system_set(
-            SystemSet::on_update(GameState::MainMenu)
+            SystemSet::on_update(GameState::LevelSelectionMenu)
                 // .with_system(update)
                 .with_system(button_highlight_system)
         );
@@ -72,6 +72,7 @@ fn spawn_level_button(parent: &mut ChildBuilder, game_textures: Res<GameTextures
                 ..default()
             },
             color: NORMAL_BUTTON.into(),
+            focus_policy: bevy::ui::FocusPolicy::Pass,
             ..default()
         }).with_children(|parent| {
             spawn_text("The quick brown fox!", parent, game_textures);
