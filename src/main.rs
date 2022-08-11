@@ -4,6 +4,8 @@ mod lemmings;
 mod lemmings_to_bevy;
 mod xbrz;
 mod main_menu;
+mod level_selection_menu;
+mod menu_common;
 
 use bevy::{
     prelude::*,
@@ -38,6 +40,7 @@ const TEXTURE_SCALE: f32 = POINT_SIZE / (SCALE as f32);
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
     MainMenu,
+    LevelSelectionMenu,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -63,7 +66,7 @@ fn animate_sprite(
 
 fn startup(
     mut commands: Commands,
-    game_textures: Res<GameTextures>,
+    // game_textures: Res<GameTextures>,
 ) {
     commands.spawn_bundle(Camera2dBundle::default());
     // commands
@@ -127,7 +130,7 @@ fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
-        .add_state(GameState::MainMenu)
+        .add_state(GameState::LevelSelectionMenu)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(WindowDescriptor {
             title: "Rusty Lemmings".to_string(),
@@ -140,6 +143,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
         .add_plugin(main_menu::MainMenuPlugin)
+        .add_plugin(level_selection_menu::LevelSelectionMenuPlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
         .run();

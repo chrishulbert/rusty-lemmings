@@ -161,7 +161,7 @@ fn load_lemmings_textures_startup(
 	mut images: ResMut<Assets<Image>>,
 	mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    // TODO multithread this!
+    // TODO multithread this! https://doc.rust-lang.org/book/ch16-02-message-passing.html
     let games = loader::load().unwrap();
     let game = games.lemmings.unwrap();
 
@@ -187,6 +187,10 @@ fn load_lemmings_textures_startup(
     //     let data = crate::lemmings::png::png_data(exit_to_dos.width as u32, exit_to_dos.height as u32, &exit_to_dos.bitmap);
     //     std::fs::write("exit_to_dos.doctored.png", &data).unwrap();
     // }
+
+    let menu_font: Vec<Handle<Image>> = game.main.main_menu.menu_font.characters.iter().map(|c|{
+        make_image(c, &mut images, true)
+    }).collect();
     
 	let game_textures = GameTextures {
         // Menu:
@@ -214,6 +218,7 @@ fn load_lemmings_textures_startup(
         taxing: make_image(&taxing, &mut images, true),
         tricky: make_image(&tricky, &mut images, true),
         fun: make_image(&fun, &mut images, true),
+        menu_font,
     
         // Lemmings:
         walking_right: make_atlas_from_animation(&game.main.lemming_animations.walking_right, &mut images, &mut texture_atlases, true),
@@ -278,7 +283,7 @@ pub struct GameTextures {
     pub taxing: Handle<Image>,
     pub tricky: Handle<Image>,
     pub fun: Handle<Image>,
-    //pub menu_font: MenuFont,
+    pub menu_font: Vec<Handle<Image>>, // '!'(33) - '~'(126), in ascii order. Not a texture atlas for UI's sake.
 
     // Lemmings:
     pub walking_right: Handle<TextureAtlas>,

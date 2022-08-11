@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use crate::GameTextures;
 use crate::GameState;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
+use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
 
 #[derive(Component)]
 struct BlinkAnimationTimer {
@@ -48,78 +49,44 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_enter(GameState::MainMenu)
-                .with_system(enter)
+                // .with_system(enter)
                 .with_system(spawn_menu_logo)
                 .with_system(spawn_menu_buttons)                
-                .with_system(spawn_menu_background),
+                .with_system(spawn_menu_background)
         )
         .add_system_set(
             SystemSet::on_update(GameState::MainMenu)
-                .with_system(update)
-                //.with_system(button_system)
-                .with_system(animate_blinking_sprites),
+                // .with_system(update)
+                .with_system(button_highlight_system)
+                .with_system(animate_blinking_sprites)
         )
         .add_system_set(
             SystemSet::on_exit(GameState::MainMenu)
-                .with_system(exit),
-        )
-        .add_system(button_system);
+                // .with_system(exit)
+        );
 	}
 }
 
-fn enter(
-    mut commands: Commands,
-    game_textures: Res<GameTextures>,
-) {
+// fn enter(
+//     mut commands: Commands,
+//     game_textures: Res<GameTextures>,
+// ) {
 
-}
+// }
 
-fn update(
-    mut commands: Commands,
-    game_textures: Res<GameTextures>,
-) {
+// fn update(
+//     mut commands: Commands,
+//     game_textures: Res<GameTextures>,
+// ) {
 
-}
+// }
 
-fn exit(
-    mut commands: Commands,
-    game_textures: Res<GameTextures>,
-) {
+// fn exit(
+//     mut commands: Commands,
+//     game_textures: Res<GameTextures>,
+// ) {
 
-}
-
-const NORMAL_BUTTON: Color = Color::NONE;
-const HOVERED_BUTTON: Color = Color::rgba(0., 0., 0., 0.5);
-const PRESSED_BUTTON: Color = Color::rgba(1., 1., 1., 0.02);
-
-fn spawn_menu_background(
-    mut commands: Commands,
-    game_textures: Res<GameTextures>,
-) {
-    const BG_WIDTH: f32 = 320.; // Texture size in original game pixels (points).
-    const BG_HEIGHT: f32 = 104.;
-    fn spawn(commands: &mut Commands, game_textures: &Res<GameTextures>, x: f32, y: f32) {
-        commands
-        .spawn_bundle(SpriteBundle {
-            texture: game_textures.background.clone(),
-            transform: Transform{
-                translation: Vec3::new(x * POINT_SIZE, y * POINT_SIZE, 0.),
-                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                ..default()
-            },        
-            ..default()
-        });
-    }
-    spawn(&mut commands, &game_textures, BG_WIDTH, BG_HEIGHT);
-    spawn(&mut commands, &game_textures, 0., BG_HEIGHT);
-    spawn(&mut commands, &game_textures, -BG_WIDTH, BG_HEIGHT);
-    spawn(&mut commands, &game_textures, BG_WIDTH, 0.);
-    spawn(&mut commands, &game_textures, 0., 0.);
-    spawn(&mut commands, &game_textures, -BG_WIDTH, 0.);
-    spawn(&mut commands, &game_textures, BG_WIDTH, -BG_HEIGHT);
-    spawn(&mut commands, &game_textures, 0., -BG_HEIGHT);
-    spawn(&mut commands, &game_textures, -BG_WIDTH, -BG_HEIGHT);
-}
+// }
 
 fn spawn_menu_logo(
     mut commands: Commands,
@@ -206,17 +173,6 @@ fn spawn_menu_buttons(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
 ) {
-    let scale = Vec3::new(TEXTURE_SCALE / 2., TEXTURE_SCALE / 2., 1.); // Logo is svga, so halve everything.
-        // .spawn_bundle(SpriteBundle {
-        //     texture: game_textures.f4_settings.clone(),
-        //     transform: Transform{
-        //         translation: Vec3::new(0., -50. * POINT_SIZE, 2.),
-        //         scale,
-        //         ..default()
-        //     },        
-        //     ..default()
-        // });
-
     // Why do UI sizes need to be halved? Is this a retina thing that'll break on non-retina?
     commands.spawn_bundle(NodeBundle{
         style: Style{
@@ -451,37 +407,8 @@ fn spawn_menu_buttons(
                 size: Size::new(Val::Px(0.), Val::Px(100.0 * POINT_SIZE / 2.)),
                 ..default()
             },
-            color: PRESSED_BUTTON.into(),
+            color: NORMAL_BUTTON.into(),
             ..default()
         });
     });
-}
-
-fn button_system(
-    mut interaction_query: Query<
-        (&Interaction, &mut UiColor, &Children),
-        (Changed<Interaction>, With<Button>),
-    >,
-    // mut text_query: Query<&mut Text>,
-) {
-    for (interaction, mut color, children) in &mut interaction_query {
-        // let mut text = text_query.get_mut(children[0]).unwrap();
-        match *interaction {
-            Interaction::Clicked => {
-                // text.sections[0].value = "Press".to_string();
-                *color = PRESSED_BUTTON.into();
-                println!("Clicked!");
-            }
-            Interaction::Hovered => {
-                // text.sections[0].value = "Hover".to_string();
-                *color = HOVERED_BUTTON.into();
-                println!("Hovered!");
-            }
-            Interaction::None => {
-                // text.sections[0].value = "Button".to_string();
-                *color = NORMAL_BUTTON.into();
-                println!("No interaction!");
-            }
-        }
-    }
 }

@@ -5,15 +5,15 @@
     "tasks": [
         {
             "type": "cargo",
-            "subcommand": "build",
+            "command": "run",
             "problemMatcher": [
                 "$rustc"
             ],
+            "label": "rust: cargo run",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            },
-            "label": "Rust: cargo build"
+            }
         }
     ]
 }
