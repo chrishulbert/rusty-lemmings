@@ -3,7 +3,7 @@ use crate::{GameTextures, GameState, POINT_SIZE, GameSelection};
 use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
 use crate::lemmings::levels_per_game_and_skill::names_per_game_and_skill;
 
-pub struct MainMenuSkillSelection(isize);
+pub struct MainMenuSkillSelection(pub isize);
 
 pub struct LevelSelectionMenuPlugin;
 

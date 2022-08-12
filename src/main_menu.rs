@@ -1,8 +1,12 @@
 use bevy::prelude::*;
 use crate::GameTextures;
 use crate::GameState;
+use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
 use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
+
+#[derive(Component)]
+struct MainMenuComponent; // Marker component so the menu can be despawned.
 
 #[derive(Component)]
 struct BlinkAnimationTimer {
@@ -56,16 +60,50 @@ impl Plugin for MainMenuPlugin {
         )
         .add_system_set(
             SystemSet::on_update(GameState::MainMenu)
-                // .with_system(update)
+                .with_system(button_system)
                 .with_system(button_highlight_system)
                 .with_system(animate_blinking_sprites)
         )
         .add_system_set(
             SystemSet::on_exit(GameState::MainMenu)
-                // .with_system(exit)
+                .with_system(exit)
         );
 	}
 }
+
+#[derive(Component)]
+pub struct MainMenuSkillButton{
+    pub is_clicked: bool,
+    pub skill: isize,
+}
+
+pub fn button_system(
+    mut state: ResMut<State<GameState>>,
+    mut skill: ResMut<MainMenuSkillSelection>,
+    mut interaction_query: Query<
+        (&Interaction, &mut MainMenuSkillButton),
+        (Changed<Interaction>, With<Button>),
+    >,
+) {
+    for (interaction, mut skill_button) in &mut interaction_query {
+        match *interaction {
+            Interaction::Clicked => {
+                skill_button.is_clicked = true;
+            }
+            Interaction::Hovered => {
+                if skill_button.is_clicked { // Finished a click while inside.
+                    skill.0 = skill_button.skill;
+                    let _ = state.set(GameState::LevelSelectionMenu);
+                }
+                skill_button.is_clicked = false;
+            }
+            Interaction::None => {
+                skill_button.is_clicked = false; // They might have dragged outside while mousedown.
+            }
+        }
+    }
+}
+
 
 // fn enter(
 //     mut commands: Commands,
@@ -81,12 +119,14 @@ impl Plugin for MainMenuPlugin {
 
 // }
 
-// fn exit(
-//     mut commands: Commands,
-//     game_textures: Res<GameTextures>,
-// ) {
-
-// }
+fn exit(
+    mut commands: Commands,
+    menu_components: Query<Entity, With<MainMenuComponent>>,
+) {
+    for e in menu_components.iter() {
+        commands.entity(e).despawn_recursive();
+    }
+}
 
 fn spawn_menu_logo(
     mut commands: Commands,
@@ -103,7 +143,7 @@ fn spawn_menu_logo(
                 ..default()
             },        
             ..default()
-        });
+        }).insert(MainMenuComponent);
 
     commands
         .spawn_bundle(SpriteSheetBundle {
@@ -114,12 +154,11 @@ fn spawn_menu_logo(
                 ..default()
             },        
             ..default()
-        })
-        .insert(BlinkAnimationTimer{
+        }).insert(BlinkAnimationTimer{
             timer: Timer::from_seconds(FRAME_DURATION, true),
             index: -15,
             dwell: 30,
-        });
+        }).insert(MainMenuComponent);
 
     commands
         .spawn_bundle(SpriteSheetBundle {
@@ -130,12 +169,11 @@ fn spawn_menu_logo(
                 ..default()
             },        
             ..default()
-        })
-        .insert(BlinkAnimationTimer{
+        }).insert(BlinkAnimationTimer{
             timer: Timer::from_seconds(FRAME_DURATION, true),
             index: -22,
             dwell: 45,
-        });
+        }).insert(MainMenuComponent);
 
     commands
         .spawn_bundle(SpriteSheetBundle {
@@ -146,12 +184,12 @@ fn spawn_menu_logo(
                 ..default()
             },        
             ..default()
-        })
-        .insert(BlinkAnimationTimer{
+        }).insert(BlinkAnimationTimer{
             timer: Timer::from_seconds(FRAME_DURATION, true),
             index: -30,
             dwell: 37,
-        });
+        }).insert(MainMenuComponent);
+
     commands
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: game_textures.blink3.clone(),
@@ -161,12 +199,11 @@ fn spawn_menu_logo(
                 ..default()
             },        
             ..default()
-        })
-        .insert(BlinkAnimationTimer{
+        }).insert(BlinkAnimationTimer{
             timer: Timer::from_seconds(FRAME_DURATION, true),
             index: -30,
             dwell: 37,
-        });
+        }).insert(MainMenuComponent);
 }
 
 fn spawn_menu_buttons(
@@ -185,7 +222,8 @@ fn spawn_menu_buttons(
         transform: Transform::from_xyz(0., 0., 2.),
         color: NORMAL_BUTTON.into(),
         ..default()
-    }).with_children(|outermost_parent| {
+    }).insert(MainMenuComponent)
+    .with_children(|outermost_parent| {
         outermost_parent.spawn_bundle(NodeBundle{
             style: Style{
                 margin: UiRect::all(Val::Auto), // Center contents.
@@ -260,6 +298,10 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
+            .insert(MainMenuSkillButton{
+                is_clicked: false,
+                skill: 0, // Fun.
+            })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
                     style: Style {
@@ -297,6 +339,10 @@ fn spawn_menu_buttons(
                 },
                 color: NORMAL_BUTTON.into(),
                 ..default()
+            })
+            .insert(MainMenuSkillButton{
+                is_clicked: false,
+                skill: 1,
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
@@ -336,6 +382,10 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
+            .insert(MainMenuSkillButton{
+                is_clicked: false,
+                skill: 2,
+            })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
                     style: Style {
@@ -373,6 +423,10 @@ fn spawn_menu_buttons(
                 },
                 color: NORMAL_BUTTON.into(),
                 ..default()
+            })
+            .insert(MainMenuSkillButton{
+                is_clicked: false,
+                skill: 3,
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
