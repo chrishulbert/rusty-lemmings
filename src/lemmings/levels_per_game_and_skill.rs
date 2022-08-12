@@ -216,7 +216,7 @@ Looks a Bit Nippy Out There
 LOoK BeFoRe YoU LeAp!
 ";
 
-fn names_per_game_and_skill(game_id: &str, skill: isize) -> &'static str {
+fn unsplit_names_per_game_and_skill(game_id: &str, skill: isize) -> &'static str {
     match (game_id, skill) {
         ("lemmings", 0) => LEMMINGS_1_FUN,
         ("lemmings", 1) => LEMMINGS_1_TRICKY,
@@ -231,10 +231,15 @@ fn names_per_game_and_skill(game_id: &str, skill: isize) -> &'static str {
     }
 }
 
+pub fn names_per_game_and_skill(game_id: &str, skill: isize) -> Vec<String> {
+    let names = unsplit_names_per_game_and_skill(game_id, skill);
+    names.split("\n").filter(|s|!s.is_empty()).map(|s|{s.to_owned()}).collect()
+}
+        
 pub fn levels_per_game_and_skill(game_id: &str, skill: isize, level_map: &HashMap<i32, Level>) -> Vec<Level> {
     let mut levels: Vec<Level> = Vec::new();
     let names = names_per_game_and_skill(game_id, skill);
-    for level_name in names.split("\n") {
+    for level_name in names {
         for (_, level) in level_map {
             if level.name == level_name {
                 levels.push(level.clone());

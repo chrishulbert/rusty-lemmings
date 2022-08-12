@@ -126,11 +126,14 @@ fn startup(
 //     }
 // }
 
+pub struct GameSelection(String); // Lemmings vs ohnomore vs christmas etc.
+
 fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
         .add_state(GameState::LevelSelectionMenu)
+        .insert_resource(GameSelection("lemmings".to_string()))
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(WindowDescriptor {
             title: "Rusty Lemmings".to_string(),
