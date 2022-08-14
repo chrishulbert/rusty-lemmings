@@ -4,6 +4,7 @@ use crate::GameState;
 use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
 use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
+use bevy::app::AppExit;
 
 #[derive(Component)]
 struct MainMenuComponent; // Marker component so the menu can be despawned.
@@ -71,34 +72,51 @@ impl Plugin for MainMenuPlugin {
 	}
 }
 
+pub enum MainMenuButtonAction {
+    Skill(isize),
+    Settings,
+    Exit,
+}
+
 #[derive(Component)]
-pub struct MainMenuSkillButton{
+pub struct MainMenuButton{
     pub is_clicked: bool,
-    pub skill: isize,
+    pub action: MainMenuButtonAction,
 }
 
 pub fn button_system(
     mut state: ResMut<State<GameState>>,
     mut skill: ResMut<MainMenuSkillSelection>,
+    mut exit: EventWriter<AppExit>,
     mut interaction_query: Query<
-        (&Interaction, &mut MainMenuSkillButton),
+        (&Interaction, &mut MainMenuButton),
         (Changed<Interaction>, With<Button>),
     >,
 ) {
-    for (interaction, mut skill_button) in &mut interaction_query {
+    for (interaction, mut button) in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
-                skill_button.is_clicked = true;
+                button.is_clicked = true;
             }
             Interaction::Hovered => {
-                if skill_button.is_clicked { // Finished a click while inside.
-                    skill.0 = skill_button.skill;
-                    let _ = state.set(GameState::LevelSelectionMenu);
+                if button.is_clicked { // Finished a click while inside.
+                    match button.action {
+                        MainMenuButtonAction::Skill(skill_level) => {
+                            skill.0 = skill_level;
+                            let _ = state.set(GameState::LevelSelectionMenu);        
+                        },
+                        MainMenuButtonAction::Settings => {
+                            println!("Settings TODO");
+                        },
+                        MainMenuButtonAction::Exit => {
+                            exit.send(AppExit);
+                        },
+                    }
                 }
-                skill_button.is_clicked = false;
+                button.is_clicked = false;
             }
             Interaction::None => {
-                skill_button.is_clicked = false; // They might have dragged outside while mousedown.
+                button.is_clicked = false; // They might have dragged outside while mousedown.
             }
         }
     }
@@ -243,6 +261,10 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
+            .insert(MainMenuButton{
+                is_clicked: false,
+                action: MainMenuButtonAction::Exit,
+            })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
                     style: Style {
@@ -264,6 +286,10 @@ fn spawn_menu_buttons(
                 },
                 color: NORMAL_BUTTON.into(),
                 ..default()
+            })
+            .insert(MainMenuButton{
+                is_clicked: false,
+                action: MainMenuButtonAction::Settings,
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
@@ -298,9 +324,9 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
-            .insert(MainMenuSkillButton{
+            .insert(MainMenuButton{
                 is_clicked: false,
-                skill: 0, // Fun.
+                action: MainMenuButtonAction::Skill(0),
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
@@ -340,9 +366,9 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
-            .insert(MainMenuSkillButton{
+            .insert(MainMenuButton{
                 is_clicked: false,
-                skill: 1,
+                action: MainMenuButtonAction::Skill(1),
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
@@ -382,9 +408,9 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
-            .insert(MainMenuSkillButton{
+            .insert(MainMenuButton{
                 is_clicked: false,
-                skill: 2,
+                action: MainMenuButtonAction::Skill(2),
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
@@ -424,9 +450,9 @@ fn spawn_menu_buttons(
                 color: NORMAL_BUTTON.into(),
                 ..default()
             })
-            .insert(MainMenuSkillButton{
+            .insert(MainMenuButton{
                 is_clicked: false,
-                skill: 3,
+                action: MainMenuButtonAction::Skill(3),
             })
             .with_children(|parent| {
                 parent.spawn_bundle(ImageBundle {
