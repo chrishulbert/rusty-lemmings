@@ -6,12 +6,14 @@ mod xbrz;
 mod main_menu;
 mod level_selection_menu;
 mod menu_common;
+mod fade_transition;
 
 use bevy::{
     prelude::*,
     window::PresentMode,
 };
 use lemmings_to_bevy::load_lemmings_textures::GameTextures;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 // Tested by watching frame-by-frame youtube captures.
 const FPS: f32 = 15.;
@@ -37,7 +39,7 @@ const ORIGINAL_GAME_H: usize = 200;
 const POINT_SIZE: f32 = (RES_H as f32) / (ORIGINAL_GAME_H as f32); // How many bevy transform values to get one 'point' (pixel) in the original game.
 const TEXTURE_SCALE: f32 = POINT_SIZE / (SCALE as f32);
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
     MainMenu,
     LevelSelectionMenu,
@@ -145,9 +147,11 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
+        .add_plugin(fade_transition::FadePlugin)
         .add_plugin(main_menu::MainMenuPlugin)
         .add_plugin(level_selection_menu::LevelSelectionMenuPlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
+        .add_plugin(WorldInspectorPlugin::new())
         .run();
 }

@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 # bevy = "0.8" # For release.
 bevy = { version = "0.8.0", features = ["dynamic"] } # For development, see: https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
+bevy-inspector-egui = "0.12.1"
 
 [workspace]
 resolver = "2" # Important! wgpu/Bevy needs this!

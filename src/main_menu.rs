@@ -1,10 +1,11 @@
 use bevy::prelude::*;
+use bevy::app::AppExit;
 use crate::GameTextures;
 use crate::GameState;
 use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
 use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
-use bevy::app::AppExit;
+use crate::fade_transition::create_fade;
 
 #[derive(Component)]
 struct MainMenuComponent; // Marker component so the menu can be despawned.
@@ -85,6 +86,8 @@ pub struct MainMenuButton{
 }
 
 pub fn button_system(
+    mut commands: Commands,
+    game_textures: Res<GameTextures>,
     mut state: ResMut<State<GameState>>,
     mut skill: ResMut<MainMenuSkillSelection>,
     mut exit: EventWriter<AppExit>,
@@ -103,7 +106,7 @@ pub fn button_system(
                     match button.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
-                            let _ = state.set(GameState::LevelSelectionMenu);        
+                            create_fade(&mut commands, GameState::LevelSelectionMenu, &game_textures);
                         },
                         MainMenuButtonAction::Settings => {
                             println!("Settings TODO");
