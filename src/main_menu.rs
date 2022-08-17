@@ -5,7 +5,7 @@ use crate::GameState;
 use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
 use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
-use crate::fade_transition::create_fade;
+use crate::fadeout::create_fadeout;
 
 #[derive(Component)]
 struct MainMenuComponent; // Marker component so the menu can be despawned.
@@ -106,7 +106,7 @@ pub fn button_system(
                     match button.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
-                            create_fade(&mut commands, GameState::LevelSelectionMenu, &game_textures);
+                            create_fadeout(&mut commands, Some(GameState::LevelSelectionMenu), &game_textures);
                         },
                         MainMenuButtonAction::Settings => {
                             println!("Settings TODO");
@@ -245,7 +245,7 @@ fn spawn_menu_buttons(
         ..default()
     }).insert(MainMenuComponent)
     .with_children(|outermost_parent| {
-        outermost_parent.spawn_bundle(NodeBundle{
+        outermost_parent.spawn_bundle(NodeBundle{ // Container for a row of buttons.
             style: Style{
                 margin: UiRect::all(Val::Auto), // Center contents.
                 justify_content: JustifyContent::Center,
@@ -307,7 +307,7 @@ fn spawn_menu_buttons(
             });
         });
 
-        outermost_parent.spawn_bundle(NodeBundle{
+        outermost_parent.spawn_bundle(NodeBundle{ // Container for a row of buttons.
             style: Style{
                 margin: UiRect::all(Val::Auto), // Center contents.
                 justify_content: JustifyContent::Center,

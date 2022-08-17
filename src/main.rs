@@ -6,7 +6,7 @@ mod xbrz;
 mod main_menu;
 mod level_selection_menu;
 mod menu_common;
-mod fade_transition;
+mod fadeout;
 
 use bevy::{
     prelude::*,
@@ -147,7 +147,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
-        .add_plugin(fade_transition::FadePlugin)
+        .add_plugin(fadeout::FadeoutPlugin)
         .add_plugin(main_menu::MainMenuPlugin)
         .add_plugin(level_selection_menu::LevelSelectionMenuPlugin)
         .add_startup_system(startup)
