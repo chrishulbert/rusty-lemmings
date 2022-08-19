@@ -12,9 +12,8 @@ pub fn spawn_menu_background(
 ) {
     const BG_WIDTH: f32 = 320.; // Texture size in original game pixels (points).
     const BG_HEIGHT: f32 = 104.;
-    fn spawn(commands: &mut Commands, game_textures: &Res<GameTextures>, x: f32, y: f32) {
-        commands
-        .spawn_bundle(SpriteBundle {
+    fn spawn(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, x: f32, y: f32) {
+        parent.spawn_bundle(SpriteBundle {
             texture: game_textures.background.clone(),
             transform: Transform{
                 translation: Vec3::new(x * POINT_SIZE, y * POINT_SIZE, 0.),
@@ -24,15 +23,19 @@ pub fn spawn_menu_background(
             ..default()
         });
     }
-    spawn(&mut commands, &game_textures, BG_WIDTH, BG_HEIGHT);
-    spawn(&mut commands, &game_textures, 0., BG_HEIGHT);
-    spawn(&mut commands, &game_textures, -BG_WIDTH, BG_HEIGHT);
-    spawn(&mut commands, &game_textures, BG_WIDTH, 0.);
-    spawn(&mut commands, &game_textures, 0., 0.);
-    spawn(&mut commands, &game_textures, -BG_WIDTH, 0.);
-    spawn(&mut commands, &game_textures, BG_WIDTH, -BG_HEIGHT);
-    spawn(&mut commands, &game_textures, 0., -BG_HEIGHT);
-    spawn(&mut commands, &game_textures, -BG_WIDTH, -BG_HEIGHT);
+    commands.spawn_bundle(SpatialBundle {
+        ..default()
+    }).with_children(|parent| {
+        spawn(parent, &game_textures, BG_WIDTH, BG_HEIGHT);
+        spawn(parent, &game_textures, 0., BG_HEIGHT);
+        spawn(parent, &game_textures, -BG_WIDTH, BG_HEIGHT);
+        spawn(parent, &game_textures, BG_WIDTH, 0.);
+        spawn(parent, &game_textures, 0., 0.);
+        spawn(parent, &game_textures, -BG_WIDTH, 0.);
+        spawn(parent, &game_textures, BG_WIDTH, -BG_HEIGHT);
+        spawn(parent, &game_textures, 0., -BG_HEIGHT);
+        spawn(parent, &game_textures, -BG_WIDTH, -BG_HEIGHT);    
+    });
 }
 
 pub fn button_highlight_system(

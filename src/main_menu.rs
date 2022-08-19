@@ -65,6 +65,7 @@ impl Plugin for MainMenuPlugin {
                 .with_system(button_system)
                 .with_system(button_highlight_system)
                 .with_system(animate_blinking_sprites)
+                .with_system(hover_highlight_system)
         )
         .add_system_set(
             SystemSet::on_exit(GameState::MainMenu)
@@ -83,6 +84,27 @@ pub enum MainMenuButtonAction {
 pub struct MainMenuButton{
     pub is_clicked: bool,
     pub action: MainMenuButtonAction,
+}
+
+fn hover_highlight_system(
+    windows: Res<Windows>,
+    mut cursor_evr: EventReader<CursorMoved>,
+    mut buttons: Query<(&mut Sprite, &Transform, &MainMenuButton)>,
+) {
+    if let Some(window) = windows.iter().next() {
+        if let Some(event) = cursor_evr.iter().last() {
+            let p = event.position;
+            let x = p.x - window.width() / 2.;
+            let y = p.y - window.height() / 2.;
+            for (mut sprite, transform, button) in &mut buttons {
+                let is_over = 
+                    transform.translation.x - 120. <= x && x <= transform.translation.x + 120. &&
+                    transform.translation.y - 61. <= y && y <= transform.translation.y + 61.;
+                let a: f32 = if is_over { 0.75 } else { 1. };
+                sprite.color = Color::rgba(1., 1., 1., a);
+            }
+        }
+    }
 }
 
 pub fn button_system(
@@ -153,345 +175,172 @@ fn spawn_menu_logo(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
 ) {
-    let scale = Vec3::new(TEXTURE_SCALE / 2., TEXTURE_SCALE / 2., 1.); // Logo is svga, so halve everything.
-    const Y: f32 = 52.; // Make it overlap the background-tile-seam.
-    commands
-        .spawn_bundle(SpriteBundle {
-            texture: game_textures.logo.clone(),
+    const SCALE: f32 = TEXTURE_SCALE / 2.; // Logo is SVGA so halve it.
+    fn spawn_blink(parent: &mut ChildBuilder, atlas: Handle<TextureAtlas>, x: f32, y: f32, index: isize, dwell: isize) {
+        parent.spawn_bundle(SpriteSheetBundle {
+            texture_atlas: atlas,
             transform: Transform{
-                translation: Vec3::new(0., Y * POINT_SIZE, 1.), 
-                scale,
-                ..default()
-            },        
-            ..default()
-        }).insert(MainMenuComponent);
-
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: game_textures.blink1.clone(),
-            transform: Transform{
-                translation: Vec3::new(-138. * POINT_SIZE, (Y + 1.) * POINT_SIZE, 2.),
-                scale,
+                translation: Vec3::new(x * POINT_SIZE / SCALE, y * POINT_SIZE / SCALE, 2.),
                 ..default()
             },        
             ..default()
         }).insert(BlinkAnimationTimer{
             timer: Timer::from_seconds(FRAME_DURATION, true),
-            index: -15,
-            dwell: 30,
+            index,
+            dwell,
         }).insert(MainMenuComponent);
+    }
 
     commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: game_textures.blink2.clone(),
-            transform: Transform{
-                translation: Vec3::new(-26. * POINT_SIZE, (Y + 2.) * POINT_SIZE, 2.),
-                scale,
-                ..default()
-            },        
+    .spawn_bundle(SpriteBundle {
+        texture: game_textures.logo.clone(),
+        transform: Transform{
+            translation: Vec3::new(0., 52. * POINT_SIZE, 1.), // 52 -> make it overlap the background-tile-seam.
+            scale: Vec3::new(SCALE, SCALE, 1.),
             ..default()
-        }).insert(BlinkAnimationTimer{
-            timer: Timer::from_seconds(FRAME_DURATION, true),
-            index: -22,
-            dwell: 45,
-        }).insert(MainMenuComponent);
-
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: game_textures.blink3.clone(),
-            transform: Transform{
-                translation: Vec3::new(94. * POINT_SIZE, (Y + 5.5) * POINT_SIZE, 2.),
-                scale,
-                ..default()
-            },        
-            ..default()
-        }).insert(BlinkAnimationTimer{
-            timer: Timer::from_seconds(FRAME_DURATION, true),
-            index: -30,
-            dwell: 37,
-        }).insert(MainMenuComponent);
-
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: game_textures.blink3.clone(),
-            transform: Transform{
-                translation: Vec3::new(94. * POINT_SIZE, (Y + 5.5) * POINT_SIZE, 2.),
-                scale,
-                ..default()
-            },        
-            ..default()
-        }).insert(BlinkAnimationTimer{
-            timer: Timer::from_seconds(FRAME_DURATION, true),
-            index: -30,
-            dwell: 37,
-        }).insert(MainMenuComponent);
+        },        
+        ..default()
+    }).insert(MainMenuComponent).with_children(|parent| {
+        spawn_blink(parent, game_textures.blink1.clone(), -138., 1., -15, 30);
+        spawn_blink(parent, game_textures.blink2.clone(), -26., 2., -22, 45);
+        spawn_blink(parent, game_textures.blink3.clone(), 94., 5.5, -30, 37);
+    });
 }
 
 fn spawn_menu_buttons(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
 ) {
-    // Why do UI sizes need to be halved? Is this a retina thing that'll break on non-retina?
-    commands.spawn_bundle(NodeBundle{
-        style: Style{
-            margin: UiRect::all(Val::Auto), // Center contents.
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            ..default()
-        },
-        transform: Transform::from_xyz(0., 0., 2.),
-        color: NORMAL_BUTTON.into(),
-        ..default()
-    }).insert(MainMenuComponent)
-    .with_children(|outermost_parent| {
-        outermost_parent.spawn_bundle(NodeBundle{ // Container for a row of buttons.
-            style: Style{
-                margin: UiRect::all(Val::Auto), // Center contents.
-                justify_content: JustifyContent::Center,
+
+    // parent.spawn_bundle(ImageBundle {
+    //     style: Style {
+    //         size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
+    //         margin: UiRect::all(Val::Auto), // Center contents.
+    //         align_items: AlignItems::Center,
+    //         justify_content: JustifyContent::Center,
+    //         ..default()
+    //     },
+    //     image: game_textures.f1.clone().into(),
+    //     focus_policy: bevy::ui::FocusPolicy::Pass,
+    //     ..default()
+    // })
+    // .with_children(|parent| {
+    //     parent.spawn_bundle(ImageBundle {
+    //         style: Style {
+    //             size: Size::new(Val::Px(72.0 * POINT_SIZE / 2.), Val::Px(27.0 * POINT_SIZE / 2.)),
+    //             margin: UiRect::new(Val::Px(0.), Val::Px(0.), Val::Px(14. * POINT_SIZE / 2.), Val::Px(0.)),
+    //             ..default()
+    //         },
+    //         image: game_textures.fun.clone().into(),
+    //         focus_policy: bevy::ui::FocusPolicy::Pass,
+    //         ..default()
+    //     });            
+    // });
+    fn spawn_skill(commands: &mut Commands, sign: Handle<Image>, skill: Handle<Image>, x: f32, y: f32, skill_index: isize) {
+        commands.spawn_bundle(SpriteBundle{
+            texture: sign,
+            transform: Transform{
+                translation: Vec3::new(x * POINT_SIZE, y * POINT_SIZE, 2.),
+                scale: Vec3::new(TEXTURE_SCALE / 2., TEXTURE_SCALE / 2., 1.), // Menu is svga, so halve everything.
                 ..default()
             },
-            color: NORMAL_BUTTON.into(),
+            sprite: Sprite {
+                color: Color::rgba(1., 1., 1., 0.5),
+                ..default()
+            },
             ..default()
+        }).insert(MainMenuButton{
+            is_clicked: false,
+            action: MainMenuButtonAction::Skill(skill_index),
         }).with_children(|parent| {
-            parent.spawn_bundle(ButtonBundle {
-                style: Style {
-                    padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+            parent.spawn_bundle(SpriteBundle{
+                texture: skill,
+                transform: Transform{
+                    translation: Vec3::new(0., -28. * POINT_SIZE, 3.),
                     ..default()
-                },
-                color: NORMAL_BUTTON.into(),
+                },        
                 ..default()
-            })
-            .insert(MainMenuButton{
-                is_clicked: false,
-                action: MainMenuButtonAction::Exit,
-            })
-            .with_children(|parent| {
-                parent.spawn_bundle(ImageBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
-                        ..default()
-                    },
-                    image: game_textures.exit_to_dos.clone().into(),
-                    focus_policy: bevy::ui::FocusPolicy::Pass,
-                    ..default()
-                });
-            });
-
-            parent.spawn_bundle(ButtonBundle {
-                style: Style {
-                    padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                color: NORMAL_BUTTON.into(),
-                ..default()
-            })
-            .insert(MainMenuButton{
-                is_clicked: false,
-                action: MainMenuButtonAction::Settings,
-            })
-            .with_children(|parent| {
-                parent.spawn_bundle(ImageBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
-                        ..default()
-                    },
-                    image: game_textures.f4_settings.clone().into(),
-                    focus_policy: bevy::ui::FocusPolicy::Pass,
-                    ..default()
-                });
             });
         });
+    }
+    spawn_skill(&mut commands, game_textures.f1.clone(), game_textures.fun.clone(), -100., 0., 0);
+    spawn_skill(&mut commands, game_textures.f2.clone(), game_textures.tricky.clone(), -33., 0., 1);
+    spawn_skill(&mut commands, game_textures.f3.clone(), game_textures.taxing.clone(), 33., 0., 2);
+    spawn_skill(&mut commands, game_textures.level_rating.clone(), game_textures.mayhem.clone(), 100., 0., 3);
 
-        outermost_parent.spawn_bundle(NodeBundle{ // Container for a row of buttons.
-            style: Style{
-                margin: UiRect::all(Val::Auto), // Center contents.
-                justify_content: JustifyContent::Center,
-                ..default()
-            },
-            color: NORMAL_BUTTON.into(),
-            ..default()
-        }).with_children(|parent| {
-            // Fun.
-            parent.spawn_bundle(ButtonBundle {
-                style: Style {
-                    padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                color: NORMAL_BUTTON.into(),
-                ..default()
-            })
-            .insert(MainMenuButton{
-                is_clicked: false,
-                action: MainMenuButtonAction::Skill(0),
-            })
-            .with_children(|parent| {
-                parent.spawn_bundle(ImageBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
-                        margin: UiRect::all(Val::Auto), // Center contents.
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    image: game_textures.f1.clone().into(),
-                    focus_policy: bevy::ui::FocusPolicy::Pass,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn_bundle(ImageBundle {
-                        style: Style {
-                            size: Size::new(Val::Px(72.0 * POINT_SIZE / 2.), Val::Px(27.0 * POINT_SIZE / 2.)),
-                            margin: UiRect::new(Val::Px(0.), Val::Px(0.), Val::Px(14. * POINT_SIZE / 2.), Val::Px(0.)),
-                            ..default()
-                        },
-                        image: game_textures.fun.clone().into(),
-                        focus_policy: bevy::ui::FocusPolicy::Pass,
-                        ..default()
-                    });            
-                });
-            });
+    // // Why do UI sizes need to be halved? Is this a retina thing that'll break on non-retina?
+    // commands.spawn_bundle(NodeBundle{
+    //     style: Style{
+    //         margin: UiRect::all(Val::Auto), // Center contents.
+    //         align_items: AlignItems::Center,
+    //         justify_content: JustifyContent::Center,
+    //         flex_direction: FlexDirection::Column,
+    //         ..default()
+    //     },
+    //     transform: Transform::from_xyz(0., 0., 2.),
+    //     color: NORMAL_BUTTON.into(),
+    //     ..default()
+    // }).insert(MainMenuComponent)
+    // .with_children(|outermost_parent| {
+    //     outermost_parent.spawn_bundle(NodeBundle{ // Container for a row of buttons.
+    //         style: Style{
+    //             margin: UiRect::all(Val::Auto), // Center contents.
+    //             justify_content: JustifyContent::Center,
+    //             ..default()
+    //         },
+    //         color: NORMAL_BUTTON.into(),
+    //         ..default()
+    //     }).with_children(|parent| {
+    //         parent.spawn_bundle(ButtonBundle {
+    //             style: Style {
+    //                 padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
+    //                 justify_content: JustifyContent::Center,
+    //                 align_items: AlignItems::Center,
+    //                 ..default()
+    //             },
+    //             color: NORMAL_BUTTON.into(),
+    //             ..default()
+    //         })
+    //         .insert(MainMenuButton{
+    //             is_clicked: false,
+    //             action: MainMenuButtonAction::Exit,
+    //         })
+    //         .with_children(|parent| {
+    //             parent.spawn_bundle(ImageBundle {
+    //                 style: Style {
+    //                     size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
+    //                     ..default()
+    //                 },
+    //                 image: game_textures.exit_to_dos.clone().into(),
+    //                 focus_policy: bevy::ui::FocusPolicy::Pass,
+    //                 ..default()
+    //             });
+    //         });
 
-            // Tricky.
-            parent.spawn_bundle(ButtonBundle {
-                style: Style {
-                    padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                color: NORMAL_BUTTON.into(),
-                ..default()
-            })
-            .insert(MainMenuButton{
-                is_clicked: false,
-                action: MainMenuButtonAction::Skill(1),
-            })
-            .with_children(|parent| {
-                parent.spawn_bundle(ImageBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
-                        margin: UiRect::all(Val::Auto), // Center contents.
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    image: game_textures.f2.clone().into(),
-                    focus_policy: bevy::ui::FocusPolicy::Pass,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn_bundle(ImageBundle {
-                        style: Style {
-                            size: Size::new(Val::Px(72.0 * POINT_SIZE / 2.), Val::Px(27.0 * POINT_SIZE / 2.)),
-                            margin: UiRect::new(Val::Px(0.), Val::Px(0.), Val::Px(14. * POINT_SIZE / 2.), Val::Px(0.)),
-                            ..default()
-                        },
-                        image: game_textures.tricky.clone().into(),
-                        focus_policy: bevy::ui::FocusPolicy::Pass,
-                        ..default()
-                    });            
-                });
-            });
-
-            // Taxing.
-            parent.spawn_bundle(ButtonBundle {
-                style: Style {
-                    padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                color: NORMAL_BUTTON.into(),
-                ..default()
-            })
-            .insert(MainMenuButton{
-                is_clicked: false,
-                action: MainMenuButtonAction::Skill(2),
-            })
-            .with_children(|parent| {
-                parent.spawn_bundle(ImageBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
-                        margin: UiRect::all(Val::Auto), // Center contents.
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    image: game_textures.f3.clone().into(),
-                    focus_policy: bevy::ui::FocusPolicy::Pass,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn_bundle(ImageBundle {
-                        style: Style {
-                            size: Size::new(Val::Px(72.0 * POINT_SIZE / 2.), Val::Px(27.0 * POINT_SIZE / 2.)),
-                            margin: UiRect::new(Val::Px(0.), Val::Px(0.), Val::Px(14. * POINT_SIZE / 2.), Val::Px(0.)),
-                            ..default()
-                        },
-                        image: game_textures.taxing.clone().into(),
-                        focus_policy: bevy::ui::FocusPolicy::Pass,
-                        ..default()
-                    });            
-                });
-            });
-
-            // Mayhem.
-            parent.spawn_bundle(ButtonBundle {
-                style: Style {
-                    padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                color: NORMAL_BUTTON.into(),
-                ..default()
-            })
-            .insert(MainMenuButton{
-                is_clicked: false,
-                action: MainMenuButtonAction::Skill(3),
-            })
-            .with_children(|parent| {
-                parent.spawn_bundle(ImageBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
-                        margin: UiRect::all(Val::Auto), // Center contents.
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    image: game_textures.level_rating.clone().into(),
-                    focus_policy: bevy::ui::FocusPolicy::Pass,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn_bundle(ImageBundle {
-                        style: Style {
-                            size: Size::new(Val::Px(72.0 * POINT_SIZE / 2.), Val::Px(27.0 * POINT_SIZE / 2.)),
-                            margin: UiRect::new(Val::Px(0.), Val::Px(0.), Val::Px(14. * POINT_SIZE / 2.), Val::Px(0.)),
-                            ..default()
-                        },
-                        image: game_textures.mayhem.clone().into(),
-                        focus_policy: bevy::ui::FocusPolicy::Pass,
-                        ..default()
-                    });            
-                });
-            });
-        });
-
-        outermost_parent.spawn_bundle(NodeBundle{ // This pushes things down under the logo.
-            style: Style {
-                size: Size::new(Val::Px(0.), Val::Px(100.0 * POINT_SIZE / 2.)),
-                ..default()
-            },
-            color: NORMAL_BUTTON.into(),
-            ..default()
-        });
-    });
+    //         parent.spawn_bundle(ButtonBundle {
+    //             style: Style {
+    //                 padding: UiRect::all(Val::Px(10. * POINT_SIZE / 2.)),
+    //                 justify_content: JustifyContent::Center,
+    //                 align_items: AlignItems::Center,
+    //                 ..default()
+    //             },
+    //             color: NORMAL_BUTTON.into(),
+    //             ..default()
+    //         })
+    //         .insert(MainMenuButton{
+    //             is_clicked: false,
+    //             action: MainMenuButtonAction::Settings,
+    //         })
+    //         .with_children(|parent| {
+    //             parent.spawn_bundle(ImageBundle {
+    //                 style: Style {
+    //                     size: Size::new(Val::Px(120.0 * POINT_SIZE / 2.), Val::Px(61.0 * POINT_SIZE / 2.)),
+    //                     ..default()
+    //                 },
+    //                 image: game_textures.f4_settings.clone().into(),
+    //                 focus_policy: bevy::ui::FocusPolicy::Pass,
+    //                 ..default()
+    //             });
+    //         });
+    //     });
 }
