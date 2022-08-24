@@ -212,31 +212,7 @@ fn spawn_menu_buttons(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
 ) {
-    fn spawn_skill(commands: &mut ChildBuilder, sign: Handle<Image>, skill: Handle<Image>, x: f32, y: f32, skill_index: isize) {
-        commands.spawn_bundle(SpriteBundle{
-            texture: sign,
-            transform: Transform{
-                translation: Vec3::new(x * POINT_SIZE, y * POINT_SIZE, 2.),
-                scale: Vec3::new(TEXTURE_SCALE / 2., TEXTURE_SCALE / 2., 1.), // Menu is svga, so halve everything.
-                ..default()
-            },
-            ..default()
-        }).insert(MainMenuButton{
-            is_clicked: false,
-            action: MainMenuButtonAction::Skill(skill_index),
-        }).with_children(|parent| {
-            parent.spawn_bundle(SpriteBundle{
-                texture: skill,
-                transform: Transform{
-                    translation: Vec3::new(0., -28. * POINT_SIZE, 3.),
-                    ..default()
-                },        
-                ..default()
-            });
-        });
-    }
-    
-    fn spawn_other(commands: &mut ChildBuilder, sign: Handle<Image>, x: f32, y: f32, action: MainMenuButtonAction) {
+    fn spawn_button(commands: &mut ChildBuilder, sign: Handle<Image>, skill: Option<Handle<Image>>, x: f32, y: f32, action: MainMenuButtonAction) {
         commands.spawn_bundle(SpriteBundle{
             texture: sign,
             transform: Transform{
@@ -248,17 +224,28 @@ fn spawn_menu_buttons(
         }).insert(MainMenuButton{
             is_clicked: false,
             action,
+        }).with_children(|parent| {
+            if let Some(skill) = skill {
+                parent.spawn_bundle(SpriteBundle{
+                    texture: skill,
+                    transform: Transform{
+                        translation: Vec3::new(0., -28. * POINT_SIZE, 3.),
+                        ..default()
+                    },        
+                    ..default()
+                });
+                }
         });
     }
 
     commands.spawn_bundle(SpatialBundle {
         ..default()
     }).with_children(|parent| {
-        spawn_skill(parent, game_textures.f1.clone(), game_textures.fun.clone(), -100., 0., 0);
-        spawn_skill(parent, game_textures.f2.clone(), game_textures.tricky.clone(), -33., 0., 1);
-        spawn_skill(parent, game_textures.f3.clone(), game_textures.taxing.clone(), 33., 0., 2);
-        spawn_skill(parent, game_textures.level_rating.clone(), game_textures.mayhem.clone(), 100., 0., 3);
-        spawn_other(parent, game_textures.exit_to_dos.clone(), -33., -40., MainMenuButtonAction::Exit);
-        spawn_other(parent, game_textures.f4_settings.clone(), 33., -40., MainMenuButtonAction::Settings);
+        spawn_button(parent, game_textures.f1.clone(), Some(game_textures.fun.clone()), -100., 0., MainMenuButtonAction::Skill(0));
+        spawn_button(parent, game_textures.f2.clone(), Some(game_textures.tricky.clone()), -33., 0., MainMenuButtonAction::Skill(1));
+        spawn_button(parent, game_textures.f3.clone(), Some(game_textures.taxing.clone()), 33., 0., MainMenuButtonAction::Skill(2));
+        spawn_button(parent, game_textures.level_rating.clone(), Some(game_textures.mayhem.clone()), 100., 0., MainMenuButtonAction::Skill(3));
+        spawn_button(parent, game_textures.exit_to_dos.clone(), None, -33., -40., MainMenuButtonAction::Exit);
+        spawn_button(parent, game_textures.f4_settings.clone(), None, 33., -40., MainMenuButtonAction::Settings);
     });
 }
