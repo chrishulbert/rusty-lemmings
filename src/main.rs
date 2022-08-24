@@ -8,9 +8,12 @@ mod level_selection_menu;
 mod menu_common;
 mod fadeout;
 
+use std::time::Duration;
+
 use bevy::{
     prelude::*,
     window::PresentMode,
+    winit::WinitSettings, winit::UpdateMode,
 };
 use lemmings_to_bevy::load_lemmings_textures::GameTextures;
 use bevy_inspector_egui::WorldInspectorPlugin;
@@ -134,6 +137,11 @@ fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
+        // The following is a workaround for mouse lag, I hope it isn't necessary forever: https://github.com/bevyengine/bevy/issues/5778
+        .insert_resource(WinitSettings {
+            focused_mode: UpdateMode::ReactiveLowPower { max_wait: Duration::from_millis(1000) },
+            ..default()
+        })
         .add_state(GameState::MainMenu)
         .insert_resource(GameSelection("lemmings".to_string()))
         .insert_resource(ClearColor(Color::BLACK))
