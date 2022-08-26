@@ -138,10 +138,10 @@ fn main() {
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
         // The following is a workaround for mouse lag, I hope it isn't necessary forever: https://github.com/bevyengine/bevy/issues/5778
-        .insert_resource(WinitSettings {
-            focused_mode: UpdateMode::ReactiveLowPower { max_wait: Duration::from_millis(1000) },
-            ..default()
-        })
+        // .insert_resource(WinitSettings {
+        //     focused_mode: UpdateMode::ReactiveLowPower { max_wait: Duration::from_millis(1000) },
+        //     ..default()
+        // })
         .add_state(GameState::MainMenu)
         .insert_resource(GameSelection("lemmings".to_string()))
         .insert_resource(ClearColor(Color::BLACK))
