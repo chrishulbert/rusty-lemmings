@@ -178,13 +178,13 @@ fn load_lemmings_textures_startup(
     let tricky = doctor_skill(&game.main.main_menu.tricky);
     let fun = doctor_skill(&game.main.main_menu.fun);
 
-    // Black for fadeouts.
-    let black_data: Vec<u8> = vec![0xff, 0xff, 0, 0xff];
-    let black_image = Image::new(Extent3d{width: 1, height: 1, depth_or_array_layers: 1},
+    // White for solid colours eg fadeouts.
+    let white_data: Vec<u8> = vec![0xff, 0xff, 0xff, 0xff];
+    let white_image = Image::new(Extent3d{width: 1, height: 1, depth_or_array_layers: 1},
         bevy::render::render_resource::TextureDimension::D2,
-        black_data,
+        white_data,
         bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb);
-    let black = images.add(black_image);
+    let white = images.add(white_image);
 
     // For inspecting the images conveniently:
     // {
@@ -259,7 +259,7 @@ fn load_lemmings_textures_startup(
         shrugging_left: make_atlas_from_animation(&game.main.lemming_animations.shrugging_left, &mut images, &mut texture_atlases, true),
         oh_no_ing: make_atlas_from_animation(&game.main.lemming_animations.oh_no_ing, &mut images, &mut texture_atlases, true),
         explosion: make_image(&game.main.lemming_animations.explosion, &mut images, true),
-        black,
+        white,
 	};
 	commands.insert_resource(game_textures);
 }
@@ -327,6 +327,6 @@ pub struct GameTextures {
     pub explosion: Handle<Image>,
 
     // Other:
-    pub black: Handle<Image>
+    pub white: Handle<Image>
 }
 
