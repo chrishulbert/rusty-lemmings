@@ -14,20 +14,7 @@ struct ScreenFade {
 
 impl Plugin for FadeoutPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(fadeout).add_system(ui_fadeout);
-    }
-}
-
-fn ui_fadeout(
-    fade_query: Query<&ScreenFade>,
-    mut text_query: Query<&mut Text>,
-) {
-    if let Some(fade) = fade_query.iter().next() {
-        for mut text in text_query.iter_mut() {
-            for section in text.sections.iter_mut() {
-                section.style.color.set_a(1.0 - fade.alpha);
-            }
-        }
+        app.add_system(fadeout);
     }
 }
 
@@ -66,14 +53,15 @@ pub fn create_fadeout(
     next_state: Option<GameState>,
     game_textures: &Res<GameTextures>,
 ) {
+    // Push a 'fading' state so you can't tap buttons in the 'from' screen.
     commands
         .spawn_bundle(SpriteBundle {
             sprite: Sprite {
-                 color: Color::rgba(0., 0., 0., 0.),
+                 color: Color::NONE,
                  custom_size: Some(Vec2::splat(100000.0)),
                 ..Default::default()
             },
-            texture: game_textures.black.clone(),
+            texture: game_textures.white.clone(),
             transform: Transform {
                 translation: Vec3::new(0., 0., 999.0),
                 ..Default::default()
@@ -85,6 +73,5 @@ pub fn create_fadeout(
             sent: false,
             next_state: next_state,
             timer: Timer::from_seconds(1., false),
-        })
-        .insert(Name::new("Fadeout"));
+        });
 }
