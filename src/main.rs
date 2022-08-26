@@ -8,8 +8,6 @@ mod level_selection_menu;
 mod menu_common;
 mod fadeout;
 
-use std::time::Duration;
-
 use bevy::{
     prelude::*,
     window::PresentMode,
@@ -139,7 +137,7 @@ fn main() {
     App::new()
         // The following is a workaround for mouse lag, I hope it isn't necessary forever: https://github.com/bevyengine/bevy/issues/5778
         // .insert_resource(WinitSettings {
-        //     focused_mode: UpdateMode::ReactiveLowPower { max_wait: Duration::from_millis(1000) },
+        //     focused_mode: UpdateMode::ReactiveLowPower { max_wait: std::time::Duration::from_millis(1000) },
         //     ..default()
         // })
         .add_state(GameState::MainMenu)
