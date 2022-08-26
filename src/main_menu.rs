@@ -89,21 +89,18 @@ pub struct MainMenuButton{
 fn hover_highlight_system(
     windows: Res<Windows>,
     mouse_buttons: Res<Input<MouseButton>>,
-    mut cursor_evr: EventReader<CursorMoved>,
     mut buttons: Query<(&mut Sprite, &Transform, &MainMenuButton)>,
 ) {
     if let Some(window) = windows.iter().next() {
-        if let Some(event) = cursor_evr.iter().last() {
-            let p = event.position;
-            let x = p.x - window.width() / 2.;
-            let y = p.y - window.height() / 2.;
-            for (mut sprite, transform, button) in &mut buttons {
-                let is_over = 
-                    transform.translation.x - 120. <= x && x <= transform.translation.x + 120. &&
-                    transform.translation.y - 61. <= y && y <= transform.translation.y + 61.;
-                let a: f32 = if is_over { if mouse_buttons.pressed(MouseButton::Left) { 0.5 } else { 0.8 } } else { 1. };
-                sprite.color.set_a(a);
-            }
+        let position = window.cursor_position().unwrap_or(Vec2::NEG_ONE);
+        let x = position.x - window.width() / 2.;
+        let y = position.y - window.height() / 2.;
+        for (mut sprite, transform, _button) in &mut buttons {
+            let is_over = 
+                transform.translation.x - 120. <= x && x <= transform.translation.x + 120. &&
+                transform.translation.y - 61. <= y && y <= transform.translation.y + 61.;
+            let a: f32 = if is_over { if mouse_buttons.pressed(MouseButton::Left) { 0.5 } else { 0.8 } } else { 1. };
+            sprite.color.set_a(a);
         }
     }
 }
