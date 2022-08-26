@@ -88,7 +88,7 @@ pub struct MainMenuButton{
 fn hover_highlight_system(
     windows: Res<Windows>,
     mouse_buttons: Res<Input<MouseButton>>,
-    mut buttons: Query<(&mut Sprite, &Transform)>,
+    mut buttons: Query<(&mut Sprite, &Transform), (With<MainMenuButton>)>,
 ) {
     if let Some(window) = windows.iter().next() {
         let position = window.cursor_position().unwrap_or(Vec2::NEG_ONE);
