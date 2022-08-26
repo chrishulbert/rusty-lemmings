@@ -8,7 +8,7 @@ pub struct FadeoutPlugin;
 struct ScreenFade {
     alpha: f32,
     sent: bool,
-    next_state: Option<GameState>,
+    next_state: GameState,
     timer: Timer,
 }
 
@@ -34,11 +34,7 @@ fn fadeout(
         sprite.color.set_a(fade.alpha);
 
         if fade.timer.percent() > 0.5 && !fade.sent {
-            if let Some(next_state) = fade.next_state {
-                state.push(next_state).unwrap();
-            } else {
-                state.pop().unwrap();
-            }
+            state.replace(fade.next_state).unwrap();
             fade.sent = true;
         }
 
@@ -50,7 +46,7 @@ fn fadeout(
 
 pub fn create_fadeout(
     commands: &mut Commands,
-    next_state: Option<GameState>,
+    next_state: GameState,
     game_textures: &Res<GameTextures>,
 ) {
     // Push a 'fading' state so you can't tap buttons in the 'from' screen.

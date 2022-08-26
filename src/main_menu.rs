@@ -127,7 +127,7 @@ fn button_system(
                     match mmb.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
-                            create_fadeout(&mut commands, Some(GameState::LevelSelectionMenu), &game_textures);
+                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures);
                         },
                         MainMenuButtonAction::Settings => {
                             println!("Settings TODO");
