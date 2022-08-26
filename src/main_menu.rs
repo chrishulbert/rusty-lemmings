@@ -82,20 +82,19 @@ pub enum MainMenuButtonAction {
 
 #[derive(Component)]
 pub struct MainMenuButton{
-    pub is_clicked: bool,
     pub action: MainMenuButtonAction,
 }
 
 fn hover_highlight_system(
     windows: Res<Windows>,
     mouse_buttons: Res<Input<MouseButton>>,
-    mut buttons: Query<(&mut Sprite, &Transform, &MainMenuButton)>,
+    mut buttons: Query<(&mut Sprite, &Transform)>,
 ) {
     if let Some(window) = windows.iter().next() {
         let position = window.cursor_position().unwrap_or(Vec2::NEG_ONE);
         let x = position.x - window.width() / 2.;
         let y = position.y - window.height() / 2.;
-        for (mut sprite, transform, _button) in &mut buttons {
+        for (mut sprite, transform) in &mut buttons {
             let is_over = 
                 transform.translation.x - 120. <= x && x <= transform.translation.x + 120. &&
                 transform.translation.y - 61. <= y && y <= transform.translation.y + 61.;
@@ -105,25 +104,27 @@ fn hover_highlight_system(
     }
 }
 
-pub fn button_system(
-    mut commands: Commands,
+fn button_system(
+    windows: Res<Windows>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    buttons: Query<(&Transform, &MainMenuButton)>,
     game_textures: Res<GameTextures>,
-    mut state: ResMut<State<GameState>>,
     mut skill: ResMut<MainMenuSkillSelection>,
+    mut commands: Commands,
     mut exit: EventWriter<AppExit>,
-    mut interaction_query: Query<
-        (&Interaction, &mut MainMenuButton),
-        (Changed<Interaction>, With<Button>),
-    >,
 ) {
-    for (interaction, mut button) in &mut interaction_query {
-        match *interaction {
-            Interaction::Clicked => {
-                button.is_clicked = true;
-            }
-            Interaction::Hovered => {
-                if button.is_clicked { // Finished a click while inside.
-                    match button.action {
+    if mouse_buttons.just_released(MouseButton::Left) {
+        if let Some(window) = windows.iter().next() {
+            if let Some(position) = window.cursor_position() {
+                let x = position.x - window.width() / 2.;
+                let y = position.y - window.height() / 2.;
+                let button_o = buttons.iter().find(|&b| {
+                    b.0.translation.x - 120. <= x && x <= b.0.translation.x + 120. &&
+                    b.0.translation.y - 61. <= y && y <= b.0.translation.y + 61.
+                });
+                if let Some(button) = button_o {
+                    let mmb: &MainMenuButton = button.1;
+                    match mmb.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
                             create_fadeout(&mut commands, Some(GameState::LevelSelectionMenu), &game_textures);
@@ -136,29 +137,10 @@ pub fn button_system(
                         },
                     }
                 }
-                button.is_clicked = false;
             }
-            Interaction::None => {
-                button.is_clicked = false; // They might have dragged outside while mousedown.
-            }
-        }
+        }    
     }
 }
-
-
-// fn enter(
-//     mut commands: Commands,
-//     game_textures: Res<GameTextures>,
-// ) {
-
-// }
-
-// fn update(
-//     mut commands: Commands,
-//     game_textures: Res<GameTextures>,
-// ) {
-
-// }
 
 fn exit(
     mut commands: Commands,
@@ -233,7 +215,6 @@ fn spawn_menu_buttons(
             },
             ..default()
         }).insert(MainMenuButton{
-            is_clicked: false,
             action,
         }).with_children(|parent| {
             if let Some(skill) = skill {
