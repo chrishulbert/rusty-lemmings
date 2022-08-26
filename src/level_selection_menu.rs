@@ -3,6 +3,9 @@ use crate::{GameTextures, GameState, POINT_SIZE, GameSelection};
 use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
 use crate::lemmings::levels_per_game_and_skill::names_per_game_and_skill;
 
+#[derive(Component)]
+struct LevelSelectionMenuComponent; // Marker component so the menu can be despawned.
+
 pub struct MainMenuSkillSelection(pub isize);
 
 pub struct LevelSelectionMenuPlugin;
@@ -14,7 +17,7 @@ impl Plugin for LevelSelectionMenuPlugin {
             SystemSet::on_enter(GameState::LevelSelectionMenu)
                 // .with_system(enter)
                 .with_system(spawn_levels)
-                .with_system(spawn_menu_background)
+                .with_system(spawn_background)
         );
         app.add_system_set(
             SystemSet::on_update(GameState::LevelSelectionMenu)
@@ -27,6 +30,18 @@ impl Plugin for LevelSelectionMenuPlugin {
         // )
         // .add_system(button_system);
 	}
+}
+
+fn spawn_background(
+    mut commands: Commands,
+    game_textures: Res<GameTextures>,
+) {
+    commands
+        .spawn_bundle(SpatialBundle::default())
+        .insert(LevelSelectionMenuComponent)
+        .with_children(|parent| {
+            spawn_menu_background(parent, &game_textures);
+        });
 }
 
 fn spawn_text(text: &str, parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, scale: f32) {

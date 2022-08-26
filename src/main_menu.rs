@@ -4,7 +4,7 @@ use crate::GameTextures;
 use crate::GameState;
 use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
-use crate::menu_common::{NORMAL_BUTTON, spawn_menu_background, button_highlight_system};
+use crate::menu_common::{spawn_menu_background, button_highlight_system};
 use crate::fadeout::create_fadeout;
 
 #[derive(Component)]
@@ -58,7 +58,7 @@ impl Plugin for MainMenuPlugin {
                 // .with_system(enter)
                 .with_system(spawn_menu_logo)
                 .with_system(spawn_menu_buttons)                
-                .with_system(spawn_menu_background)
+                .with_system(spawn_background)
         )
         .add_system_set(
             SystemSet::on_update(GameState::MainMenu)
@@ -172,6 +172,18 @@ fn exit(
     }
 }
 
+fn spawn_background(
+    mut commands: Commands,
+    game_textures: Res<GameTextures>,
+) {
+    commands
+        .spawn_bundle(SpatialBundle::default())
+        .insert(MainMenuComponent)
+        .with_children(|parent| {
+            spawn_menu_background(parent, &game_textures);
+        });
+}
+
 fn spawn_menu_logo(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
@@ -189,23 +201,25 @@ fn spawn_menu_logo(
             timer: Timer::from_seconds(FRAME_DURATION, true),
             index,
             dwell,
-        }).insert(MainMenuComponent);
+        });
     }
 
     commands
-    .spawn_bundle(SpriteBundle {
-        texture: game_textures.logo.clone(),
-        transform: Transform{
-            translation: Vec3::new(0., 52. * POINT_SIZE, 1.), // 52 -> make it overlap the background-tile-seam.
-            scale: Vec3::new(SCALE, SCALE, 1.),
+        .spawn_bundle(SpriteBundle {
+            texture: game_textures.logo.clone(),
+            transform: Transform{
+                translation: Vec3::new(0., 52. * POINT_SIZE, 1.), // 52 -> make it overlap the background-tile-seam.
+                scale: Vec3::new(SCALE, SCALE, 1.),
+                ..default()
+            },        
             ..default()
-        },        
-        ..default()
-    }).insert(MainMenuComponent).with_children(|parent| {
-        spawn_blink(parent, game_textures.blink1.clone(), -138., 1., -15, 30);
-        spawn_blink(parent, game_textures.blink2.clone(), -26., 2., -22, 45);
-        spawn_blink(parent, game_textures.blink3.clone(), 94., 5.5, -30, 37);
-    });
+        })
+        .insert(MainMenuComponent)
+        .with_children(|parent| {
+            spawn_blink(parent, game_textures.blink1.clone(), -138., 1., -15, 30);
+            spawn_blink(parent, game_textures.blink2.clone(), -26., 2., -22, 45);
+            spawn_blink(parent, game_textures.blink3.clone(), 94., 5.5, -30, 37);
+        });
 }
 
 fn spawn_menu_buttons(
@@ -238,14 +252,17 @@ fn spawn_menu_buttons(
         });
     }
 
-    commands.spawn_bundle(SpatialBundle {
-        ..default()
-    }).with_children(|parent| {
-        spawn_button(parent, game_textures.f1.clone(), Some(game_textures.fun.clone()), -100., 0., MainMenuButtonAction::Skill(0));
-        spawn_button(parent, game_textures.f2.clone(), Some(game_textures.tricky.clone()), -33., 0., MainMenuButtonAction::Skill(1));
-        spawn_button(parent, game_textures.f3.clone(), Some(game_textures.taxing.clone()), 33., 0., MainMenuButtonAction::Skill(2));
-        spawn_button(parent, game_textures.level_rating.clone(), Some(game_textures.mayhem.clone()), 100., 0., MainMenuButtonAction::Skill(3));
-        spawn_button(parent, game_textures.exit_to_dos.clone(), None, -33., -40., MainMenuButtonAction::Exit);
-        spawn_button(parent, game_textures.f4_settings.clone(), None, 33., -40., MainMenuButtonAction::Settings);
-    });
+    commands
+        .spawn_bundle(SpatialBundle {
+            ..default()
+        })
+        .insert(MainMenuComponent)
+        .with_children(|parent| {
+            spawn_button(parent, game_textures.f1.clone(), Some(game_textures.fun.clone()), -100., 0., MainMenuButtonAction::Skill(0));
+            spawn_button(parent, game_textures.f2.clone(), Some(game_textures.tricky.clone()), -33., 0., MainMenuButtonAction::Skill(1));
+            spawn_button(parent, game_textures.f3.clone(), Some(game_textures.taxing.clone()), 33., 0., MainMenuButtonAction::Skill(2));
+            spawn_button(parent, game_textures.level_rating.clone(), Some(game_textures.mayhem.clone()), 100., 0., MainMenuButtonAction::Skill(3));
+            spawn_button(parent, game_textures.exit_to_dos.clone(), None, -33., -40., MainMenuButtonAction::Exit);
+            spawn_button(parent, game_textures.f4_settings.clone(), None, 33., -40., MainMenuButtonAction::Settings);
+        });
 }
