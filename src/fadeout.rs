@@ -48,8 +48,9 @@ pub fn create_fadeout(
     commands: &mut Commands,
     next_state: GameState,
     game_textures: &Res<GameTextures>,
+    state: &mut ResMut<State<GameState>>,
 ) {
-    // Push a 'fading' state so you can't tap buttons in the 'from' screen.
+    _ = state.push(GameState::Fading); // So you can't tap anything on the old screen.
     commands
         .spawn_bundle(SpriteBundle {
             sprite: Sprite {

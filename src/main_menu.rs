@@ -88,7 +88,7 @@ pub struct MainMenuButton{
 fn hover_highlight_system(
     windows: Res<Windows>,
     mouse_buttons: Res<Input<MouseButton>>,
-    mut buttons: Query<(&mut Sprite, &Transform), (With<MainMenuButton>)>,
+    mut buttons: Query<(&mut Sprite, &Transform), With<MainMenuButton>>,
 ) {
     if let Some(window) = windows.iter().next() {
         let position = window.cursor_position().unwrap_or(Vec2::NEG_ONE);
@@ -109,6 +109,7 @@ fn button_system(
     mouse_buttons: Res<Input<MouseButton>>,
     buttons: Query<(&Transform, &MainMenuButton)>,
     game_textures: Res<GameTextures>,
+    mut state: ResMut<State<GameState>>,
     mut skill: ResMut<MainMenuSkillSelection>,
     mut commands: Commands,
     mut exit: EventWriter<AppExit>,
@@ -127,7 +128,7 @@ fn button_system(
                     match mmb.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
-                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures);
+                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures, &mut state);
                         },
                         MainMenuButtonAction::Settings => {
                             println!("Settings TODO");

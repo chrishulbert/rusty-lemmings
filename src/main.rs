@@ -11,7 +11,7 @@ mod fadeout;
 use bevy::{
     prelude::*,
     window::PresentMode,
-    winit::WinitSettings, winit::UpdateMode,
+    // winit::WinitSettings, winit::UpdateMode,
 };
 use lemmings_to_bevy::load_lemmings_textures::GameTextures;
 use bevy_inspector_egui::WorldInspectorPlugin;
@@ -44,6 +44,7 @@ const TEXTURE_SCALE: f32 = POINT_SIZE / (SCALE as f32);
 pub enum GameState {
     MainMenu,
     LevelSelectionMenu,
+    Fading,
 }
 
 #[derive(Component, Deref, DerefMut)]
