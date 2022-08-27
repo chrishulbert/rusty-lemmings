@@ -293,20 +293,6 @@ impl GameFont {
     }
 }
 
-impl MenuFont {
-    fn parse(data: &[u8], palette: [u32; 16]) -> MenuFont {
-        const SIZE_PER_CHAR: usize = 0x60;
-        let mut font: MenuFont = Default::default();
-        let mut offset: usize = 0;
-        for _ in 0..94 {
-            let image = Image::parse_3bpp(&data[offset..], 16, 16, palette);
-            font.characters.push(image);
-            offset += SIZE_PER_CHAR;
-        }
-        return font;
-    }
-}
-
 impl MainMenu {
     fn parse(section_3: &[u8], section_4: &[u8], palette: [u32; 16]) -> MainMenu {
         let mut back_palette = palette; // Make 0 solid black, not transparent, for the background.
@@ -336,7 +322,7 @@ impl MainMenu {
             taxing:         Image::parse_4bpp(&section_4[0x5E4C..], 72, 27, back_palette),
             tricky:         Image::parse_4bpp(&section_4[0x6218..], 72, 27, back_palette),
             fun:            Image::parse_4bpp(&section_4[0x65E4..], 72, 27, back_palette),
-            menu_font:      MenuFont::parse(&section_4[0x69B0..], palette)
+            menu_font:      Animation::parse_3bpp(&section_4[0x69B0..], 94, 16, 16, palette)
         }
     }
 }

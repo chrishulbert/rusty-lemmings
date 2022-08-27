@@ -296,11 +296,6 @@ pub struct GameFont {
     pub letters: [Image; 26], // A-Z
 }
 
-#[derive(Default, Clone)]
-pub struct MenuFont {
-    pub characters: Vec<Image>, // '!'(33) - '~'(126), in ascii order.
-}
-
 #[derive(Clone)]
 pub struct MainMenu {
     pub background: Image,
@@ -330,7 +325,7 @@ pub struct MainMenu {
     pub taxing: Image,
     pub tricky: Image,
     pub fun: Image,
-    pub menu_font: MenuFont,
+    pub menu_font: Animation, // 16x16, 94 frames, '!'(33) - '~'(126), in ascii order. Not really an animation, but this makes texture atlas conversion simpler. 
 }
 
 #[derive(Clone)]

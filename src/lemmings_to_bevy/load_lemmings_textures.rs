@@ -196,10 +196,6 @@ fn load_lemmings_textures_startup(
     //     std::fs::write("exit_to_dos.doctored.png", &data).unwrap();
     // }
 
-    let menu_font: Vec<Handle<Image>> = game.main.main_menu.menu_font.characters.iter().map(|c|{
-        make_image(c, &mut images, true)
-    }).collect();
-    
 	let game_textures = GameTextures {
         // Menu:
         background: make_image(&background, &mut images, false),
@@ -226,7 +222,7 @@ fn load_lemmings_textures_startup(
         taxing: make_image(&taxing, &mut images, true),
         tricky: make_image(&tricky, &mut images, true),
         fun: make_image(&fun, &mut images, true),
-        menu_font,
+        menu_font: make_atlas_from_animation(&game.main.main_menu.menu_font, &mut images, &mut texture_atlases, true),
     
         // Lemmings:
         walking_right: make_atlas_from_animation(&game.main.lemming_animations.walking_right, &mut images, &mut texture_atlases, true),
@@ -292,7 +288,7 @@ pub struct GameTextures {
     pub taxing: Handle<Image>,
     pub tricky: Handle<Image>,
     pub fun: Handle<Image>,
-    pub menu_font: Vec<Handle<Image>>, // '!'(33) - '~'(126), in ascii order. Not a texture atlas for UI's sake.
+    pub menu_font: Handle<TextureAtlas>, // 16x16, '!'(33) - '~'(126), in ascii order. Not a texture atlas for UI's sake.
 
     // Lemmings:
     pub walking_right: Handle<TextureAtlas>,
