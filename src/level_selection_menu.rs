@@ -80,9 +80,20 @@ fn spawn_text(text: &str, parent: &mut ChildBuilder, game_textures: &Res<GameTex
 	}
 }
 
-fn spawn_level_button(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, name: &str, scale: f32, y: f32) {
+#[derive(Component)]
+pub struct LevelSelectionButton{
+	pub game_id: String,
+	pub skill: isize,
+	pub level_name: String,
+}
+
+fn spawn_level_button(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, name: &str, scale: f32, y: f32, game_id: &str, skill: isize) {
 	parent.spawn_bundle(SpatialBundle{
 		..default()
+	}).insert(LevelSelectionButton{
+		game_id: game_id.to_owned(),
+		skill,
+		level_name: name.to_owned(),		
 	}).with_children(|parent| {
 		spawn_text(name, parent, game_textures, scale, y);
 	});
@@ -103,7 +114,7 @@ fn spawn_levels(
 			let size = text_size(scale);
 			let mut y: f32 = -(names.len() as f32) / 2. * size;
 			for (i, name) in names.iter().enumerate() {
-				spawn_level_button(parent, &game_textures, &name, scale, y);
+				spawn_level_button(parent, &game_textures, &name, scale, y, &game_selection.0, skill_selection.0);
 				y += size
 			}
 		});
