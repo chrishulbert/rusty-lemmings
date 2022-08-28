@@ -132,7 +132,7 @@ fn spawn_levels(
 			let scale: f32 = if names.len() >= 16 { 0.5 } else { 1. };
 			let size = text_size(scale);
 			let mut y: f32 = -(names.len() as f32) / 2. * size;
-			for (i, name) in names.iter().enumerate() {
+			for name in names {
 				spawn_level_button(parent, &game_textures, &name, scale, y, &game_selection.0, skill_selection.0);
 				y += size
 			}
