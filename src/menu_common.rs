@@ -33,24 +33,3 @@ pub fn spawn_menu_background(
     spawn(parent, &game_textures, 0., -BG_HEIGHT);
     spawn(parent, &game_textures, -BG_WIDTH, -BG_HEIGHT);    
 }
-
-pub fn button_highlight_system(
-    mut interaction_query: Query<
-        (&Interaction, &mut UiColor),
-        (Changed<Interaction>, With<Button>),
-    >,
-) {
-    for (interaction, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Clicked => {
-                *color = PRESSED_BUTTON.into();
-            }
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-            }
-        }
-    }
-}

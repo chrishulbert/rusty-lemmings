@@ -4,7 +4,7 @@ use crate::GameTextures;
 use crate::GameState;
 use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
-use crate::menu_common::{spawn_menu_background, button_highlight_system};
+use crate::menu_common::{spawn_menu_background};
 use crate::fadeout::create_fadeout;
 
 #[derive(Component)]
@@ -63,9 +63,8 @@ impl Plugin for MainMenuPlugin {
         .add_system_set(
             SystemSet::on_update(GameState::MainMenu)
                 .with_system(button_system)
-                .with_system(button_highlight_system)
                 .with_system(animate_blinking_sprites)
-                .with_system(hover_highlight_system)
+                .with_system(button_highlight_system)
         )
         .add_system_set(
             SystemSet::on_exit(GameState::MainMenu)
@@ -85,7 +84,7 @@ pub struct MainMenuButton{
     pub action: MainMenuButtonAction,
 }
 
-fn hover_highlight_system(
+fn button_highlight_system(
     windows: Res<Windows>,
     mouse_buttons: Res<Input<MouseButton>>,
     mut buttons: Query<(&mut Sprite, &Transform), With<MainMenuButton>>,

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::{GameTextures, GameState, POINT_SIZE, GameSelection, TEXTURE_SCALE};
-use crate::menu_common::{spawn_menu_background, button_highlight_system};
+use crate::menu_common::{spawn_menu_background};
 use crate::lemmings::levels_per_game_and_skill::names_per_game_and_skill;
 
 #[derive(Component)]
@@ -29,6 +29,25 @@ impl Plugin for LevelSelectionMenuPlugin {
 		        .with_system(exit),
 		);
 	}
+}
+
+fn button_highlight_system(
+    windows: Res<Windows>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    mut buttons: Query<(&mut Sprite, &Transform), With<LevelSelectionButton>>,
+) {
+    if let Some(window) = windows.iter().next() {
+        let position = window.cursor_position().unwrap_or(Vec2::NEG_ONE);
+        let x = position.x - window.width() / 2.;
+        let y = position.y - window.height() / 2.;
+        for (mut sprite, transform) in &mut buttons {
+            let is_over = 
+                transform.translation.x - 120. <= x && x <= transform.translation.x + 120. &&
+                transform.translation.y - 61. <= y && y <= transform.translation.y + 61.;
+            let a: f32 = if is_over { if mouse_buttons.pressed(MouseButton::Left) { 0.5 } else { 0.8 } } else { 1. };
+            sprite.color.set_a(a);
+        }
+    }
 }
 
 fn exit(
