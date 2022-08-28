@@ -24,12 +24,20 @@ impl Plugin for LevelSelectionMenuPlugin {
 				// .with_system(update)
 				.with_system(button_highlight_system)
 		);
-		// .add_system_set(
-		//     SystemSet::on_exit(GameState::LevelSelectionMenu)
-		//         .with_system(exit),
-		// )
-		// .add_system(button_system);
+		app.add_system_set(
+		    SystemSet::on_exit(GameState::LevelSelectionMenu)
+		        .with_system(exit),
+		);
 	}
+}
+
+fn exit(
+    mut commands: Commands,
+    menu_components: Query<Entity, With<LevelSelectionMenuComponent>>,
+) {
+    for e in menu_components.iter() {
+        commands.entity(e).despawn_recursive();
+    }
 }
 
 fn spawn_background(
