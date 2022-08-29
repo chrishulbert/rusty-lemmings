@@ -7,6 +7,7 @@ mod main_menu;
 mod level_selection_menu;
 mod menu_common;
 mod fadeout;
+mod level_preview;
 
 use bevy::{
     prelude::*,
@@ -45,6 +46,7 @@ pub enum GameState {
     MainMenu,
     LevelSelectionMenu,
     Fading,
+    LevelPreview,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -157,6 +159,7 @@ fn main() {
         .add_plugin(fadeout::FadeoutPlugin)
         .add_plugin(main_menu::MainMenuPlugin)
         .add_plugin(level_selection_menu::LevelSelectionMenuPlugin)
+        .add_plugin(level_preview::LevelPreviewPlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
         .add_plugin(WorldInspectorPlugin::new())

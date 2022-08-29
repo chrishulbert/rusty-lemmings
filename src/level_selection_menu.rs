@@ -1,7 +1,9 @@
 use bevy::prelude::*;
+use crate::fadeout::create_fadeout;
 use crate::{GameTextures, GameState, POINT_SIZE, GameSelection, TEXTURE_SCALE};
 use crate::menu_common::{spawn_menu_background};
 use crate::lemmings::levels_per_game_and_skill::names_per_game_and_skill;
+use crate::level_preview::LevelSelectionResource;
 
 #[derive(Component)]
 struct LevelSelectionMenuComponent; // Marker component so the menu can be despawned.
@@ -23,6 +25,7 @@ impl Plugin for LevelSelectionMenuPlugin {
 			SystemSet::on_update(GameState::LevelSelectionMenu)
 				// .with_system(update)
 				.with_system(button_highlight_system)
+				.with_system(button_system)
 		);
 		app.add_system_set(
 		    SystemSet::on_exit(GameState::LevelSelectionMenu)
@@ -50,6 +53,34 @@ fn button_highlight_system(
 				}
 			}
         }
+    }
+}
+
+fn button_system(
+    windows: Res<Windows>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    buttons: Query<(&Transform, &LevelSelectionButton)>,
+    game_textures: Res<GameTextures>,
+    mut state: ResMut<State<GameState>>,
+    mut level_selection: ResMut<LevelSelectionResource>,
+    mut commands: Commands,
+) {
+    if mouse_buttons.just_released(MouseButton::Left) {
+        if let Some(window) = windows.iter().next() {
+            if let Some(position) = window.cursor_position() {
+                let y = position.y - window.height() / 2.;
+                let button_o = buttons.iter().find(|&b| {
+                    b.0.translation.y - 16. * b.0.scale.y < y && y < b.0.translation.y + 16. * b.0.scale.y
+                });
+                if let Some(button) = button_o {
+                    let lsb: &LevelSelectionButton = button.1;
+					level_selection.game_id = lsb.game_id.to_string();
+					level_selection.level_name = lsb.level_name.to_string();
+					level_selection.skill = lsb.skill;
+					create_fadeout(&mut commands, GameState::LevelPreview, &game_textures, &mut state);
+                }
+            }
+        }    
     }
 }
 
