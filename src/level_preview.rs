@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{GameTextures, GameState, POINT_SIZE, TEXTURE_SCALE};
+use crate::{GameTextures, GameState};
 use crate::menu_common::{spawn_menu_background};
 
 pub struct LevelPreviewPlugin;

@@ -33,3 +33,31 @@ pub fn spawn_menu_background(
     spawn(parent, &game_textures, 0., -BG_HEIGHT);
     spawn(parent, &game_textures, -BG_WIDTH, -BG_HEIGHT);    
 }
+
+pub fn text_size() -> f32 {
+	16.0 * POINT_SIZE / 2.
+}
+
+pub fn spawn_text(text: &str, parent: &mut ChildBuilder, game_textures: &Res<GameTextures>) {
+	let texture_scale = TEXTURE_SCALE / 2.; // Logo is SVGA so halve it.
+	let size = text_size();
+	let scale = Vec3::new(texture_scale, texture_scale, 1.);
+	let mut x: f32 = -(text.len() as f32) / 2. * size;
+	for c in text.chars() {
+		let a = c as u32;
+		if 33 <= a && a <= 126 { // Menu font is '!'(33) - '~'(126)
+			let index = (a - 33) as usize;
+			parent.spawn_bundle(SpriteSheetBundle {
+				texture_atlas: game_textures.menu_font.clone(),
+				sprite: TextureAtlasSprite{index, ..default()},
+				transform: Transform {
+					scale,
+					translation: Vec3::new(x, 0., 3.),
+					..default()
+				},        
+				..default()
+			});
+		}
+		x += size;
+	}
+}
