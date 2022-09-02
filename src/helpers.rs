@@ -83,6 +83,19 @@ pub fn make_image(
     image_handle
 }
 
+pub fn make_image_unscaled(
+    image: &crate::lemmings::models::Image,
+    images: &mut ResMut<Assets<Image>>,
+) -> Handle<Image> {
+    let u8_data = u32_to_rgba_u8(&image.bitmap);
+    let image = Image::new(Extent3d{width: image.width as u32, height: image.height as u32, depth_or_array_layers: 1},
+        bevy::render::render_resource::TextureDimension::D2,
+        u8_data,
+        bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb);
+    let image_handle = images.add(image);
+    image_handle
+}
+
 // Figure out a neat way to layout the grid.
 fn cols_rows_for_frames(frame_count: usize) -> (usize, usize) {
     let lenf = frame_count as f32;
