@@ -1,7 +1,7 @@
 // This renders a level to a bitmap.
 
 use std::cmp;
-use std::io::Result;
+//use std::io::Result;
 use crate::lemmings::models::*;
 use crate::lemmings::parsers::special;
 
@@ -108,7 +108,7 @@ fn draw(sprite: &[u32],
     }
 }
 
-pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap, show_objects: bool) -> Result<RenderedLevel> {
+pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap, show_objects: bool) -> RenderedLevel {
     let size = size_of_level(level, grounds);
     let width = size.width();
     let height = LEVEL_HEIGHT;
@@ -155,5 +155,5 @@ pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap, show_ob
         image: image,
         size: size,
     };
-    Ok(rendered_level)
+    rendered_level
 }

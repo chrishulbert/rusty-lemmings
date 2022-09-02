@@ -42,7 +42,7 @@ pub fn spawn_text(text: &str, parent: &mut ChildBuilder, game_textures: &Res<Gam
 	let texture_scale = TEXTURE_SCALE / 2.; // Logo is SVGA so halve it.
 	let size = text_size();
 	let scale = Vec3::new(texture_scale, texture_scale, 1.);
-	let mut x: f32 = -(text.len() as f32) / 2. * size;
+	let mut x: f32 = -((text.len() as f32) - 1.) / 2. * size;
 	for c in text.chars() {
 		let a = c as u32;
 		if 33 <= a && a <= 126 { // Menu font is '!'(33) - '~'(126)

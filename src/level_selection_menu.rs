@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use crate::fadeout::create_fadeout;
-use crate::{GameTextures, GameState, POINT_SIZE, GameSelection};
+use crate::{GameTextures, GameState, POINT_SIZE};
 use crate::menu_common::{spawn_menu_background, text_size, spawn_text};
 use crate::lemmings::levels_per_game_and_skill::names_per_game_and_skill;
 use crate::level_preview::LevelSelectionResource;
+use crate::lemmings::models::Game;
 
 #[derive(Component)]
 struct LevelSelectionMenuComponent; // Marker component so the menu can be despawned.
@@ -74,7 +75,6 @@ fn button_system(
                 });
                 if let Some(button) = button_o {
                     let lsb: &LevelSelectionButton = button.1;
-					level_selection.game_id = lsb.game_id.to_string();
 					level_selection.level_name = lsb.level_name.to_string();
 					level_selection.skill = lsb.skill;
 					create_fadeout(&mut commands, GameState::LevelPreview, &game_textures, &mut state);
@@ -107,12 +107,11 @@ fn spawn_background(
 
 #[derive(Component)]
 pub struct LevelSelectionButton{
-	pub game_id: String,
 	pub skill: isize,
 	pub level_name: String,
 }
 
-fn spawn_level_button(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, name: &str, scale: f32, y: f32, game_id: &str, skill: isize) {
+fn spawn_level_button(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, name: &str, scale: f32, y: f32, skill: isize) {
 	parent.spawn_bundle(SpatialBundle{
 		transform: Transform {
 			translation: Vec3::new(0., y, 2.),
@@ -121,7 +120,6 @@ fn spawn_level_button(parent: &mut ChildBuilder, game_textures: &Res<GameTexture
 		},        
 		..default()
 	}).insert(LevelSelectionButton{
-		game_id: game_id.to_owned(),
 		skill,
 		level_name: name.to_owned(),		
 	}).with_children(|parent| {
@@ -133,19 +131,20 @@ fn spawn_levels(
 	mut commands: Commands,
 	game_textures: Res<GameTextures>,
 	skill_selection: Res<MainMenuSkillSelection>,
-	game_selection: Res<GameSelection>,
+	game: Res<Game>,
 ) {
 	commands
 		.spawn_bundle(SpatialBundle::default())
 		.insert(LevelSelectionMenuComponent)
 		.with_children(|parent| {
-			let names = names_per_game_and_skill(&game_selection.0, skill_selection.0);
+			let names = names_per_game_and_skill(&game.id, skill_selection.0);
 			let scale: f32 = if names.len() >= 16 { 0.5 } else { 1. };
 			let padding: f32 = POINT_SIZE * 4. * scale;
 			let size = text_size() * scale;
-			let mut y: f32 = -((names.len() as f32) * (size + padding) - padding) / 2.;
+			let all_size: f32 = ((names.len() - 1) as f32) * (size + padding);
+			let mut y: f32 = -all_size / 2.;
 			for name in names {
-				spawn_level_button(parent, &game_textures, &name, scale, y, &game_selection.0, skill_selection.0);
+				spawn_level_button(parent, &game_textures, &name, scale, y, skill_selection.0);
 				y += size + padding;
 			}
 		});

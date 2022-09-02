@@ -8,6 +8,7 @@ mod level_selection_menu;
 mod menu_common;
 mod fadeout;
 mod level_preview;
+mod helpers;
 
 use bevy::{
     prelude::*,
@@ -16,6 +17,7 @@ use bevy::{
 };
 use lemmings_to_bevy::load_lemmings_textures::GameTextures;
 use bevy_inspector_egui::WorldInspectorPlugin;
+use lemmings::loader;
 
 // Tested by watching frame-by-frame youtube captures.
 const FPS: f32 = 15.;
@@ -132,9 +134,11 @@ fn startup(
 //     }
 // }
 
-pub struct GameSelection(String); // Lemmings vs ohnomore vs christmas etc.
-
 fn main() {
+    // TODO multithread this! https://doc.rust-lang.org/book/ch16-02-message-passing.html
+    let games = loader::load().unwrap();
+    let game = games.lemmings.unwrap();
+
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
@@ -144,7 +148,7 @@ fn main() {
         //     ..default()
         // })
         .add_state(GameState::MainMenu)
-        .insert_resource(GameSelection("lemmings".to_string()))
+        .insert_resource(game)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(WindowDescriptor {
             title: "Rusty Lemmings".to_string(),
