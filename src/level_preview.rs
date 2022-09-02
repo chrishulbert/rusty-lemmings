@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use bevy::reflect::erased_serde::private::serde::__private::de;
-use bevy::sprite::Anchor;
+ use bevy::sprite::Anchor;
+use crate::fadeout::create_fadeout;
 use crate::{GameTextures, GameState};
 use crate::menu_common::{spawn_menu_background, text_size, spawn_text};
 use crate::lemmings::level_renderer;
@@ -19,7 +19,7 @@ impl Plugin for LevelPreviewPlugin {
 		);
 		app.add_system_set(
 			SystemSet::on_update(GameState::LevelPreview)
-				// .with_system(button_highlight_system)
+				.with_system(button_system)
 		);
 		app.add_system_set(
 		    SystemSet::on_exit(GameState::LevelPreview)
@@ -46,17 +46,16 @@ fn exit(
     }
 }
 
-// fn button_system(
-//     windows: Res<Windows>,
-//     mouse_buttons: Res<Input<MouseButton>>,
-//     buttons: Query<(&Transform, &LevelSelectionButton)>,
-//     game_textures: Res<GameTextures>,
-//     mut state: ResMut<State<GameState>>,
-//     mut level_selection: ResMut<LevelSelectionResource>,
-//     mut commands: Commands,
-// ) {
-//     if mouse_buttons.just_released(MouseButton::Left) {
-//         if let Some(window) = windows.iter().next() {
+fn button_system(
+	mut commands: Commands,
+    mut state: ResMut<State<GameState>>,
+	game_textures: Res<GameTextures>,
+    mouse_buttons: Res<Input<MouseButton>>,
+) {
+    if mouse_buttons.just_released(MouseButton::Left) {
+		create_fadeout(&mut commands, GameState::MainMenu, &game_textures, &mut state);
+	}
+}
 
 fn spawn_background(
 	mut commands: Commands,

@@ -142,10 +142,10 @@ fn spawn_levels(
 			let padding: f32 = POINT_SIZE * 4. * scale;
 			let size = text_size() * scale;
 			let all_size: f32 = ((names.len() - 1) as f32) * (size + padding);
-			let mut y: f32 = -all_size / 2.;
+			let mut y: f32 = all_size / 2.;
 			for name in names {
 				spawn_level_button(parent, &game_textures, &name, scale, y, skill_selection.0);
-				y += size + padding;
+				y -= size + padding;
 			}
 		});
 }
