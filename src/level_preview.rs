@@ -78,43 +78,41 @@ fn spawn_preview(
 	windows: Res<Windows>,
 ) {
 	if let Some(window) = windows.iter().next() {
-		// Top black area: 78/350 of screen size.
-		let mini_map_background_height = (window.height() * 78. / 350.).ceil();
-
-		// Text.
-		let text: Vec<String> = vec![
-			"Level 1".to_string(),
-			level_selection.level_name.to_string(),
-			"".to_string(),
-			"Number of Lemmings: X".to_string(),
-			"To be saved: 10%".to_string(),
-			"Release rate: 50".to_string(),
-			"Time: 5 minutes".to_string(),
-			"Rating: Fun".to_string(),
-			"".to_string(),
-			"Press mouse button to continue".to_string(),
-		];
-		let size = text_size();
-		let gap = (size / 2.).round();
-		let text_lines = text.len();
-		let all_height = (size + gap) * ((text_lines - 1) as f32); // From center of topmost to center of bottom-most.
-		let text_center_y_offset = -mini_map_background_height / 2.; // Center it in the remaining space under the black bar.
-		commands
-			.spawn_bundle(SpatialBundle::default())
-			.insert(LevelPreviewComponent)
-			.with_children(|parent| {
-				for (i, t) in text.iter().enumerate() {
-					parent.spawn_bundle(SpatialBundle{
-						transform: Transform::from_xyz(0., text_center_y_offset + all_height / 2. - ((i as f32) * (size + gap)), 2.),
-						..default()
-					}).with_children(|parent| {
-						spawn_text(t, parent, &game_textures);
-					});
-				}
-			});
-
-		// Preview map.
 		if let Some(level) = game.level_named(&level_selection.level_name) {
+			// Top black area: 78/350 of screen size.
+			let mini_map_background_height = (window.height() * 78. / 350.).ceil();
+
+			
+			// Text.
+			let text: Vec<String> = vec![
+				level_selection.level_name.to_string(),
+				"".to_string(),
+				format!("Number of Lemmings: {}", level.globals.num_of_lemmings),
+				format!("To be saved: {}", level.globals.num_to_rescue),
+				format!("Release rate: {}", level.globals.release_rate),
+				format!("Time: {} minutes", level.globals.time_limit),
+				"".to_string(),
+				"Press mouse button to continue".to_string(),
+			];
+			let size = text_size();
+			let gap = (size / 2.).round();
+			let text_lines = text.len();
+			let all_height = (size + gap) * ((text_lines - 1) as f32); // From center of topmost to center of bottom-most.
+			let text_center_y_offset = -mini_map_background_height / 2.; // Center it in the remaining space under the black bar.
+			commands
+				.spawn_bundle(SpatialBundle::default())
+				.insert(LevelPreviewComponent)
+				.with_children(|parent| {
+					for (i, t) in text.iter().enumerate() {
+						parent.spawn_bundle(SpatialBundle{
+							transform: Transform::from_xyz(0., text_center_y_offset + all_height / 2. - ((i as f32) * (size + gap)), 2.),
+							..default()
+						}).with_children(|parent| {
+							spawn_text(t, parent, &game_textures);
+						});
+					}
+				});
+
 			// Black bar.
 			commands
 				.spawn_bundle(SpriteBundle {
