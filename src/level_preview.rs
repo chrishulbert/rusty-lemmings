@@ -81,7 +81,6 @@ fn spawn_preview(
 		if let Some(level) = game.level_named(&level_selection.level_name) {
 			// Top black area: 78/350 of screen size.
 			let mini_map_background_height = (window.height() * 78. / 350.).ceil();
-
 			
 			// Text.
 			let text: Vec<String> = vec![
