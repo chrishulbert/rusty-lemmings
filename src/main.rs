@@ -9,12 +9,10 @@ mod menu_common;
 mod fadeout;
 mod level_preview;
 mod helpers;
+mod ingame;
 
-use bevy::{
-    prelude::*,
-    window::PresentMode,
-    // winit::WinitSettings, winit::UpdateMode,
-};
+use bevy::prelude::*;
+use bevy::window::PresentMode;
 use lemmings_to_bevy::load_lemmings_textures::GameTextures;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use lemmings::loader;
@@ -49,6 +47,7 @@ pub enum GameState {
     LevelSelectionMenu,
     Fading,
     LevelPreview,
+    InGame,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -142,11 +141,6 @@ fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
-        // The following is a workaround for mouse lag, I hope it isn't necessary forever: https://github.com/bevyengine/bevy/issues/5778
-        // .insert_resource(WinitSettings {
-        //     focused_mode: UpdateMode::ReactiveLowPower { max_wait: std::time::Duration::from_millis(1000) },
-        //     ..default()
-        // })
         .add_state(GameState::MainMenu)
         .insert_resource(game)
         .insert_resource(ClearColor(Color::BLACK))
@@ -164,6 +158,7 @@ fn main() {
         .add_plugin(main_menu::MainMenuPlugin)
         .add_plugin(level_selection_menu::LevelSelectionMenuPlugin)
         .add_plugin(level_preview::LevelPreviewPlugin)
+        .add_plugin(ingame::InGamePlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
         .add_plugin(WorldInspectorPlugin::new())
