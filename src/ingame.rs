@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::utils::HashMap;
-use crate::{GameTextures, GameState, TEXTURE_SCALE};
+use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE};
 use crate::lemmings::models::Game;
 use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
@@ -46,19 +46,25 @@ struct Slice {
 
 const SLICE_WIDTH: usize = 64; // N pixels in the bitmap, not display points or original lemmings pixels.
 
+// Slice a map into pieces of N width.
 fn slice(image: &[u32], width: usize, height: usize) -> Vec<Slice> {
-    let slices = Vec::<Slice>::with_capacity(width / SLICE_WIDTH + 1);
+    let mut slices = Vec::<Slice>::with_capacity(width / SLICE_WIDTH + 1);
     let mut offset_x: usize = 0;
     while offset_x < width {
         let remaining_cols = width - offset_x;
-        let this_width = std::cmp::max(SLICE_WIDTH, remaining_cols);
-        let slice = Vec::<u32>::with_capacity(this_width * height);
-        todo copy bits, make Slice, add it, etc.
+        let this_width = std::cmp::min(SLICE_WIDTH, remaining_cols);
+        let mut slice_bitmap = Vec::<u32>::with_capacity(this_width * height);
+        for y in 0..height {
+            let input_offset = y * width + offset_x;
+            for x in 0..this_width {
+                slice_bitmap.push(image[input_offset + x]);
+            }
+        }
+        slices.push(Slice{bitmap: slice_bitmap, width: this_width, height});
         offset_x += SLICE_WIDTH;
     }
     slices
 }
-TODO make image handles
 
 fn enter(
 	mut commands: Commands,
@@ -72,7 +78,7 @@ fn enter(
 		if let Some(level) = game.level_named(&level_selection.level_name) {
 			let render = level_renderer::render(level, &game.grounds, &game.specials, true);
             let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
-            let slices = 
+            let slices = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE);
 
 			commands
 				.spawn_bundle(SpriteBundle{
