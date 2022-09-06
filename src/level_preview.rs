@@ -1,5 +1,5 @@
 use bevy::prelude::*;
- use bevy::sprite::Anchor;
+use bevy::sprite::Anchor;
 use crate::fadeout::create_fadeout;
 use crate::{GameTextures, GameState};
 use crate::menu_common::{spawn_menu_background, text_size, spawn_text};
@@ -53,7 +53,7 @@ fn button_system(
     mouse_buttons: Res<Input<MouseButton>>,
 ) {
     if mouse_buttons.just_released(MouseButton::Left) {
-		create_fadeout(&mut commands, GameState::MainMenu, &game_textures, &mut state);
+		create_fadeout(&mut commands, GameState::InGame, &game_textures, &mut state);
 	}
 }
 

@@ -58,7 +58,7 @@ fn remove_scale_margin(image: &[u32], width: usize, height: usize) -> Vec<u32> {
 // Multi-step scale-up.
 // should_add_then_remove_margin removes artifacts from sprites (eg not things that are expected to tile) where they don't
 // 'round off' near the edge properly.
-fn multi_scale(image: &[u32], width: usize, height: usize, should_add_then_remove_margin: bool) -> Vec<u32> {
+pub fn multi_scale(image: &[u32], width: usize, height: usize, should_add_then_remove_margin: bool) -> Vec<u32> {
     if should_add_then_remove_margin {
         let (image_with_margin, margin_width, margin_height) = add_1_margin(image, width, height);
         let scaled = multi_scale(&image_with_margin, margin_width, margin_height, false);
