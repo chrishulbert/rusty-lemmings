@@ -132,8 +132,8 @@ fn enter(
 ) {
 	if let Some(window) = windows.iter().next() {
 		if let Some(level) = game.level_named(&level_selection.level_name) {
-            // Spawn the level.
-			let render = level_renderer::render(level, &game.grounds, &game.specials, true);
+            // Spawn the level terrain (not objects).
+			let render = level_renderer::render(level, &game.grounds, &game.specials, false);
             let level_offset_y = window.height() / 2. - render.image.height as f32 * POINT_SIZE / 2.;
             let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
             let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE);
@@ -158,6 +158,23 @@ fn enter(
 				.insert(InGameComponent)
                 .insert(MapContainerComponent);
 
+            // Spawn level objects.
+            for object in &level.objects {
+                commands.spawn
+                let sprite = &ground.object_sprites[&(object.obj_id as i32)];
+                draw(&sprite.frames[0],
+                    sprite.width as isize, sprite.height as isize,
+                    object.x as isize - size.min_x, object.y as isize,
+                    &mut bitmap,
+                    width as isize, height as isize,
+                    object.modifier.is_do_not_overwrite_existing_terrain(),
+                    object.is_upside_down,
+                    false,
+                    object.modifier.is_must_have_terrain_underneath_to_be_visible());
+    
+            }
+
+            // Skill bundle.
 			commands
 				.spawn_bundle(SpriteBundle{
                     sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },

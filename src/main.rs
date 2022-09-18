@@ -14,7 +14,6 @@ mod ingame;
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use lemmings_to_bevy::load_lemmings_textures::GameTextures;
-use bevy_inspector_egui::WorldInspectorPlugin;
 use lemmings::loader;
 
 // Tested by watching frame-by-frame youtube captures.
@@ -161,6 +160,6 @@ fn main() {
         .add_plugin(ingame::InGamePlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
-        .add_plugin(WorldInspectorPlugin::new())
+        .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
         .run();
 }
