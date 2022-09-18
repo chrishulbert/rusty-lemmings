@@ -1,11 +1,13 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
+use bevy::utils::HashMap;
 use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE, POINT_SIZE};
 use crate::lemmings::models::Game;
 use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
 use crate::helpers::{multi_scale, u32_to_rgba_u8};
+use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
 
 pub struct InGamePlugin;
 
@@ -125,9 +127,10 @@ fn scroll(
 fn enter(
 	mut commands: Commands,
 	game_textures: Res<GameTextures>,
-	level_selection: Res<LevelSelectionResource>,
+    level_selection: Res<LevelSelectionResource>,
 	game: Res<Game>,
 	mut images: ResMut<Assets<Image>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 	windows: Res<Windows>,
 ) {
 	if let Some(window) = windows.iter().next() {
@@ -146,6 +149,7 @@ fn enter(
                     for slice in &slices {
                         parent.spawn_bundle(SpriteBundle{
                             transform: Transform{
+                                // TODO counter the x-centering.
                                 translation: Vec3::new(slice.x as f32 * TEXTURE_SCALE, 0., 1.),
                                 scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
                                 ..default()
@@ -158,21 +162,44 @@ fn enter(
 				.insert(InGameComponent)
                 .insert(MapContainerComponent);
 
-            // Spawn level objects.
-            for object in &level.objects {
-                commands.spawn
-                let sprite = &ground.object_sprites[&(object.obj_id as i32)];
-                draw(&sprite.frames[0],
-                    sprite.width as isize, sprite.height as isize,
-                    object.x as isize - size.min_x, object.y as isize,
-                    &mut bitmap,
-                    width as isize, height as isize,
-                    object.modifier.is_do_not_overwrite_existing_terrain(),
-                    object.is_upside_down,
-                    false,
-                    object.modifier.is_must_have_terrain_underneath_to_be_visible());
-    
+            // Scale and bevy-ify the ground's objects.
+            pub enum AnimationOrImageHandle {
+                Animation(Handle<TextureAtlas>),
+                Image(Handle<Image>),
             }
+            let mut object_handles = HashMap::<i32, AnimationOrImageHandle>::new();
+            let ground = &game.grounds[&(level.globals.normal_graphic_set as i32)];
+            for (index, animation) in &ground.object_sprites {
+                let frame_count = animation.frames.len();
+                let anim_or_image: AnimationOrImageHandle;
+                if frame_count == 0 {
+                    continue;
+                } else if frame_count == 1 {
+                    // Static.
+                    let image_handle = make_image_from_bitmap(&animation.frames[0], animation.width, animation.height, &mut images, true);
+                    anim_or_image = AnimationOrImageHandle::Image(image_handle);
+                } else {
+                    // Animation.
+                    let atlas_handle = make_atlas_from_animation(animation, &mut images, &mut texture_atlases, true);
+                    anim_or_image = AnimationOrImageHandle::Animation(atlas_handle);
+                }
+                object_handles.insert(index.clone(), anim_or_image);
+            }
+
+            // Spawn level objects.
+            // for object in &level.objects {
+            //     let sprite = &ground.object_sprites[&(object.obj_id as i32)];
+            //     draw(&sprite.frames[0],
+            //         sprite.width as isize, sprite.height as isize,
+            //         object.x as isize - size.min_x, object.y as isize,
+            //         &mut bitmap,
+            //         width as isize, height as isize,
+            //         object.modifier.is_do_not_overwrite_existing_terrain(),
+            //         object.is_upside_down,
+            //         false,
+            //         object.modifier.is_must_have_terrain_underneath_to_be_visible());
+    
+            // }
 
             // Skill bundle.
 			commands

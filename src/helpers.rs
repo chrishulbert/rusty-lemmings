@@ -73,9 +73,19 @@ pub fn make_image(
     images: &mut ResMut<Assets<Image>>,
     should_add_then_remove_margin: bool,
 ) -> Handle<Image> {
-    let scaled = multi_scale(&image.bitmap, image.width, image.height, should_add_then_remove_margin);
+    make_image_from_bitmap(&image.bitmap, image.width, image.height, images, should_add_then_remove_margin)
+}
+
+pub fn make_image_from_bitmap(
+    bitmap: &[u32],
+    width: usize,
+    height: usize,
+    images: &mut ResMut<Assets<Image>>,
+    should_add_then_remove_margin: bool,
+) -> Handle<Image> {
+    let scaled = multi_scale(bitmap, width, height, should_add_then_remove_margin);
     let u8_data = u32_to_rgba_u8(&scaled);
-    let image = Image::new(Extent3d{width: (image.width * SCALE) as u32, height: (image.height * SCALE) as u32, depth_or_array_layers: 1},
+    let image = Image::new(Extent3d{width: (width * SCALE) as u32, height: (height * SCALE) as u32, depth_or_array_layers: 1},
         bevy::render::render_resource::TextureDimension::D2,
         u8_data,
         bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb);

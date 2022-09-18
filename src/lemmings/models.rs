@@ -24,7 +24,7 @@ pub struct Globals {
     pub time_limit: u16, // max 0x00FF, 0x0001 to 0x0009 works best
     pub skills: Skills, // How many of each skill you get to start with.
     pub start_screen_xpos: u16, // 0x0000 to 0x04F0.  is rounded to nearest multiple of 8.
-    pub normal_graphic_set: u16, // 0x0000 is dirt, 0x0001 is fire, 0x0002 is squasher, 0x0003 is pillar, 0x0004 is crystal, 0x0005 is brick, 0x0006 is rock, 0x0007 is snow and 0x0008 is bubble.
+    pub normal_graphic_set: u16, // AKA ground. 0x0000 is dirt, 0x0001 is fire, 0x0002 is squasher, 0x0003 is pillar, 0x0004 is crystal, 0x0005 is brick, 0x0006 is rock, 0x0007 is snow and 0x0008 is bubble.
     pub extended_graphic_set: u16, // Apparently ignored in windows version.
 }
 
