@@ -32,6 +32,11 @@ impl Plugin for InGamePlugin {
 struct InGameComponent; // Marker component so it can be despawned.
 
 #[derive(Component)]
+struct ObjectComponent {
+    // pub info: ObjectInfo,  // TODO include the object info here?
+}
+
+#[derive(Component)]
 struct MapContainerComponent; // Controls the x/y scroll of the map.
 
 fn exit(
@@ -135,40 +140,13 @@ fn enter(
 ) {
 	if let Some(window) = windows.iter().next() {
 		if let Some(level) = game.level_named(&level_selection.level_name) {
-            // Spawn the level terrain (not objects).
-			let render = level_renderer::render(level, &game.grounds, &game.specials, false);
-            let level_offset_y = window.height() / 2. - render.image.height as f32 * POINT_SIZE / 2.;
-            let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
-            let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE);
-            let slices = send_slices_to_bevy(slices_raw, &mut images);
-            commands
-                .spawn_bundle(SpatialBundle{
-                    transform: Transform::from_xyz(-1000., level_offset_y, 1.),
-                    ..default()
-                }).with_children(|parent| {
-                    for slice in &slices {
-                        parent.spawn_bundle(SpriteBundle{
-                            transform: Transform{
-                                // TODO counter the x-centering.
-                                translation: Vec3::new(slice.x as f32 * TEXTURE_SCALE, 0., 1.),
-                                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                                ..default()
-                            },
-                            texture: slice.texture.clone(),
-                            ..default()
-                        });
-                    }
-                })
-				.insert(InGameComponent)
-                .insert(MapContainerComponent);
-
             // Scale and bevy-ify the ground's objects.
+            let ground = &game.grounds[&(level.globals.normal_graphic_set as i32)];
             pub enum AnimationOrImageHandle {
                 Animation(Handle<TextureAtlas>),
                 Image(Handle<Image>),
             }
             let mut object_handles = HashMap::<i32, AnimationOrImageHandle>::new();
-            let ground = &game.grounds[&(level.globals.normal_graphic_set as i32)];
             for (index, animation) in &ground.object_sprites {
                 let frame_count = animation.frames.len();
                 let anim_or_image: AnimationOrImageHandle;
@@ -186,22 +164,71 @@ fn enter(
                 object_handles.insert(index.clone(), anim_or_image);
             }
 
-            // Spawn level objects.
-            // for object in &level.objects {
-            //     let sprite = &ground.object_sprites[&(object.obj_id as i32)];
-            //     draw(&sprite.frames[0],
-            //         sprite.width as isize, sprite.height as isize,
-            //         object.x as isize - size.min_x, object.y as isize,
-            //         &mut bitmap,
-            //         width as isize, height as isize,
-            //         object.modifier.is_do_not_overwrite_existing_terrain(),
-            //         object.is_upside_down,
-            //         false,
-            //         object.modifier.is_must_have_terrain_underneath_to_be_visible());
-    
-            // }
+            // Spawn the level terrain.
+			let render = level_renderer::render(level, &game.grounds, &game.specials, false);
+            let level_offset_y = window.height() / 2. - render.image.height as f32 * POINT_SIZE / 2.;
+            let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
+            let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE);
+            let slices = send_slices_to_bevy(slices_raw, &mut images);
+            commands
+                .spawn_bundle(SpatialBundle{
+                    transform: Transform::from_xyz(-1000., level_offset_y, 1.),
+                    ..default()
+                }).with_children(|parent| {
+                    // Terrain slices.
+                    for slice in &slices {
+                        parent.spawn_bundle(SpriteBundle{
+                            transform: Transform{
+                                // TODO counter the x-centering.
+                                translation: Vec3::new(slice.x as f32 * TEXTURE_SCALE, 0., 2.),
+                                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                                ..default()
+                            },
+                            texture: slice.texture.clone(),
+                            ..default()
+                        });
+                    }
 
-            // Skill bundle.
+                    // Spawn level objects.
+                    for object in &level.objects {
+                        let z_index: f32 = if object.modifier.is_do_not_overwrite_existing_terrain() { 1. } else { 3. };
+                        if let Some(handle) = object_handles.get(&(object.obj_id as i32)) {
+                            match handle {
+                                AnimationOrImageHandle::Animation(anim) => {
+                                    // commands.spawn_bundle(bundle)
+
+                                },
+                                AnimationOrImageHandle::Image(image) => {
+                                    parent.spawn_bundle(SpriteBundle{
+                                        texture: image.clone(),
+                                        transform: Transform {
+                                            translation: Vec3::new(object.x as f32 * TEXTURE_SCALE, object.y as f32 * TEXTURE_SCALE, z_index),
+                                            scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                                            ..default()
+                                        },
+                                        ..default()
+                                    })
+                                    .insert(ObjectComponent{});
+                                },
+                            }
+                            // draw(&sprite.frames[0],
+                            //     sprite.width as isize, sprite.height as isize,
+                            //     object.x as isize - size.min_x, object.y as isize,
+                            //     &mut bitmap,
+                            //     width as isize, height as isize,
+                            //     object.modifier.is_do_not_overwrite_existing_terrain(),
+                            //     object.is_upside_down,
+                            //     false,
+                            //     object.modifier.is_must_have_terrain_underneath_to_be_visible());
+                        }    
+                    }
+
+                    // TODO put objects here?
+                })
+				.insert(InGameComponent)
+                .insert(MapContainerComponent);
+
+            // Skill panel.
 			commands
 				.spawn_bundle(SpriteBundle{
                     sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },

@@ -111,8 +111,8 @@ pub struct Level {
 
 #[derive(Default, Debug, Clone)]
 pub struct ObjectInfo {
-    pub animation_flags: u16,
-    pub start_animation_frame_index: u8,
+    pub animation_flags: u16, // bit 0 = 0 for loops, 1 for triggered animations.
+    pub start_animation_frame_index: u8, 
     pub end_animation_frame_index: u8,
     pub width: usize,
     pub height: usize,
@@ -122,7 +122,7 @@ pub struct ObjectInfo {
     pub trigger_top: u16,
     pub trigger_width: u8,
     pub trigger_height: u8,
-    pub trigger_effect_id: u8,
+    pub trigger_effect_id: u8, // 0=none, 1=lemming exits, 4=trigger trap, 5=drown, 6=disintegrate, 7=one way wall left, 8=one way right, 9=steel
     pub animation_frames_base_loc: u16,
     pub preview_image_index: u16,
     pub trap_sound_effect_id: u8,
