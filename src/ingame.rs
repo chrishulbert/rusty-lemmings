@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, transform};
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
 use bevy::utils::HashMap;
@@ -8,6 +8,7 @@ use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
 use crate::helpers::{multi_scale, u32_to_rgba_u8};
 use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
+use crate::ORIGINAL_GAME_W;
 
 pub struct InGamePlugin;
 
@@ -37,7 +38,10 @@ struct ObjectComponent {
 }
 
 #[derive(Component)]
-struct MapContainerComponent; // Controls the x/y scroll of the map.
+struct MapContainerComponent { // Controls the x/y scroll of the map.
+    pub min_x: f32, // In bevy transform coords.
+    pub max_x: f32,
+}
 
 fn exit(
     mut commands: Commands,
@@ -50,7 +54,7 @@ fn exit(
 
 struct SliceWithoutHandle {
     pub bitmap: Vec<u32>,
-    pub x: usize,
+    pub x: isize,
     pub width: usize,
     pub height: usize,
 }
@@ -60,7 +64,7 @@ struct SliceWithoutHandle {
 const SLICE_WIDTH: usize = 192;
 
 // Slice a map into pieces of N width.
-fn slice(image: &[u32], width: usize, height: usize) -> Vec<SliceWithoutHandle> {
+fn slice(image: &[u32], width: usize, height: usize, min_x: isize) -> Vec<SliceWithoutHandle> {
     let mut slices = Vec::<SliceWithoutHandle>::with_capacity(width / SLICE_WIDTH + 1);
     let mut offset_x: usize = 0;
     while offset_x < width {
@@ -73,7 +77,7 @@ fn slice(image: &[u32], width: usize, height: usize) -> Vec<SliceWithoutHandle> 
                 slice_bitmap.push(image[input_offset + x]);
             }
         }
-        slices.push(SliceWithoutHandle{bitmap: slice_bitmap, x: offset_x, width: this_width, height});
+        slices.push(SliceWithoutHandle{bitmap: slice_bitmap, x: (offset_x as isize) + min_x, width: this_width, height});
         offset_x += SLICE_WIDTH;
     }
     slices
@@ -81,7 +85,7 @@ fn slice(image: &[u32], width: usize, height: usize) -> Vec<SliceWithoutHandle> 
 
 struct Slice {
     pub bitmap: Vec<u32>,
-    pub x: usize,
+    pub x: isize,
     pub width: usize,
     pub height: usize,
     pub texture: Handle<Image>,
@@ -106,9 +110,10 @@ fn send_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Asse
 }
 
 /// Scroll left and right if your mouse is at the edge.
+/// TODO multiply by frame time.
 fn scroll(
     windows: Res<Windows>,
-    mut query: Query<&mut Transform, With<MapContainerComponent>>,
+    mut query: Query<(&mut Transform, &MapContainerComponent)>,
 ) {
     if let Some(window) = windows.iter().next() {
         if let Some(position) = window.cursor_position() {
@@ -121,8 +126,10 @@ fn scroll(
                 delta = 0;
             }
             if delta != 0 {
-                for mut transform in query.iter_mut() {
-                    transform.translation.x += (delta as f32 * window.width() * 0.005).round();// = Vec3::new(slice.x as f32 * TEXTURE_SCALE, level_offset_y, 1.),
+                for (mut transform, container) in query.iter_mut() {
+                    let new_x = transform.translation.x + (delta as f32 * window.width() * 0.005).round();
+                    let clamped_x = new_x.min(container.max_x).max(container.min_x);
+                    transform.translation.x = clamped_x;
                 }
             }
         }
@@ -166,67 +173,72 @@ fn enter(
 
             // Spawn the level terrain.
 			let render = level_renderer::render(level, &game.grounds, &game.specials, false);
-            let level_offset_y = window.height() / 2. - render.image.height as f32 * POINT_SIZE / 2.;
+            let game_origin_offset_y: f32 = (render.image.height as f32) * POINT_SIZE / 2.; // Y to use for 0 in game coords.
+            let level_offset_y = window.height() / 2. - game_origin_offset_y;
             let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
-            let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE);
+            let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE, render.size.min_x * SCALE as isize);
             let slices = send_slices_to_bevy(slices_raw, &mut images);
             commands
                 .spawn_bundle(SpatialBundle{
-                    transform: Transform::from_xyz(-1000., level_offset_y, 1.),
+                    // TODO for the start X, do we need to account for the current screen width?
+                    transform: Transform::from_xyz(-(level.globals.start_screen_xpos as f32 + ORIGINAL_GAME_W as f32 / 2.) * POINT_SIZE, 
+                        level_offset_y, 1.),
                     ..default()
                 }).with_children(|parent| {
                     // Terrain slices.
-                    for slice in &slices {
-                        parent.spawn_bundle(SpriteBundle{
-                            transform: Transform{
-                                // TODO counter the x-centering.
-                                translation: Vec3::new(slice.x as f32 * TEXTURE_SCALE, 0., 2.),
-                                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                    parent.spawn_bundle(SpatialBundle::default()).with_children(|parent| {
+                        for slice in &slices {
+                            parent.spawn_bundle(SpriteBundle{
+                                transform: Transform{
+                                    translation: Vec3::new((slice.x as f32 + (slice.width as f32 / 2.)) * TEXTURE_SCALE, 0., 2.),
+                                    scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                                    ..default()
+                                },
+                                texture: slice.texture.clone(),
                                 ..default()
-                            },
-                            texture: slice.texture.clone(),
-                            ..default()
-                        });
-                    }
+                            });
+                        }
+                    });
 
                     // Spawn level objects.
                     for object in &level.objects {
                         let z_index: f32 = if object.modifier.is_do_not_overwrite_existing_terrain() { 1. } else { 3. };
+                        let object_info = &ground.ground.object_info[object.obj_id];
                         if let Some(handle) = object_handles.get(&(object.obj_id as i32)) {
+                            let transform = Transform{
+                                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                                translation: Vec3::new((object.x as f32 + object_info.width as f32 / 2.) * POINT_SIZE,
+                                game_origin_offset_y - (object.y as f32 + object_info.height as f32 / 2.) * POINT_SIZE, 
+                                z_index),
+                                ..default()
+                            };
                             match handle {
                                 AnimationOrImageHandle::Animation(anim) => {
                                     // commands.spawn_bundle(bundle)
-
+                                    parent.spawn_bundle(SpriteSheetBundle{
+                                        texture_atlas: anim.clone(),
+                                        transform, 
+                                        ..default()
+                                    })
+                                    .insert(ObjectComponent{});
                                 },
                                 AnimationOrImageHandle::Image(image) => {
                                     parent.spawn_bundle(SpriteBundle{
                                         texture: image.clone(),
-                                        transform: Transform {
-                                            translation: Vec3::new(object.x as f32 * TEXTURE_SCALE, object.y as f32 * TEXTURE_SCALE, z_index),
-                                            scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                                            ..default()
-                                        },
+                                        transform, 
                                         ..default()
                                     })
                                     .insert(ObjectComponent{});
                                 },
                             }
-                            // draw(&sprite.frames[0],
-                            //     sprite.width as isize, sprite.height as isize,
-                            //     object.x as isize - size.min_x, object.y as isize,
-                            //     &mut bitmap,
-                            //     width as isize, height as isize,
-                            //     object.modifier.is_do_not_overwrite_existing_terrain(),
-                            //     object.is_upside_down,
-                            //     false,
-                            //     object.modifier.is_must_have_terrain_underneath_to_be_visible());
                         }    
                     }
-
-                    // TODO put objects here?
                 })
 				.insert(InGameComponent)
-                .insert(MapContainerComponent);
+                .insert(MapContainerComponent{
+                    min_x: -render.size.max_x as f32 * POINT_SIZE,
+                    max_x: -render.size.min_x as f32 * POINT_SIZE,
+                });
 
             // Skill panel.
 			commands

@@ -35,6 +35,7 @@ const SCALE_B: usize = 2;
 
 const RES_W: usize = 1280;
 const RES_H: usize = 720;
+const ORIGINAL_GAME_W: usize = 320;
 const ORIGINAL_GAME_H: usize = 200;
 // I'm declaring an 'original game pixel' to be called a 'point'.
 const POINT_SIZE: f32 = (RES_H as f32) / (ORIGINAL_GAME_H as f32); // How many bevy transform values to get one 'point' (pixel) in the original game.
