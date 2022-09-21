@@ -214,7 +214,6 @@ fn enter(
                             };
                             match handle {
                                 AnimationOrImageHandle::Animation(anim) => {
-                                    // commands.spawn_bundle(bundle)
                                     parent.spawn_bundle(SpriteSheetBundle{
                                         texture_atlas: anim.clone(),
                                         transform, 
