@@ -1,9 +1,9 @@
-use bevy::{prelude::*, transform};
+use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
 use bevy::utils::HashMap;
 use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE, POINT_SIZE};
-use crate::lemmings::models::Game;
+use crate::lemmings::models::{Game, ObjectInfo, Object};
 use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
 use crate::helpers::{multi_scale, u32_to_rgba_u8};
@@ -34,7 +34,7 @@ struct InGameComponent; // Marker component so it can be despawned.
 
 #[derive(Component)]
 struct ObjectComponent {
-    // pub info: ObjectInfo,  // TODO include the object info here?
+    pub info: ObjectInfo,
 }
 
 #[derive(Component)]
@@ -119,8 +119,12 @@ fn scroll(
         if let Some(position) = window.cursor_position() {
             let delta: isize;
             if position.x < window.width() * 0.05 {
+                delta = 2;
+            } else if position.x < window.width() * 0.1 {
                 delta = 1;
             } else if position.x > window.width() * 0.95 {
+                delta = -2;
+            } else if position.x > window.width() * 0.9 {
                 delta = -1;
             } else {
                 delta = 0;
@@ -212,6 +216,9 @@ fn enter(
                                 z_index),
                                 ..default()
                             };
+                            let object_component = ObjectComponent{
+                                info: object_info.clone(),
+                            };
                             match handle {
                                 AnimationOrImageHandle::Animation(anim) => {
                                     parent.spawn_bundle(SpriteSheetBundle{
@@ -219,7 +226,7 @@ fn enter(
                                         transform, 
                                         ..default()
                                     })
-                                    .insert(ObjectComponent{});
+                                    .insert(object_component);
                                 },
                                 AnimationOrImageHandle::Image(image) => {
                                     parent.spawn_bundle(SpriteBundle{
@@ -227,7 +234,7 @@ fn enter(
                                         transform, 
                                         ..default()
                                     })
-                                    .insert(ObjectComponent{});
+                                    .insert(object_component);
                                 },
                             }
                         }    
