@@ -28,8 +28,7 @@ fn load_ground_and_sprites(dir: &str, index: i32) -> Result<GroundCombined> {
     let mut object_sprites: AnimationMap = AnimationMap::new();
     for (i, object) in ground.object_info.iter().enumerate() {
         if object.is_valid() {
-            // TODO do we need +1 for the # of frames?
-            let sprite = sprites::extract_animation(&vga_sections[1], object.width, object.height, object.animation_frames_base_loc as usize, object.animation_frames_base_loc as usize + object.mask_offset_from_image as usize, &palette, object.animation_frame_data_size as usize, object.end_animation_frame_index as usize);
+            let sprite = sprites::extract_animation(&vga_sections[1], object.width, object.height, object.animation_frames_base_loc as usize, object.animation_frames_base_loc as usize + object.mask_offset_from_image as usize, &palette, object.animation_frame_data_size as usize, object.frame_count as usize);
             object_sprites.insert(i as i32, sprite);
         }
     }

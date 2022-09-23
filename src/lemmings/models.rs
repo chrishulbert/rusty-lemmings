@@ -113,7 +113,7 @@ pub struct Level {
 pub struct ObjectInfo {
     pub animation_flags: u16, // bit 0 = 0 for loops, 1 for triggered animations.
     pub start_animation_frame_index: u8, 
-    pub end_animation_frame_index: u8,
+    pub frame_count: u8, // aka end_animation_frame_index in the docs, but I suspect that's wrong, because if you +1 to get the frame count, it fails to load.
     pub width: usize,
     pub height: usize,
     pub animation_frame_data_size: u16,

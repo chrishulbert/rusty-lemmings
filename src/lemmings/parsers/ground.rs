@@ -51,7 +51,7 @@ pub fn parse(data: &[u8]) -> io::Result<Ground> {
     for i in 0..16 {
         ground.object_info[i].animation_flags = read_u16(&mut data_iter);
         ground.object_info[i].start_animation_frame_index = *data_iter.next().unwrap();
-        ground.object_info[i].end_animation_frame_index = *data_iter.next().unwrap();
+        ground.object_info[i].frame_count = *data_iter.next().unwrap();
         ground.object_info[i].width = *data_iter.next().unwrap() as usize;
         ground.object_info[i].height = *data_iter.next().unwrap() as usize;
         ground.object_info[i].animation_frame_data_size = read_u16(&mut data_iter);

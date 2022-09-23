@@ -135,7 +135,8 @@ pub fn render(level: &Level, grounds: &GroundMap, specials: &SpecialMap, show_ob
     if show_objects {
         for object in level.objects.iter() {
             let sprite = &ground.object_sprites[&(object.obj_id as i32)];
-            draw(&sprite.frames[0],
+            // let info: &ObjectInfo = &ground.ground.object_info[object.obj_id];
+            draw(&sprite.frames[0], // info.preview_image_index seems correct but is too large and crashes.
                 sprite.width as isize, sprite.height as isize,
                 object.x as isize - size.min_x, object.y as isize,
                 &mut bitmap,

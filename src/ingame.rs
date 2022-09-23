@@ -1,3 +1,4 @@
+use std::time::Duration;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
@@ -8,19 +9,32 @@ use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
 use crate::helpers::{multi_scale, u32_to_rgba_u8};
 use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
-use crate::ORIGINAL_GAME_W;
+use crate::{ORIGINAL_GAME_W, FRAME_DURATION};
 
 pub struct InGamePlugin;
 
+#[derive(Component)]
+struct GameTimer(Timer);
+
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
+        // Instead of timers per entity, we use a global timer so that everyone moves in unison.
+        app.insert_resource(GameTimer(Timer::from_seconds(FRAME_DURATION, true)));
+
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
 				.with_system(enter)
 		);
 		app.add_system_set(
 			SystemSet::on_update(GameState::InGame)
+                .label("tick")
+                .with_system(tick)
+		);
+		app.add_system_set(
+			SystemSet::on_update(GameState::InGame)
+                .after("tick")
 				.with_system(scroll)
+                .with_system(update_objects)
 		);
 		app.add_system_set(
 		    SystemSet::on_exit(GameState::InGame)
@@ -109,9 +123,30 @@ fn send_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Asse
     }).collect()
 }
 
+fn update_objects(
+    timer: Res<GameTimer>,
+    mut query: Query<(
+        &mut TextureAtlasSprite,
+        &ObjectComponent,
+    )>,
+) {
+    if timer.0.just_finished() {
+        for (mut tas, object) in &mut query {
+            tas.index = (tas.index + 1) % (object.info.frame_count as usize);
+        }
+    }
+}
+
+fn tick(
+    time: Res<Time>,
+    mut timer: ResMut<GameTimer>,
+) {
+    timer.0.tick(time.delta());
+}
+
 /// Scroll left and right if your mouse is at the edge.
-/// TODO multiply by frame time.
 fn scroll(
+    time: Res<Time>,
     windows: Res<Windows>,
     mut query: Query<(&mut Transform, &MapContainerComponent)>,
 ) {
@@ -131,7 +166,7 @@ fn scroll(
             }
             if delta != 0 {
                 for (mut transform, container) in query.iter_mut() {
-                    let new_x = transform.translation.x + (delta as f32 * window.width() * 0.005).round();
+                    let new_x = transform.translation.x + (delta as f32 * time.delta().as_secs_f32() * window.width() * 0.3).round();
                     let clamped_x = new_x.min(container.max_x).max(container.min_x);
                     transform.translation.x = clamped_x;
                 }
@@ -145,10 +180,12 @@ fn enter(
 	game_textures: Res<GameTextures>,
     level_selection: Res<LevelSelectionResource>,
 	game: Res<Game>,
+    mut timer: ResMut<GameTimer>,
 	mut images: ResMut<Assets<Image>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 	windows: Res<Windows>,
 ) {
+    timer.0.set_elapsed(Duration::ZERO);
 	if let Some(window) = windows.iter().next() {
 		if let Some(level) = game.level_named(&level_selection.level_name) {
             // Scale and bevy-ify the ground's objects.
