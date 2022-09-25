@@ -18,3 +18,10 @@ Filenames will need to be lowercase, which can be fixed like so: `ruby -e "Dir['
 You can find lemmings here: https://www.camanis.net/lemmings/lemmings.php
 
 Install rust (eg `brew install rustup` then `rustup update`), then do `cargo run`.
+
+## Compilation notes
+
+To cross compile, first run `rustup target list` to see supported platforms.
+If you are on apple silicon macOS, run `rustup target add x86_64-apple-darwin` to support Intel macs.
+Note: Run this from the project's folder so it applies the toolchain version.
+Then use cargo specifying the target as follows: `cargo build --target=x86_64-apple-darwin`
