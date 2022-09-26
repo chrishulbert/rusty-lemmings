@@ -31,10 +31,17 @@ impl Plugin for LevelPreviewPlugin {
 #[derive(Component)]
 struct LevelPreviewComponent;
 
-#[derive(Default)]
 pub struct LevelSelectionResource {
 	pub skill: isize,
 	pub level_name: String,
+}
+impl Default for LevelSelectionResource {
+	fn default() -> Self {
+		Self {
+			skill: 0,
+			level_name: "Just dig!".to_string(),
+		}		
+	}
 }
 
 fn exit(
