@@ -68,6 +68,8 @@ pub fn parse(data: &[u8]) -> io::Result<Ground> {
         let _unknown3 = read_u16(&mut data_iter);
         ground.object_info[i].trap_sound_effect_id = *data_iter.next().unwrap();
     }
+    ground.object_info[0].is_exit = true;
+    ground.object_info[1].is_entrance = true;
     for i in 0..64 {
         ground.terrain_info[i].width = *data_iter.next().unwrap() as usize;
         ground.terrain_info[i].height = *data_iter.next().unwrap() as usize;

@@ -111,6 +111,8 @@ pub struct Level {
 
 #[derive(Default, Debug, Clone)]
 pub struct ObjectInfo {
+    pub is_exit: bool, // According to lemmings_lvl_file_format.txt, the first object for any ground is always exit, second is entrance.
+    pub is_entrance: bool, 
     pub animation_flags: u16, // bit 0 = 0 for loops, 1 for triggered animations.
     pub start_animation_frame_index: u8, 
     pub frame_count: u8, // aka end_animation_frame_index in the docs, but I suspect that's wrong, because if you +1 to get the frame count, it fails to load.
