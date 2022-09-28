@@ -130,14 +130,30 @@ fn send_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Asse
 
 fn update_objects(
     timer: Res<GameTimer>,
+    start_countdown: Res<InGameStartCountdown>,
     mut query: Query<(
         &mut TextureAtlasSprite,
         &ObjectComponent,
     )>,
 ) {
     if timer.0.just_finished() {
-        for (mut tas, object) in &mut query {
-            tas.index = (tas.index + 1) % (object.info.frame_count as usize);
+        for (mut tas, object_unknown) in &mut query {
+            let object: &ObjectComponent = object_unknown; // Otherwise RLS can't suggest the type.
+            if object.info.is_entrance {
+                // Entrance is a special case: has to wait for the start countdown.
+                // TODO start at 1 and end at 0?
+                // print the values?
+                if start_countdown.0 <= 0 {
+                    let new_index = tas.index + 1;
+                    if new_index >= object.info.frame_count as usize {
+                        // Is past fully open now, start the countdown to dropping lemmings.
+                    } else {
+                        tas.index = new_index;
+                    }
+                }
+            } else {
+                tas.index = (tas.index + 1) % (object.info.frame_count as usize);
+            }
         }
     }
 }
