@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
 use bevy::utils::HashMap;
-use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE, POINT_SIZE};
+use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE, POINT_SIZE, FPS};
 use crate::lemmings::models::{Game, ObjectInfo, Object};
 use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
@@ -13,13 +13,17 @@ use crate::{ORIGINAL_GAME_W, FRAME_DURATION};
 
 pub struct InGamePlugin;
 
-#[derive(Component)]
+/// Resource.
 struct GameTimer(Timer);
+
+/// Resource.
+struct InGameStartCountdown(i32);
 
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
         // Instead of timers per entity, we use a global timer so that everyone moves in unison.
         app.insert_resource(GameTimer(Timer::from_seconds(FRAME_DURATION, true)));
+        app.insert_resource(InGameStartCountdown(FPS as i32));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -35,6 +39,7 @@ impl Plugin for InGamePlugin {
                 .after("tick")
 				.with_system(scroll)
                 .with_system(update_objects)
+                .with_system(do_countdown)
 		);
 		app.add_system_set(
 		    SystemSet::on_exit(GameState::InGame)
@@ -137,6 +142,17 @@ fn update_objects(
     }
 }
 
+fn do_countdown(
+    timer: Res<GameTimer>,
+    mut start_countdown: ResMut<InGameStartCountdown>,
+) {
+    if start_countdown.0 > 0 {
+        if timer.0.just_finished() {
+            start_countdown.0 -= 1;
+        }    
+    }
+}
+
 fn tick(
     time: Res<Time>,
     mut timer: ResMut<GameTimer>,
@@ -181,10 +197,12 @@ fn enter(
     level_selection: Res<LevelSelectionResource>,
 	game: Res<Game>,
     mut timer: ResMut<GameTimer>,
+    mut start_countdown: ResMut<InGameStartCountdown>,
 	mut images: ResMut<Assets<Image>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 	windows: Res<Windows>,
 ) {
+    start_countdown.0 = FPS as i32;
     timer.0.set_elapsed(Duration::ZERO);
 	if let Some(window) = windows.iter().next() {
 		if let Some(level) = game.level_named(&level_selection.level_name) {
