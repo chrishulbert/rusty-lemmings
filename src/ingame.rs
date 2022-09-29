@@ -141,14 +141,14 @@ fn update_objects(
             let object: &ObjectComponent = object_unknown; // Otherwise RLS can't suggest the type.
             if object.info.is_entrance {
                 // Entrance is a special case: has to wait for the start countdown.
-                // TODO start at 1 and end at 0?
-                // print the values?
                 if start_countdown.0 <= 0 {
-                    let new_index = tas.index + 1;
-                    if new_index >= object.info.frame_count as usize {
-                        // Is past fully open now, start the countdown to dropping lemmings.
-                    } else {
-                        tas.index = new_index;
+                    if tas.index > 0 { // Not fully open yet.
+                        let new_index = tas.index + 1;
+                        if new_index >= object.info.frame_count as usize {
+                            tas.index = 0; // Full open now.
+                        } else {
+                            tas.index = new_index;
+                        }    
                     }
                 }
             } else {
@@ -293,6 +293,7 @@ fn enter(
                             match handle {
                                 AnimationOrImageHandle::Animation(anim) => {
                                     parent.spawn_bundle(SpriteSheetBundle{
+                                        sprite: TextureAtlasSprite { index: object_info.start_animation_frame_index as usize % object_info.frame_count as usize, ..default() },
                                         texture_atlas: anim.clone(),
                                         transform, 
                                         ..default()
