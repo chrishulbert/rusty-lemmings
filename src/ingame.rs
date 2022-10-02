@@ -4,7 +4,7 @@ use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
 use bevy::utils::HashMap;
 use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE, POINT_SIZE, FPS};
-use crate::lemmings::models::{Game, ObjectInfo, Object};
+use crate::lemmings::models::{Game, ObjectInfo};
 use crate::level_preview::LevelSelectionResource;
 use crate::lemmings::level_renderer;
 use crate::helpers::{multi_scale, u32_to_rgba_u8};
@@ -17,13 +17,17 @@ pub struct InGamePlugin;
 struct GameTimer(Timer);
 
 /// Resource.
-struct InGameStartCountdown(i32);
+struct InGameStartCountdown(i32); // Countdown to the entrance opening.
+struct InGameDropCountdown(i32); // Countdown between dropping lemmings. -1 if hasn't started yet, or has dropped all lemmings.
+struct InGameLemmingsContainerId(Entity); // The entity id of the lemmings container.
 
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
         // Instead of timers per entity, we use a global timer so that everyone moves in unison.
         app.insert_resource(GameTimer(Timer::from_seconds(FRAME_DURATION, true)));
-        app.insert_resource(InGameStartCountdown(FPS as i32));
+        app.insert_resource(InGameStartCountdown(FPS as i32));        
+        app.insert_resource(InGameDropCountdown(-1));
+        app.insert_resource(InGameLemmingsContainerId(Entity::from_raw(0)));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -40,6 +44,8 @@ impl Plugin for InGamePlugin {
 				.with_system(scroll)
                 .with_system(update_objects)
                 .with_system(do_countdown)
+                .with_system(drop_lemmings)
+                .with_system(update_lemmings)               
 		);
 		app.add_system_set(
 		    SystemSet::on_exit(GameState::InGame)
@@ -54,6 +60,11 @@ struct InGameComponent; // Marker component so it can be despawned.
 #[derive(Component)]
 struct ObjectComponent {
     pub info: ObjectInfo,
+}
+
+#[derive(Component)]
+struct LemmingComponent {
+    is_facing_right: bool,
 }
 
 #[derive(Component)]
@@ -128,9 +139,60 @@ fn send_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Asse
     }).collect()
 }
 
+// Drop lemmings every now and again.
+fn drop_lemmings(
+	mut commands: Commands,
+	game_textures: Res<GameTextures>,
+    timer: Res<GameTimer>,
+    mut drop_countdown: ResMut<InGameDropCountdown>,
+    query: Query<(&Transform, &ObjectComponent)>,
+    lemmings_container_id: Res<InGameLemmingsContainerId>,
+) {
+    if drop_countdown.0 < 0 { return } // hasn't started yet or is complete.
+    if timer.0.just_finished() {
+        let new_countdown = drop_countdown.0 - 1;
+        if new_countdown <= 0 {
+            // For each entrance, drop 1 lemming, until we've dropped enough lemmings.
+            for (t, o) in query.iter() {
+                let t: &Transform = t;
+                let o: &ObjectComponent = o;
+                if o.info.is_entrance {
+
+                    // TODO only spawn if we haven't run out of lemmings to spawn, otherwise break the for.
+                    spawn_a_lemming(&mut commands, &t.translation, &game_textures, &lemmings_container_id.0);
+                }
+            }
+            drop_countdown.0 = FPS as i32; // Delay until the next drop. TODO change this depending on the selected drop rate.
+        } else {
+            drop_countdown.0 = new_countdown;
+        }
+    }
+}
+
+// Spawn a lemming right now.
+fn spawn_a_lemming(
+    commands: &mut Commands,
+    entrance: &Vec3,
+    game_textures: &Res<GameTextures>,
+    lemmings_container_id: &Entity,
+) {
+    commands.entity(*lemmings_container_id).with_children(|parent| {
+        parent.spawn_bundle(SpriteSheetBundle{
+            texture_atlas: game_textures.falling_right.clone(),
+            transform: Transform{
+                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                translation: Vec3::new(entrance.x, entrance.y, 0.),
+                ..default()
+            },
+            ..default()
+        }).insert(LemmingComponent{is_facing_right: true});
+    });
+}
+
 fn update_objects(
     timer: Res<GameTimer>,
     start_countdown: Res<InGameStartCountdown>,
+    mut drop_countdown: ResMut<InGameDropCountdown>,
     mut query: Query<(
         &mut TextureAtlasSprite,
         &ObjectComponent,
@@ -146,6 +208,7 @@ fn update_objects(
                         let new_index = tas.index + 1;
                         if new_index >= object.info.frame_count as usize {
                             tas.index = 0; // Full open now.
+                            drop_countdown.0 = (FPS / 2.) as i32; // Wait half a sec to drop.
                         } else {
                             tas.index = new_index;
                         }    
@@ -214,11 +277,14 @@ fn enter(
 	game: Res<Game>,
     mut timer: ResMut<GameTimer>,
     mut start_countdown: ResMut<InGameStartCountdown>,
+    mut drop_countdown: ResMut<InGameDropCountdown>,
 	mut images: ResMut<Assets<Image>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut lemmings_container_id: ResMut<InGameLemmingsContainerId>,
 	windows: Res<Windows>,
 ) {
     start_countdown.0 = FPS as i32;
+    drop_countdown.0 = -1; // Not dropping yet.
     timer.0.set_elapsed(Duration::ZERO);
 	if let Some(window) = windows.iter().next() {
 		if let Some(level) = game.level_named(&level_selection.level_name) {
@@ -311,6 +377,12 @@ fn enter(
                             }
                         }    
                     }
+
+                    // Spawn lemmings container.
+                    lemmings_container_id.0 = parent.spawn_bundle(SpatialBundle {
+                        transform: Transform::from_xyz(0., 0., 4.),
+                       ..default() 
+                    }).id();
                 })
 				.insert(InGameComponent)
                 .insert(MapContainerComponent{
@@ -333,4 +405,22 @@ fn enter(
 				.insert(InGameComponent);
 		}
 	}
+}
+
+fn update_lemmings(
+    mut query: Query<(
+        &mut Transform,
+        &mut TextureAtlasSprite,
+        &LemmingComponent,
+    )>,
+    timer: Res<GameTimer>,
+    game_textures: Res<GameTextures>,
+) {
+    if !timer.0.just_finished() { return }
+
+    for (mut t, mut tas, l) in query.iter_mut() {
+        let l: &LemmingComponent = l;
+        tas.index = (tas.index + 1) % 4;
+        t.translation.y -= POINT_SIZE;
+    }
 }
