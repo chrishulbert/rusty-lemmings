@@ -1,8 +1,8 @@
 use std::time::Duration;
+use std::collections::HashMap;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
-use bevy::utils::HashMap;
 use crate::{GameTextures, GameState, TEXTURE_SCALE, SCALE, POINT_SIZE, FPS};
 use crate::lemmings::models::{Game, ObjectInfo};
 use crate::level_preview::LevelSelectionResource;
@@ -117,6 +117,11 @@ fn slice(image: &[u32], width: usize, height: usize, min_x: isize) -> Vec<SliceW
     slices
 }
 
+struct Slices {
+    slices: Vec<Slice>,
+    x_to_slice_index_lookup: HashMap<i32, u32>, // eg x_to_slice_index[x] = index in slices.
+}
+
 struct Slice {
     pub bitmap: Vec<u32>,
     pub x: isize,
@@ -125,8 +130,8 @@ struct Slice {
     pub texture: Handle<Image>,
 }
 
-fn convert_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Assets<Image>>) -> Vec<Slice> {
-    slices.into_iter().map(|s| {
+fn convert_slices_to_bevy(in_slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Assets<Image>>) -> Slices {
+    let slices: Vec<Slice> = in_slices.into_iter().map(|s| {
         let u8_data = u32_to_rgba_u8(&s.bitmap);
         let image = Image::new(Extent3d{width: s.width as u32, height: s.height as u32, depth_or_array_layers: 1},
             bevy::render::render_resource::TextureDimension::D2,
@@ -140,7 +145,21 @@ fn convert_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<A
             height: s.height,
             texture,
         }
-    }).collect()
+    }).collect();
+
+    // Make a lookup so its easy to find the slices.
+    // Not using a simple array because the x positions might be negative.
+    let mut x_to_slice_index_lookup = HashMap::<i32, u32>::new();
+    for (slice_index, slice) in slices.iter().enumerate() {
+        for delta in 0..slice.width {
+            x_to_slice_index_lookup.insert(slice.x as i32 + delta as i32, slice_index as u32);
+        }
+    }
+
+    Slices {
+        slices,
+        x_to_slice_index_lookup,
+    }
 }
 
 // Drop lemmings every now and again.
@@ -332,7 +351,7 @@ fn enter(
                 }).with_children(|parent| {
                     // Terrain slices.
                     parent.spawn_bundle(SpatialBundle::default()).with_children(|parent| {
-                        for slice in &slices {
+                        for slice in &slices.slices {
                             parent.spawn_bundle(SpriteBundle{
                                 transform: Transform{
                                     translation: Vec3::new((slice.x as f32 + (slice.width as f32 / 2.)) * TEXTURE_SCALE, 0., 2.),
