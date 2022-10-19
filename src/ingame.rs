@@ -134,7 +134,9 @@ struct Slice {
     pub width: usize,
     pub height: usize,
 
-    
+    // In game points:
+    game_points_x: isize,
+    game_points_width: usize,
 }
 
 fn convert_slices_to_bevy(in_slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Assets<Image>>) -> Slices {
@@ -151,6 +153,8 @@ fn convert_slices_to_bevy(in_slices: Vec<SliceWithoutHandle>, images: &mut ResMu
             x: s.x,
             width: s.width,
             height: s.height,
+            game_points_x: s.x / SCALE as isize,
+            game_points_width: s.width / SCALE,
         }
     }).collect();
 
@@ -158,8 +162,8 @@ fn convert_slices_to_bevy(in_slices: Vec<SliceWithoutHandle>, images: &mut ResMu
     // Not using a simple array because the x positions might be negative.
     let mut x_to_slice_index_lookup = HashMap::<i32, u32>::new();
     for (slice_index, slice) in slices.iter().enumerate() {
-        for delta in 0..slice.width {
-            x_to_slice_index_lookup.insert(slice.x as i32 + delta as i32, slice_index as u32);
+        for delta in 0..slice.game_points_width {
+            x_to_slice_index_lookup.insert(slice.game_points_x as i32 + delta as i32, slice_index as u32);
         }
     }
 
