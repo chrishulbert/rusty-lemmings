@@ -24,6 +24,7 @@ struct GameTimer(Timer);
 struct InGameStartCountdown(i32); // Countdown to the entrance opening.
 struct InGameDropCountdown(i32); // Countdown between dropping lemmings. -1 if hasn't started yet, or has dropped all lemmings.
 struct InGameLemmingsContainerId(Entity); // The entity id of the lemmings container.
+struct InGameSlices(Option<Slices>);
 
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
@@ -32,6 +33,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameStartCountdown(FPS as i32));        
         app.insert_resource(InGameDropCountdown(-1));
         app.insert_resource(InGameLemmingsContainerId(Entity::from_raw(0)));
+        app.insert_resource(InGameSlices(None));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -88,7 +90,7 @@ fn exit(
 
 struct SliceWithoutHandle {
     pub bitmap: Vec<u32>,
-    pub x: isize,
+    pub x: isize, // Scaled-up pixels. This includes the level's min_x.
     pub width: usize,
     pub height: usize,
 }
@@ -98,6 +100,7 @@ struct SliceWithoutHandle {
 const SLICE_WIDTH: usize = 192;
 
 // Slice a map into pieces of N width.
+// The image should be scaled.
 fn slice(image: &[u32], width: usize, height: usize, min_x: isize) -> Vec<SliceWithoutHandle> {
     let mut slices = Vec::<SliceWithoutHandle>::with_capacity(width / SLICE_WIDTH + 1);
     let mut offset_x: usize = 0;
@@ -124,10 +127,14 @@ struct Slices {
 
 struct Slice {
     pub bitmap: Vec<u32>,
-    pub x: isize,
+    pub texture: Handle<Image>,
+
+    // The following are in scaled-up pixels:
+    pub x: isize, 
     pub width: usize,
     pub height: usize,
-    pub texture: Handle<Image>,
+
+    
 }
 
 fn convert_slices_to_bevy(in_slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Assets<Image>>) -> Slices {
@@ -140,10 +147,10 @@ fn convert_slices_to_bevy(in_slices: Vec<SliceWithoutHandle>, images: &mut ResMu
         let texture = images.add(image);
         Slice{
             bitmap: s.bitmap,
+            texture,
             x: s.x,
             width: s.width,
             height: s.height,
-            texture,
         }
     }).collect();
 
@@ -304,6 +311,7 @@ fn enter(
 	mut images: ResMut<Assets<Image>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut lemmings_container_id: ResMut<InGameLemmingsContainerId>,
+    mut slices_resource: ResMut<InGameSlices>,
 	windows: Res<Windows>,
 ) {
     start_countdown.0 = FPS as i32;
@@ -413,6 +421,9 @@ fn enter(
                     max_x: -render.size.min_x as f32 * POINT_SIZE,
                 });
 
+            // Keep the slices around.
+            slices_resource.0 = Some(slices);
+
             // Skill panel.
 			commands
 				.spawn_bundle(SpriteBundle{
@@ -437,6 +448,7 @@ fn update_lemmings(
         &LemmingComponent,
     )>,
     timer: Res<GameTimer>,
+    slices: Res<InGameSlices>,
     game_textures: Res<GameTextures>,
 ) {
     if !timer.0.just_finished() { return }
