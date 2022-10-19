@@ -11,6 +11,10 @@ use crate::helpers::{multi_scale, u32_to_rgba_u8};
 use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
 use crate::{ORIGINAL_GAME_W, FRAME_DURATION};
 
+const DROP_POINTS_PER_FRAME: f32 = 2.;
+const LEMMING_NOMINAL_HEIGHT: f32 = 10.; // Usual height for a lemming sprite in points.
+const LEMMING_WIDTH_FOR_BASE: f32 = 3.; // How many points under it to check to see if any land exists.
+
 pub struct InGamePlugin;
 
 /// Resource.
@@ -121,7 +125,7 @@ struct Slice {
     pub texture: Handle<Image>,
 }
 
-fn send_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Assets<Image>>) -> Vec<Slice> {
+fn convert_slices_to_bevy(slices: Vec<SliceWithoutHandle>, images: &mut ResMut<Assets<Image>>) -> Vec<Slice> {
     slices.into_iter().map(|s| {
         let u8_data = u32_to_rgba_u8(&s.bitmap);
         let image = Image::new(Extent3d{width: s.width as u32, height: s.height as u32, depth_or_array_layers: 1},
@@ -181,7 +185,7 @@ fn spawn_a_lemming(
             texture_atlas: game_textures.falling_right.clone(),
             transform: Transform{
                 scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                translation: Vec3::new(entrance.x, entrance.y, 0.),
+                translation: Vec3::new(entrance.x.round(), entrance.y.round(), 0.),
                 ..default()
             },
             ..default()
@@ -318,7 +322,7 @@ fn enter(
             let level_offset_y = window.height() / 2. - game_origin_offset_y;
             let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
             let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE, render.size.min_x * SCALE as isize);
-            let slices = send_slices_to_bevy(slices_raw, &mut images);
+            let slices = convert_slices_to_bevy(slices_raw, &mut images);
             commands
                 .spawn_bundle(SpatialBundle{
                     // TODO for the start X, do we need to account for the current screen width?
