@@ -461,5 +461,31 @@ fn update_lemmings(
         let l: &LemmingComponent = l;
         tas.index = (tas.index + 1) % 4;
         t.translation.y -= POINT_SIZE;
+
+// xy are game points, eg y=0=top.
+fn is_there_ground_at_xy(x: i32, y: i32, slices_o: Option<&Slices>) -> bool {
+    if let Some(slices) = slices_o {
+        if let Some(index) = slices.x_to_slice_index_lookup.get(&x) {
+            let slice = &slices.slices[*index as usize];
+            let game_points_x_offset = x as isize - slice.game_points_x;
+            let scaled_x_offset = game_points_x_offset as usize * SCALE;
+            let scaled_y_offset = y as usize * SCALE;
+            let offset = scaled_y_offset * slice.width + scaled_x_offset;
+            // Check all scaled pixels until ground is found.
+            // Exit early if ground is found. This is an optimisation because lemmings will more
+            // often than not be on the ground.
+            for scale_search_x in 0..SCALE {
+                let rgba = slice.bitmap[offset + scale_search_x];
+                let a = rgba as u8;
+                if a > 0 {
+                    return true
+                }
+            }
+            return false
+        } else {
+            false
+        }
+    } else {
+        false
     }
 }
