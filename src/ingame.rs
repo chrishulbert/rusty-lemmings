@@ -12,7 +12,7 @@ use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
 use crate::{ORIGINAL_GAME_W, FRAME_DURATION};
 
 const DROP_POINTS_PER_FRAME: f32 = 2.;
-const LEMMING_NOMINAL_HEIGHT: f32 = 10.; // Usual height for a lemming sprite in points.
+const LEMMING_NOMINAL_HEIGHT_HALF: i32 = 5; // Usual height for a lemming sprite in game points. Halved for use later.
 const LEMMING_WIDTH_FOR_BASE: f32 = 3.; // How many points under it to check to see if any land exists.
 
 pub struct InGamePlugin;
@@ -459,8 +459,26 @@ fn update_lemmings(
 
     for (mut t, mut tas, l) in query.iter_mut() {
         let l: &LemmingComponent = l;
-        tas.index = (tas.index + 1) % 4;
-        t.translation.y -= POINT_SIZE;
+        let mut t: Mut<Transform> = t;
+        let (game_x, game_y) = game_xy_from_translation(&t.translation);
+        let bottom_y = game_y + LEMMING_NOMINAL_HEIGHT_HALF;
+        // Check if there's any ground under this lemming.
+        if is_there_ground_at_xy(game_x, bottom_y, slices.0.as_ref()) {
+            // Walk left or right. If there's no ground under it to the side, he can climb down or up no dramas without needing to fall.
+        } else {
+            // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
+            tas.index = (tas.index + 1) % 4;
+            t.translation.y = (t.translation.y - POINT_SIZE).round(); // Round on changes so we don't accumulate some float error.
+        }
+    }
+}
+
+fn game_xy_from_translation(translation: &Vec3) -> (i32, i32) {
+    // Translation 0 means middle, and + numbers go towards the top of the screen.
+    let game_y = level_renderer::LEVEL_HEIGHT as f32 / 2. - translation.y / POINT_SIZE;
+    let game_x = translation.x / POINT_SIZE;
+    (game_x.round() as i32, game_y.round() as i32)
+}
 
 // xy are game points, eg y=0=top.
 fn is_there_ground_at_xy(x: i32, y: i32, slices_o: Option<&Slices>) -> bool {
@@ -475,10 +493,11 @@ fn is_there_ground_at_xy(x: i32, y: i32, slices_o: Option<&Slices>) -> bool {
             // Exit early if ground is found. This is an optimisation because lemmings will more
             // often than not be on the ground.
             for scale_search_x in 0..SCALE {
-                let rgba = slice.bitmap[offset + scale_search_x];
-                let a = rgba as u8;
-                if a > 0 {
-                    return true
+                if let Some(rgba) = slice.bitmap.get(offset + scale_search_x) {
+                    let a = *rgba as u8;
+                    if a > 0 {
+                        return true
+                    }
                 }
             }
             return false

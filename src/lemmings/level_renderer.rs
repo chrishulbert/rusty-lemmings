@@ -46,7 +46,7 @@ pub struct RenderedLevel {
 }
 
 pub const LEVEL_BACKGROUND: u32 = 0xff000000;
-const LEVEL_HEIGHT: isize = 160;
+pub const LEVEL_HEIGHT: isize = 160;
 
 fn draw(sprite: &[u32],
         sprite_width: isize, sprite_height: isize,
