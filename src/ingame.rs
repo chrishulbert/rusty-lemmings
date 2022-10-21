@@ -449,6 +449,7 @@ fn update_lemmings(
     mut query: Query<(
         &mut Transform,
         &mut TextureAtlasSprite,
+        &mut Handle<TextureAtlas>,
         &LemmingComponent,
     )>,
     timer: Res<GameTimer>,
@@ -457,18 +458,51 @@ fn update_lemmings(
 ) {
     if !timer.0.just_finished() { return }
 
-    for (mut t, mut tas, l) in query.iter_mut() {
-        let l: &LemmingComponent = l;
+    for (mut t, mut tas, mut ta, l) in query.iter_mut() {
         let mut t: Mut<Transform> = t;
+        let mut tas: Mut<TextureAtlasSprite> = tas;
+        let l: &LemmingComponent = l;
         let (game_x, game_y) = game_xy_from_translation(&t.translation);
         let bottom_y = game_y + LEMMING_NOMINAL_HEIGHT_HALF;
+        let mut did_change_texture = false;
+        let x_delta_from_direction_faced: f32 = if l.is_facing_right { 1. } else { -1. };
         // Check if there's any ground under this lemming.
         if is_there_ground_at_xy(game_x, bottom_y, slices.0.as_ref()) {
+            let direction: f32;
+            if l.is_facing_right {
+                if ta.id != game_textures.walking_right.id {
+                    *ta = game_textures.walking_right.clone();
+                    tas.index = 0;
+                    did_change_texture = true;
+                }
+            } else {
+                if ta.id != game_textures.walking_left.id {
+                    *ta = game_textures.walking_left.clone();
+                    tas.index = 0;
+                    did_change_texture = true;
+                }
+            }
+            t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round();
             // Walk left or right. If there's no ground under it to the side, he can climb down or up no dramas without needing to fall.
         } else {
             // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
-            tas.index = (tas.index + 1) % 4;
+            if l.is_facing_right {
+                if ta.id != game_textures.falling_right.id {
+                    *ta = game_textures.falling_right.clone();
+                    tas.index = 0;
+                    did_change_texture = true;
+                }
+            } else {
+                if ta.id != game_textures.falling_left.id {
+                    *ta = game_textures.falling_left.clone();
+                    tas.index = 0;
+                    did_change_texture = true;
+                }
+            }
             t.translation.y = (t.translation.y - POINT_SIZE).round(); // Round on changes so we don't accumulate some float error.
+        }
+        if !did_change_texture {
+            tas.index = (tas.index + 1) % 4;
         }
     }
 }
