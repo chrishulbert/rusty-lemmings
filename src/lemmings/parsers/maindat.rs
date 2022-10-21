@@ -146,7 +146,6 @@ impl Animation {
     }
 
     fn parse(data: &[u8], frames: usize, width: usize, height: usize, palette: [u32; 16], bpp: u8) -> Animation {
-        debug_assert!(frames > 1, "Should be an image not an animation.");
         if bpp == 2 {
             Animation::parse_2bpp(data, frames, width, height, palette)
         } else if bpp == 3 {
@@ -163,9 +162,9 @@ impl LemmingAnimations {
     fn parse(data: &[u8], palette: [u32; 16]) -> io::Result<LemmingAnimations> {
         Ok(LemmingAnimations {
             walking_right: Animation::parse(&data[0x0000..], 8, 16, 10, palette, 2),
-            jumping_right: Image::parse_2bpp(&data[0x0140..], 16, 10, palette),
+            jumping_right: Animation::parse(&data[0x0140..], 1, 16, 10, palette, 2),
             walking_left: Animation::parse(&data[0x0168..], 8, 16, 10, palette, 2),
-            jumping_left: Image::parse_2bpp(&data[0x02A8..], 16, 10, palette),
+            jumping_left: Animation::parse(&data[0x02A8..], 1, 16, 10, palette, 2),
             digging: Animation::parse(&data[0x02D0..], 16, 16, 14, palette, 3),
             climbing_right: Animation::parse(&data[0x0810..], 8, 16, 12, palette, 2),
             climbing_left: Animation::parse(&data[0x0990..], 8, 16, 12, palette, 2),

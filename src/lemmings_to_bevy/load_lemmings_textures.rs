@@ -78,9 +78,9 @@ fn load_lemmings_textures_startup(
     
         // Lemmings:
         walking_right: make_atlas_from_animation(&game.main.lemming_animations.walking_right, &mut images, &mut texture_atlases, true),
-        jumping_right: make_image(&game.main.lemming_animations.jumping_right, &mut images, true),
+        jumping_right: make_atlas_from_animation(&game.main.lemming_animations.jumping_right, &mut images, &mut texture_atlases, true),
         walking_left: make_atlas_from_animation(&game.main.lemming_animations.walking_left, &mut images, &mut texture_atlases, true),
-        jumping_left: make_image(&game.main.lemming_animations.jumping_left, &mut images, true),
+        jumping_left: make_atlas_from_animation(&game.main.lemming_animations.jumping_left, &mut images, &mut texture_atlases, true),
         digging: make_atlas_from_animation(&game.main.lemming_animations.digging, &mut images, &mut texture_atlases, true),
         climbing_right: make_atlas_from_animation(&game.main.lemming_animations.climbing_right, &mut images, &mut texture_atlases, true),
         climbing_left: make_atlas_from_animation(&game.main.lemming_animations.climbing_left, &mut images, &mut texture_atlases, true),
@@ -145,9 +145,9 @@ pub struct GameTextures {
 
     // Lemmings:
     pub walking_right: Handle<TextureAtlas>,
-    pub jumping_right: Handle<Image>, // Walking up a step 3-6px tall.
+    pub jumping_right: Handle<TextureAtlas>, // Walking up a step 3-6px tall. 1 frame.
     pub walking_left: Handle<TextureAtlas>,
-    pub jumping_left: Handle<Image>,
+    pub jumping_left: Handle<TextureAtlas>, // 1 frame.
     pub digging: Handle<TextureAtlas>,
     pub climbing_right: Handle<TextureAtlas>,
     pub climbing_left: Handle<TextureAtlas>,

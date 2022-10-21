@@ -244,9 +244,9 @@ pub struct Mask {
 #[derive(Clone)]
 pub struct LemmingAnimations {
     pub walking_right: Animation,
-    pub jumping_right: Image, // Walking up a step 3-6px tall.
+    pub jumping_right: Animation, // Walking up a step 3-6px tall. This is a 1-frame 'animation'.
     pub walking_left: Animation,
-    pub jumping_left: Image,
+    pub jumping_left: Animation, // This is a 1-frame 'animation'.
     pub digging: Animation,
     pub climbing_right: Animation,
     pub climbing_left: Animation,
@@ -424,9 +424,9 @@ impl Game {
         let mut all = Vec::<AssetToPreProcess>::new();        
 
         all.push(AssetToPreProcess{name: "lemming.walking_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.walking_right),});
-        all.push(AssetToPreProcess{name: "lemming.jumping_right".to_string(), content: AnimationOrImage::Image(&self.main.lemming_animations.jumping_right),});
+        all.push(AssetToPreProcess{name: "lemming.jumping_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.jumping_right),});
         all.push(AssetToPreProcess{name: "lemming.walking_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.walking_left),});
-        all.push(AssetToPreProcess{name: "lemming.jumping_left".to_string(), content: AnimationOrImage::Image(&self.main.lemming_animations.jumping_left),});
+        all.push(AssetToPreProcess{name: "lemming.jumping_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.jumping_left),});
         all.push(AssetToPreProcess{name: "lemming.digging".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.digging),});
         all.push(AssetToPreProcess{name: "lemming.climbing_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.climbing_right),});
         all.push(AssetToPreProcess{name: "lemming.climbing_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.climbing_left),});
