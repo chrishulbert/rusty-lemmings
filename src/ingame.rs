@@ -450,7 +450,7 @@ fn update_lemmings(
         &mut Transform,
         &mut TextureAtlasSprite,
         &mut Handle<TextureAtlas>,
-        &LemmingComponent,
+        &mut LemmingComponent,
     )>,
     timer: Res<GameTimer>,
     slices: Res<InGameSlices>,
@@ -458,22 +458,66 @@ fn update_lemmings(
 ) {
     if !timer.0.just_finished() { return }
 
-    for (mut t, mut tas, mut ta, l) in query.iter_mut() {
+    for (mut t, mut tas, mut ta, mut l) in query.iter_mut() {
         let mut t: Mut<Transform> = t;
         let mut tas: Mut<TextureAtlasSprite> = tas;
-        let l: &LemmingComponent = l;
+        let mut l: Mut<LemmingComponent> = l;
         let (game_x, game_y) = game_xy_from_translation(&t.translation);
         let bottom_y = game_y + LEMMING_NOMINAL_HEIGHT_HALF;
         let mut did_change_texture = false;
         let x_delta_from_direction_faced: f32 = if l.is_facing_right { 1. } else { -1. };
         // Check if there's any ground under this lemming.
         if is_there_ground_at_xy(game_x, bottom_y, slices.0.as_ref()) {
-            let direction: f32;
             if l.is_facing_right {
-                if ta.id != game_textures.walking_right.id {
-                    *ta = game_textures.walking_right.clone();
+                // These keep track of 'is there ground where i'm walking'.
+                let is_ground_2down = is_there_ground_at_xy(game_x + 1, bottom_y + 2, slices.0.as_ref());
+                let is_ground_1down = is_there_ground_at_xy(game_x + 1, bottom_y + 1, slices.0.as_ref());
+                let is_ground_on_same_level = is_there_ground_at_xy(game_x + 1, bottom_y, slices.0.as_ref());
+                let is_ground_1up = is_there_ground_at_xy(game_x + 1, bottom_y - 1, slices.0.as_ref());
+                let is_ground_2up = is_there_ground_at_xy(game_x + 1, bottom_y - 2, slices.0.as_ref());
+                let is_ground_3up = is_there_ground_at_xy(game_x + 1, bottom_y - 3, slices.0.as_ref()); // Jump.
+                let is_ground_4up = is_there_ground_at_xy(game_x + 1, bottom_y - 4, slices.0.as_ref());
+                let is_ground_5up = is_there_ground_at_xy(game_x + 1, bottom_y - 5, slices.0.as_ref());
+                let is_ground_6up = is_there_ground_at_xy(game_x + 1, bottom_y - 6, slices.0.as_ref());
+                let is_ground_7up = is_there_ground_at_xy(game_x + 1, bottom_y - 7, slices.0.as_ref()); // Blocked.
+                let is_ground_8up = is_there_ground_at_xy(game_x + 1, bottom_y - 8, slices.0.as_ref());
+                let is_ground_9up = is_there_ground_at_xy(game_x + 1, bottom_y - 9, slices.0.as_ref());
+                // Jumping is if you walk 3-6 pixels up.
+                let is_blocked = is_ground_7up || is_ground_8up || is_ground_9up;
+                if is_blocked { // Turn left.
+                    l.is_facing_right = false;
+                    *ta = game_textures.walking_left.clone();
                     tas.index = 0;
                     did_change_texture = true;
+                } else { // Not blocked.
+                    let should_jump = is_ground_3up || is_ground_4up || is_ground_5up || is_ground_6up;
+                    if should_jump { // Take a jump up.
+                        let y_offset: f32;
+                        if is_ground_6up { y_offset = -6. }
+                        else if is_ground_5up { y_offset = -5. }
+                        else if is_ground_4up { y_offset = -4. }
+                        else { y_offset = -3. }
+                        t.translation.x = (t.translation.x + POINT_SIZE).round();
+                        t.translation.y = (t.translation.y - y_offset * POINT_SIZE).round();
+                        *ta = game_textures.jumping_right.clone();
+                        tas.index = 0;
+                        did_change_texture = true;
+                    } else { // Just walk normally.
+                        let y_offset: f32;
+                        if is_ground_2up { y_offset = -2. }
+                        else if is_ground_1up { y_offset = -1. }
+                        else if is_ground_on_same_level { y_offset = 0. }
+                        else if is_ground_1down { y_offset = 1. }
+                        else if is_ground_2down { y_offset = 2. }
+                        else { y_offset = 1. } // Walking into thin air. Make it drop a little to start with.
+                        t.translation.x = (t.translation.x + POINT_SIZE).round();
+                        t.translation.y = (t.translation.y - y_offset * POINT_SIZE).round();
+                        if ta.id != game_textures.walking_right.id {
+                            *ta = game_textures.walking_right.clone();
+                            tas.index = 0;
+                            did_change_texture = true;
+                        }
+                    }
                 }
             } else {
                 if ta.id != game_textures.walking_left.id {
@@ -482,7 +526,7 @@ fn update_lemmings(
                     did_change_texture = true;
                 }
             }
-            t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round();
+            //t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round();
             // Walk left or right. If there's no ground under it to the side, he can climb down or up no dramas without needing to fall.
         } else {
             // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
@@ -502,7 +546,7 @@ fn update_lemmings(
             t.translation.y = (t.translation.y - POINT_SIZE).round(); // Round on changes so we don't accumulate some float error.
         }
         if !did_change_texture {
-            tas.index = (tas.index + 1) % 4;
+            // tas.index = (tas.index + 1) % 4;
         }
     }
 }
@@ -522,15 +566,18 @@ fn is_there_ground_at_xy(x: i32, y: i32, slices_o: Option<&Slices>) -> bool {
             let game_points_x_offset = x as isize - slice.game_points_x;
             let scaled_x_offset = game_points_x_offset as usize * SCALE;
             let scaled_y_offset = y as usize * SCALE;
-            let offset = scaled_y_offset * slice.width + scaled_x_offset;
+            
             // Check all scaled pixels until ground is found.
             // Exit early if ground is found. This is an optimisation because lemmings will more
             // often than not be on the ground.
-            for scale_search_x in 0..SCALE {
-                if let Some(rgba) = slice.bitmap.get(offset + scale_search_x) {
-                    let a = *rgba as u8;
-                    if a > 0 {
-                        return true
+            for scale_search_y in 0..SCALE {
+                let offset = (scaled_y_offset + scale_search_y) * slice.width + scaled_x_offset;
+                for scale_search_x in 0..SCALE {
+                    if let Some(rgba) = slice.bitmap.get(offset + scale_search_x) {
+                        let a = *rgba as u8;
+                        if a > 0 {
+                            return true
+                        }
                     }
                 }
             }
