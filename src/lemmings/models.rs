@@ -272,7 +272,7 @@ pub struct LemmingAnimations {
     pub shrugging_right: Animation, // Builder running out of bricks.
     pub shrugging_left: Animation,
     pub oh_no_ing: Animation,
-    pub explosion: Image,
+    pub explosion: Animation, // 1 frame.
 }
 
 #[derive(Clone)]
@@ -452,7 +452,7 @@ impl Game {
         all.push(AssetToPreProcess{name: "lemming.shrugging_right".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.shrugging_right),});
         all.push(AssetToPreProcess{name: "lemming.shrugging_left".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.shrugging_left),});
         all.push(AssetToPreProcess{name: "lemming.oh_no_ing".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.oh_no_ing),});
-        all.push(AssetToPreProcess{name: "lemming.explosion".to_string(), content: AnimationOrImage::Image(&self.main.lemming_animations.explosion),});
+        all.push(AssetToPreProcess{name: "lemming.explosion".to_string(), content: AnimationOrImage::Animation(&self.main.lemming_animations.explosion),});
 
         all.push(AssetToPreProcess{name: "font.percent".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.percent),});
         all.push(AssetToPreProcess{name: "font.dash".to_string(), content: AnimationOrImage::Image(&self.main.game_font_high_perf.dash),});

@@ -190,7 +190,7 @@ impl LemmingAnimations {
             shrugging_right: Animation::parse(&data[0x4BF0..], 8, 16, 10, palette, 2), 
             shrugging_left: Animation::parse(&data[0x4D30..], 8, 16, 10, palette, 2), 
             oh_no_ing: Animation::parse(&data[0x4E70..], 16, 16, 10, palette, 2), 
-            explosion: Image::parse_3bpp(&data[0x50F0..], 32, 32, palette),
+            explosion: Animation::parse(&data[0x50F0..], 1, 32, 32, palette, 3),
         })
     }
 }

@@ -106,7 +106,8 @@ fn load_lemmings_textures_startup(
         shrugging_right: make_atlas_from_animation(&game.main.lemming_animations.shrugging_right, &mut images, &mut texture_atlases, true), // Builder running out of bricks.
         shrugging_left: make_atlas_from_animation(&game.main.lemming_animations.shrugging_left, &mut images, &mut texture_atlases, true),
         oh_no_ing: make_atlas_from_animation(&game.main.lemming_animations.oh_no_ing, &mut images, &mut texture_atlases, true),
-        explosion: make_image(&game.main.lemming_animations.explosion, &mut images, true),
+        explosion: make_atlas_from_animation(&game.main.lemming_animations.explosion, &mut images, &mut texture_atlases, true),
+
         skill_panel: make_image(&game.main.skill_panel, &mut images, true),
         white,
 	};
@@ -173,7 +174,7 @@ pub struct GameTextures {
     pub shrugging_right: Handle<TextureAtlas>, // Builder running out of bricks.
     pub shrugging_left: Handle<TextureAtlas>,
     pub oh_no_ing: Handle<TextureAtlas>,
-    pub explosion: Handle<Image>,
+    pub explosion: Handle<TextureAtlas>, // 1 frame.
 
     // Ingame:
     pub skill_panel: Handle<Image>,
