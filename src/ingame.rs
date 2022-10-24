@@ -215,7 +215,7 @@ fn spawn_a_lemming(
             texture_atlas: game_textures.falling_right.clone(),
             transform: Transform{
                 scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                translation: Vec3::new(entrance.x.round(), entrance.y.round(), 0.),
+                translation: Vec3::new(round_to_nearest_point(entrance.x), round_to_nearest_point(entrance.y), 0.),
                 ..default()
             },
             ..default()
@@ -465,11 +465,14 @@ fn update_lemmings(
         let (game_x, game_y) = game_xy_from_translation(&t.translation);
         let bottom_y = game_y + LEMMING_NOMINAL_HEIGHT_HALF;
         let mut did_change_texture = false;
+        let mut texture_frame_count: Option<usize> = None; // Set if you want it to animate.
         let x_delta_from_direction_faced: f32 = if l.is_facing_right { 1. } else { -1. };
         // Check if there's any ground under this lemming.
-        if is_there_ground_at_xy(game_x, bottom_y, slices.0.as_ref()) {
+        let is_ground_under = is_there_ground_at_xy(game_x, bottom_y, slices.0.as_ref());
+        if is_ground_under {
             if l.is_facing_right {
                 // These keep track of 'is there ground where i'm walking'.
+                let is_ground_3down = is_there_ground_at_xy(game_x + 1, bottom_y + 3, slices.0.as_ref());
                 let is_ground_2down = is_there_ground_at_xy(game_x + 1, bottom_y + 2, slices.0.as_ref());
                 let is_ground_1down = is_there_ground_at_xy(game_x + 1, bottom_y + 1, slices.0.as_ref());
                 let is_ground_on_same_level = is_there_ground_at_xy(game_x + 1, bottom_y, slices.0.as_ref());
@@ -488,7 +491,6 @@ fn update_lemmings(
                     l.is_facing_right = false;
                     *ta = game_textures.walking_left.clone();
                     tas.index = 0;
-                    did_change_texture = true;
                 } else { // Not blocked.
                     let should_jump = is_ground_3up || is_ground_4up || is_ground_5up || is_ground_6up;
                     if should_jump { // Take a jump up.
@@ -497,11 +499,10 @@ fn update_lemmings(
                         else if is_ground_5up { y_offset = -5. }
                         else if is_ground_4up { y_offset = -4. }
                         else { y_offset = -3. }
-                        t.translation.x = (t.translation.x + POINT_SIZE).round();
-                        t.translation.y = (t.translation.y - y_offset * POINT_SIZE).round();
+                        t.translation.x = round_to_nearest_point(t.translation.x + POINT_SIZE);
+                        t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
                         *ta = game_textures.jumping_right.clone();
                         tas.index = 0;
-                        did_change_texture = true;
                     } else { // Just walk normally.
                         let y_offset: f32;
                         if is_ground_2up { y_offset = -2. }
@@ -509,13 +510,15 @@ fn update_lemmings(
                         else if is_ground_on_same_level { y_offset = 0. }
                         else if is_ground_1down { y_offset = 1. }
                         else if is_ground_2down { y_offset = 2. }
+                        else if is_ground_3down { y_offset = 3. }
                         else { y_offset = 1. } // Walking into thin air. Make it drop a little to start with.
-                        t.translation.x = (t.translation.x + POINT_SIZE).round();
-                        t.translation.y = (t.translation.y - y_offset * POINT_SIZE).round();
+                        t.translation.x = round_to_nearest_point(t.translation.x + POINT_SIZE);
+                        t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
                         if ta.id != game_textures.walking_right.id {
                             *ta = game_textures.walking_right.clone();
                             tas.index = 0;
-                            did_change_texture = true;
+                        } else {
+                            texture_frame_count = Some(game_textures.walking_right_count);
                         }
                     }
                 }
@@ -523,10 +526,11 @@ fn update_lemmings(
                 if ta.id != game_textures.walking_left.id {
                     *ta = game_textures.walking_left.clone();
                     tas.index = 0;
-                    did_change_texture = true;
+                } else {
+                    texture_frame_count = Some(game_textures.walking_left_count);
                 }
             }
-            //t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round();
+            //t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round_to_nearest_point();
             // Walk left or right. If there's no ground under it to the side, he can climb down or up no dramas without needing to fall.
         } else {
             // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
@@ -534,21 +538,27 @@ fn update_lemmings(
                 if ta.id != game_textures.falling_right.id {
                     *ta = game_textures.falling_right.clone();
                     tas.index = 0;
-                    did_change_texture = true;
+                } else {
+                    texture_frame_count = Some(game_textures.falling_right_count);
                 }
             } else {
                 if ta.id != game_textures.falling_left.id {
                     *ta = game_textures.falling_left.clone();
                     tas.index = 0;
-                    did_change_texture = true;
+                } else {
+                    texture_frame_count = Some(game_textures.falling_left_count);
                 }
             }
-            t.translation.y = (t.translation.y - POINT_SIZE).round(); // Round on changes so we don't accumulate some float error.
+            t.translation.y = round_to_nearest_point(t.translation.y - POINT_SIZE); // Round on changes so we don't accumulate some float error.
         }
-        if !did_change_texture {
-            // tas.index = (tas.index + 1) % 4;
+        if let Some(count) = texture_frame_count {
+            tas.index = (tas.index + 1) % count;
         }
     }
+}
+
+fn round_to_nearest_point(a: f32) -> f32 {
+    (a / POINT_SIZE).round() * POINT_SIZE
 }
 
 fn game_xy_from_translation(translation: &Vec3) -> (i32, i32) {
