@@ -7,6 +7,40 @@ use std::io::ErrorKind;
 use super::helpers::BitsIterMS;
 use crate::lemmings::models::*;
 
+// 1=blue, 2=green, 3=white.
+const MOUSE_CURSOR: [u8; 196] = [
+    0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    2, 0, 2, 0, 2, 0, 1, 1, 0, 3, 0, 3, 0, 3,
+    3, 0, 3, 0, 3, 0, 1, 1, 0, 2, 0, 2, 0, 2,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0,
+];
+const MOUSE_CURSOR_HOVERING: [u8; 196] = [
+    2, 2, 3, 3, 0, 0, 1, 1, 0, 0, 3, 3, 2, 2,
+    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+    2, 2, 3, 3, 0, 0, 1, 1, 0, 0, 3, 3, 2, 2,
+];
+
 // Creates a bit iterator from [u8].
 macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new) } }
 
@@ -70,6 +104,15 @@ impl Image {
                 (plane_3.next().unwrap() << 3);
             let colour = palette[colour_index as usize];
             bitmap.push(colour);
+        }
+        return Image { bitmap: bitmap, width: width, height: height };
+    }
+
+    fn parse_8bpp(data: &[u8], width: usize, height: usize, palette: [u32; 16]) -> Image {
+        let pixels = width * height;
+        let mut bitmap = Vec::<u32>::with_capacity(pixels);
+        for i in 0..pixels {
+            bitmap.push(palette[data[i] as usize]);
         }
         return Image { bitmap: bitmap, width: width, height: height };
     }
@@ -371,5 +414,7 @@ pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
         main_menu: MainMenu::parse(&sections[3], &sections[4], menu_palette),
         skill_panel: Image::parse_4bpp(&sections[6], 320, 40, game_palette),
         game_font: GameFont::parse(&sections[6][0x1900..], game_palette),
+        mouse_cursor: Image::parse_8bpp(&MOUSE_CURSOR, 14, 14, game_palette),
+        mouse_cursor_hovering: Image::parse_8bpp(&MOUSE_CURSOR_HOVERING, 14, 14, game_palette),
     })
 }

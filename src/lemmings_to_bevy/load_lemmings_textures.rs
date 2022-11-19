@@ -5,40 +5,6 @@ use crate::helpers::{make_image, make_atlas_from_animation};
 
 pub struct LoadLemmingsTexturesPlugin;
 
-// 1=blue, 2=green, 3=white.
-const mouse_cursor: [u8; 196] = [
-    0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    2, 0, 2, 0, 2, 0, 1, 1, 0, 3, 0, 3, 0, 3,
-    3, 0, 3, 0, 3, 0, 1, 1, 0, 2, 0, 2, 0, 2,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0,
-];
-const mouse_cursor_hovering: [u8; 196] = [
-    2, 2, 3, 3, 0, 0, 1, 1, 0, 0, 3, 3, 2, 2,
-    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
-    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
-    2, 2, 3, 3, 0, 0, 1, 1, 0, 0, 3, 3, 2, 2,
-];
-
 impl Plugin for LoadLemmingsTexturesPlugin {
 	fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PreStartup, load_lemmings_textures_startup);
@@ -174,7 +140,10 @@ fn load_lemmings_textures_startup(
         explosion_count: game.main.lemming_animations.explosion.frames.len(),
 
         skill_panel: make_image(&game.main.skill_panel, &mut images, true),
+        
         white,
+        mouse_cursor: make_image(&game.main.mouse_cursor, &mut images, true),
+        mouse_cursor_hovering: make_image(&game.main.mouse_cursor_hovering, &mut images, true),
 	};
 	commands.insert_resource(game_textures);
 }
@@ -277,6 +246,7 @@ pub struct GameTextures {
     pub skill_panel: Handle<Image>,
 
     // Other:
-    pub white: Handle<Image>
+    pub white: Handle<Image>,
+    pub mouse_cursor: Handle<Image>,
+    pub mouse_cursor_hovering: Handle<Image>,
 }
-
