@@ -10,6 +10,7 @@ mod fadeout;
 mod level_preview;
 mod helpers;
 mod ingame;
+mod mouse_cursor;
 
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -159,6 +160,7 @@ fn main() {
         .add_plugin(level_selection_menu::LevelSelectionMenuPlugin)
         .add_plugin(level_preview::LevelPreviewPlugin)
         .add_plugin(ingame::InGamePlugin)
+        .add_plugin(mouse_cursor::MouseCursorPlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
         .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
