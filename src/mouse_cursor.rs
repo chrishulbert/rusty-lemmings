@@ -19,6 +19,7 @@ struct MouseCursorComponent;
 
 fn spawn_mouse_cursor(
     mut commands: Commands,
+    mut windows: ResMut<Windows>,
     game_textures: Res<GameTextures>,
 ) {
     commands.spawn_bundle(SpriteBundle {
@@ -31,6 +32,8 @@ fn spawn_mouse_cursor(
         ..default()
     })
     .insert(MouseCursorComponent);
+
+    windows.primary_mut().set_cursor_visibility(false);
 }
 
 fn mouse_motion_system(
