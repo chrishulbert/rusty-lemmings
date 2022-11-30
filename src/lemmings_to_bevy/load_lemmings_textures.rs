@@ -140,6 +140,7 @@ fn load_lemmings_textures_startup(
         explosion_count: game.main.lemming_animations.explosion.frames.len(),
 
         skill_panel: make_image(&game.main.skill_panel, &mut images, true),
+        skill_selection:  make_image(&game.main.skill_selection, &mut images, true),
         
         white,
         mouse_cursor: make_image(&game.main.mouse_cursor, &mut images, true),
@@ -244,6 +245,7 @@ pub struct GameTextures {
 
     // Ingame:
     pub skill_panel: Handle<Image>,
+    pub skill_selection: Handle<Image>, // The indicator.
 
     // Other:
     pub white: Handle<Image>,

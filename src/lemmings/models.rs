@@ -340,6 +340,7 @@ pub struct MainDat {
     pub game_font_high_perf: GameFont,
     pub main_menu: MainMenu,
     pub skill_panel: Image,
+    pub skill_selection: Image,
     pub game_font: GameFont,
     pub mouse_cursor: Image,
     pub mouse_cursor_hovering: Image,
