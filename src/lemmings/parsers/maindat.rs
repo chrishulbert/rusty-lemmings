@@ -427,7 +427,7 @@ pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
         game_font_high_perf: GameFont::parse(&sections[2][0x19a0..], game_palette),
         main_menu: MainMenu::parse(&sections[3], &sections[4], menu_palette),
         skill_panel: Image::parse_4bpp(&sections[6], 320, 40, game_palette),
-        skill_selection: Image::parse_8bpp(&skill_selection, 14, 14, game_palette),
+        skill_selection: Image::parse_8bpp(&skill_selection, SKILL_SELECTION_WIDTH, SKILL_SELECTION_HEIGHT, game_palette),
         game_font: GameFont::parse(&sections[6][0x1900..], game_palette),
         mouse_cursor: Image::parse_8bpp(&MOUSE_CURSOR, 14, 14, game_palette),
         mouse_cursor_hovering: Image::parse_8bpp(&MOUSE_CURSOR_HOVERING, 14, 14, game_palette),

@@ -74,65 +74,9 @@ fn animate_sprite(
 
 fn startup(
     mut commands: Commands,
-    // game_textures: Res<GameTextures>,
 ) {
     commands.spawn_bundle(Camera2dBundle::default());
-    // commands
-    //     .spawn_bundle(SpriteSheetBundle {
-    //         texture_atlas: game_textures.mining_right.clone(),
-    //         transform: Transform{
-    //             translation: Vec3::new(0., 0., 1.),
-    //             scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-    //             ..default()
-    //         },        
-    //         ..default()
-    //     })
-    //     .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
-    // commands
-    //     .spawn_bundle(SpriteSheetBundle {
-    //         texture_atlas: game_textures.blocking.clone(),
-    //         transform: Transform{
-    //             translation: Vec3::new(100., 0., 1.),
-    //             scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-    //             ..default()
-    //         },     
-    //         ..default()
-    //     })
-    //     .insert(AnimationTimer(Timer::from_seconds(FRAME_DURATION, true)));
 }
-
-// #[derive(Component)]
-// struct Person;
-
-// #[derive(Component)]
-// struct Name(String);
-
-// fn add_people(mut commands: Commands) {
-//     commands.spawn().insert(Person).insert(Name("Elaina Proctor".to_string()));
-//     commands.spawn().insert(Person).insert(Name("Renzo Hume".to_string()));
-//     commands.spawn().insert(Person).insert(Name("Zayna Nieves".to_string()));
-// }
-
-// struct GreetTimer(Timer);
-
-// fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
-//     if timer.0.tick(time.delta()).just_finished() {
-//         for name in query.iter() {
-//             println!("hello {}!", name.0);
-//         }
-//     }
-// }
-
-// pub struct HelloPlugin;
-
-// impl Plugin for HelloPlugin {
-//     fn build(&self, app: &mut App) {
-//         app
-//             .insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-//             .add_startup_system(add_people)
-//             .add_system(greet_people);
-//     }
-// }
 
 fn main() {
     // TODO multithread this! https://doc.rust-lang.org/book/ch16-02-message-passing.html
@@ -142,7 +86,8 @@ fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
-        .add_state(GameState::MainMenu)
+        // .add_state(GameState::MainMenu)
+        .add_state(GameState::InGame)
         .insert_resource(game)
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(WindowDescriptor {

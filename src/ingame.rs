@@ -17,6 +17,41 @@ const LEMMING_WIDTH_FOR_BASE: f32 = 3.; // How many points under it to check to 
 
 pub struct InGamePlugin;
 
+enum SkillPanelSelection {
+    Minus = 0, // Momentary.
+    Plus = 1, // Momentary.
+    Climb = 2,
+    Umbrella = 3,
+    Explode = 4,
+    Block = 5,
+    Build = 6,
+    Bash = 7,
+    MineDiagonal = 8,
+    DigVertical = 9,
+    Pause = 10,
+    Nuke = 11, // Momentary.
+}
+
+impl SkillPanelSelection {
+    fn from_index(i: isize) -> SkillPanelSelection {
+        match i {
+            0 => SkillPanelSelection::Minus,
+            1 => SkillPanelSelection::Plus,
+            2 => SkillPanelSelection::Climb,
+            3 => SkillPanelSelection::Umbrella,
+            4 => SkillPanelSelection::Explode,
+            5 => SkillPanelSelection::Block,
+            6 => SkillPanelSelection::Build,
+            7 => SkillPanelSelection::Bash,
+            8 => SkillPanelSelection::MineDiagonal,
+            9 => SkillPanelSelection::DigVertical,
+            10 => SkillPanelSelection::Pause,
+            11 => SkillPanelSelection::Nuke,
+            _ => SkillPanelSelection::Nuke,
+        }
+    }
+}
+
 /// Resource.
 struct GameTimer(Timer);
 
@@ -25,6 +60,7 @@ struct InGameStartCountdown(i32); // Countdown to the entrance opening.
 struct InGameDropCountdown(i32); // Countdown between dropping lemmings. -1 if hasn't started yet, or has dropped all lemmings.
 struct InGameLemmingsContainerId(Entity); // The entity id of the lemmings container.
 struct InGameSlices(Option<Slices>);
+struct InGameSkillSelectionIndicatorId(Entity); // The id of the skill selection indicator.
 
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
@@ -34,6 +70,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameDropCountdown(-1));
         app.insert_resource(InGameLemmingsContainerId(Entity::from_raw(0)));
         app.insert_resource(InGameSlices(None));
+        app.insert_resource(InGameSkillSelectionIndicatorId(Entity::from_raw(0)));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -279,27 +316,26 @@ fn scroll(
     windows: Res<Windows>,
     mut query: Query<(&mut Transform, &MapContainerComponent)>,
 ) {
-    if let Some(window) = windows.iter().next() {
-        if let Some(position) = window.cursor_position() {
-            let delta: isize;
-            if position.x < window.width() * 0.05 {
-                delta = 2;
-            } else if position.x < window.width() * 0.1 {
-                delta = 1;
-            } else if position.x > window.width() * 0.95 {
-                delta = -2;
-            } else if position.x > window.width() * 0.9 {
-                delta = -1;
-            } else {
-                delta = 0;
-            }
-            if delta != 0 {
-                for (mut transform, container) in query.iter_mut() {
-                    let new_x = transform.translation.x + (delta as f32 * time.delta().as_secs_f32() * window.width() * 0.3).round();
-                    let clamped_x = new_x.min(container.max_x).max(container.min_x);
-                    transform.translation.x = clamped_x;
-                }
-            }
+    let Some(window) = windows.iter().next() else { return };
+    let Some(position) = window.cursor_position() else { return };
+    
+    let delta: isize;
+    if position.x < window.width() * 0.05 {
+        delta = 2;
+    } else if position.x < window.width() * 0.1 {
+        delta = 1;
+    } else if position.x > window.width() * 0.95 {
+        delta = -2;
+    } else if position.x > window.width() * 0.9 {
+        delta = -1;
+    } else {
+        delta = 0;
+    }
+    if delta != 0 {
+        for (mut transform, container) in query.iter_mut() {
+            let new_x = transform.translation.x + (delta as f32 * time.delta().as_secs_f32() * window.width() * 0.3).round();
+            let clamped_x = new_x.min(container.max_x).max(container.min_x);
+            transform.translation.x = clamped_x;
         }
     }
 }
@@ -317,132 +353,144 @@ fn enter(
     mut lemmings_container_id: ResMut<InGameLemmingsContainerId>,
     mut slices_resource: ResMut<InGameSlices>,
 	windows: Res<Windows>,
+    mut skill_selection_indicator: ResMut<InGameSkillSelectionIndicatorId>,
 ) {
+	let Some(window) = windows.iter().next() else { return };
+    let Some(level) = game.level_named(&level_selection.level_name) else { return };
+
     start_countdown.0 = FPS as i32;
     drop_countdown.0 = -1; // Not dropping yet.
     timer.0.set_elapsed(Duration::ZERO);
-	if let Some(window) = windows.iter().next() {
-		if let Some(level) = game.level_named(&level_selection.level_name) {
-            // Scale and bevy-ify the ground's objects.
-            let ground = &game.grounds[&(level.globals.normal_graphic_set as i32)];
-            pub enum AnimationOrImageHandle {
-                Animation(Handle<TextureAtlas>),
-                Image(Handle<Image>),
-            }
-            let mut object_handles = HashMap::<i32, AnimationOrImageHandle>::new();
-            for (index, animation) in &ground.object_sprites {
-                let frame_count = animation.frames.len();
-                let anim_or_image: AnimationOrImageHandle;
-                if frame_count == 0 {
-                    continue;
-                } else if frame_count == 1 {
-                    // Static.
-                    let image_handle = make_image_from_bitmap(&animation.frames[0], animation.width, animation.height, &mut images, true);
-                    anim_or_image = AnimationOrImageHandle::Image(image_handle);
-                } else {
-                    // Animation.
-                    let atlas_handle = make_atlas_from_animation(animation, &mut images, &mut texture_atlases, true);
-                    anim_or_image = AnimationOrImageHandle::Animation(atlas_handle);
-                }
-                object_handles.insert(index.clone(), anim_or_image);
-            }
+    
+    // Scale and bevy-ify the ground's objects.
+    let ground = &game.grounds[&(level.globals.normal_graphic_set as i32)];
+    pub enum AnimationOrImageHandle {
+        Animation(Handle<TextureAtlas>),
+        Image(Handle<Image>),
+    }
+    let mut object_handles = HashMap::<i32, AnimationOrImageHandle>::new();
+    for (index, animation) in &ground.object_sprites {
+        let frame_count = animation.frames.len();
+        let anim_or_image: AnimationOrImageHandle;
+        if frame_count == 0 {
+            continue;
+        } else if frame_count == 1 {
+            // Static.
+            let image_handle = make_image_from_bitmap(&animation.frames[0], animation.width, animation.height, &mut images, true);
+            anim_or_image = AnimationOrImageHandle::Image(image_handle);
+        } else {
+            // Animation.
+            let atlas_handle = make_atlas_from_animation(animation, &mut images, &mut texture_atlases, true);
+            anim_or_image = AnimationOrImageHandle::Animation(atlas_handle);
+        }
+        object_handles.insert(index.clone(), anim_or_image);
+    }
 
-            // Spawn the level terrain.
-			let render = level_renderer::render(level, &game.grounds, &game.specials, false);
-            let game_origin_offset_y: f32 = (render.image.height as f32) * POINT_SIZE / 2.; // Y to use for 0 in game coords.
-            let level_offset_y = window.height() / 2. - game_origin_offset_y;
-            let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
-            let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE, render.size.min_x * SCALE as isize);
-            let slices = convert_slices_to_bevy(slices_raw, &mut images);
-            commands
-                .spawn_bundle(SpatialBundle{
-                    // TODO for the start X, do we need to account for the current screen width?
-                    transform: Transform::from_xyz(-(level.globals.start_screen_xpos as f32 + ORIGINAL_GAME_W as f32 / 2.) * POINT_SIZE, 
-                        level_offset_y, 1.),
-                    ..default()
-                }).with_children(|parent| {
-                    // Terrain slices.
-                    parent.spawn_bundle(SpatialBundle::default()).with_children(|parent| {
-                        for slice in &slices.slices {
-                            parent.spawn_bundle(SpriteBundle{
-                                transform: Transform{
-                                    translation: Vec3::new((slice.x as f32 + (slice.width as f32 / 2.)) * TEXTURE_SCALE, 0., 2.),
-                                    scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                                    ..default()
-                                },
-                                texture: slice.texture.clone(),
-                                ..default()
-                            });
-                        }
-                    });
-
-                    // Spawn level objects.
-                    for object in &level.objects {
-                        let z_index: f32 = if object.modifier.is_do_not_overwrite_existing_terrain() { 1. } else { 3. };
-                        let object_info = &ground.ground.object_info[object.obj_id];
-                        if let Some(handle) = object_handles.get(&(object.obj_id as i32)) {
-                            let transform = Transform{
-                                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
-                                translation: Vec3::new((object.x as f32 + object_info.width as f32 / 2.) * POINT_SIZE,
-                                game_origin_offset_y - (object.y as f32 + object_info.height as f32 / 2.) * POINT_SIZE, 
-                                z_index),
-                                ..default()
-                            };
-                            let object_component = ObjectComponent{
-                                info: object_info.clone(),
-                            };
-                            match handle {
-                                AnimationOrImageHandle::Animation(anim) => {
-                                    parent.spawn_bundle(SpriteSheetBundle{
-                                        sprite: TextureAtlasSprite { index: object_info.start_animation_frame_index as usize % object_info.frame_count as usize, ..default() },
-                                        texture_atlas: anim.clone(),
-                                        transform, 
-                                        ..default()
-                                    })
-                                    .insert(object_component);
-                                },
-                                AnimationOrImageHandle::Image(image) => {
-                                    parent.spawn_bundle(SpriteBundle{
-                                        texture: image.clone(),
-                                        transform, 
-                                        ..default()
-                                    })
-                                    .insert(object_component);
-                                },
-                            }
-                        }
-                    }
-
-                    // Spawn lemmings container.
-                    lemmings_container_id.0 = parent.spawn_bundle(SpatialBundle {
-                        transform: Transform::from_xyz(0., 0., 4.),
-                       ..default() 
-                    }).id();
-                })
-				.insert(InGameComponent)
-                .insert(MapContainerComponent{
-                    min_x: -render.size.max_x as f32 * POINT_SIZE,
-                    max_x: -render.size.min_x as f32 * POINT_SIZE,
-                });
-
-            // Keep the slices around.
-            slices_resource.0 = Some(slices);
-
-            // Skill panel.
-			commands
-				.spawn_bundle(SpriteBundle{
-                    sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
-					texture: game_textures.skill_panel.clone(),
-                    transform: Transform{
-                        translation: Vec3::new(0., -window.height() / 2., 10.),
-                        scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+    // Spawn the level terrain.
+    let render = level_renderer::render(level, &game.grounds, &game.specials, false);
+    let game_origin_offset_y: f32 = (render.image.height as f32) * POINT_SIZE / 2.; // Y to use for 0 in game coords.
+    let level_offset_y = window.height() / 2. - game_origin_offset_y;
+    let scaled = multi_scale(&render.image.bitmap, render.image.width, render.image.height, false);
+    let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE, render.size.min_x * SCALE as isize);
+    let slices = convert_slices_to_bevy(slices_raw, &mut images);
+    commands
+        .spawn_bundle(SpatialBundle{
+            // TODO for the start X, do we need to account for the current screen width?
+            transform: Transform::from_xyz(-(level.globals.start_screen_xpos as f32 + ORIGINAL_GAME_W as f32 / 2.) * POINT_SIZE, 
+                level_offset_y, 1.),
+            ..default()
+        }).with_children(|parent| {
+            // Terrain slices.
+            parent.spawn_bundle(SpatialBundle::default()).with_children(|parent| {
+                for slice in &slices.slices {
+                    parent.spawn_bundle(SpriteBundle{
+                        transform: Transform{
+                            translation: Vec3::new((slice.x as f32 + (slice.width as f32 / 2.)) * TEXTURE_SCALE, 0., 2.),
+                            scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                            ..default()
+                        },
+                        texture: slice.texture.clone(),
                         ..default()
-                    },        
+                    });
+                }
+            });
+
+            // Spawn level objects.
+            for object in &level.objects {
+                let z_index: f32 = if object.modifier.is_do_not_overwrite_existing_terrain() { 1. } else { 3. };
+                let object_info = &ground.ground.object_info[object.obj_id];
+                if let Some(handle) = object_handles.get(&(object.obj_id as i32)) {
+                    let transform = Transform{
+                        scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                        translation: Vec3::new((object.x as f32 + object_info.width as f32 / 2.) * POINT_SIZE,
+                        game_origin_offset_y - (object.y as f32 + object_info.height as f32 / 2.) * POINT_SIZE, 
+                        z_index),
+                        ..default()
+                    };
+                    let object_component = ObjectComponent{
+                        info: object_info.clone(),
+                    };
+                    match handle {
+                        AnimationOrImageHandle::Animation(anim) => {
+                            parent.spawn_bundle(SpriteSheetBundle{
+                                sprite: TextureAtlasSprite { index: object_info.start_animation_frame_index as usize % object_info.frame_count as usize, ..default() },
+                                texture_atlas: anim.clone(),
+                                transform, 
+                                ..default()
+                            })
+                            .insert(object_component);
+                        },
+                        AnimationOrImageHandle::Image(image) => {
+                            parent.spawn_bundle(SpriteBundle{
+                                texture: image.clone(),
+                                transform, 
+                                ..default()
+                            })
+                            .insert(object_component);
+                        },
+                    }
+                }
+            }
+
+            // Spawn lemmings container.
+            lemmings_container_id.0 = parent.spawn_bundle(SpatialBundle {
+                transform: Transform::from_xyz(0., 0., 4.),
+                ..default() 
+            }).id();
+        })
+        .insert(InGameComponent)
+        .insert(MapContainerComponent{
+            min_x: -render.size.max_x as f32 * POINT_SIZE,
+            max_x: -render.size.min_x as f32 * POINT_SIZE,
+        });
+
+    // Keep the slices around.
+    slices_resource.0 = Some(slices);
+
+    // Skill panel.
+    commands
+        .spawn_bundle(SpriteBundle{
+            sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+            texture: game_textures.skill_panel.clone(),
+            transform: Transform{
+                translation: Vec3::new(0., -window.height() / 2., 10.),
+                scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
+                ..default()
+            },        
+            ..default()
+        })
+        .with_children(|parent| {
+            skill_selection_indicator.0 = parent.spawn_bundle(SpriteBundle{
+                texture: game_textures.skill_selection.clone(),
+                sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+                transform: Transform{
+                    translation: Vec3::new(-7.5 * POINT_SIZE / TEXTURE_SCALE, 0., 11.), // Just on top of skill panel.
                     ..default()
-				})
-				.insert(InGameComponent);
-		}
-	}
+                },
+                ..default()
+            }).insert(InGameComponent).id();
+        })
+        .insert(InGameComponent);
 }
 
 fn update_lemmings(

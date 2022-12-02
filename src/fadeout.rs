@@ -60,7 +60,7 @@ pub fn create_fadeout(
             },
             texture: game_textures.white.clone(),
             transform: Transform {
-                translation: Vec3::new(0., 0., 999.0),
+                translation: Vec3::new(0., 0., 998.0), // 999 is mouse, we want to be under that.
                 ..Default::default()
             },
             ..Default::default()
