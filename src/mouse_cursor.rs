@@ -3,7 +3,7 @@ use bevy::input::mouse::MouseMotion;
 use crate::{POINT_SIZE, TEXTURE_SCALE};
 use crate::{GameTextures};
 
-const MOUSE_Y: f32 = 999.; // On top of all.
+const MOUSE_Z: f32 = 999.; // On top of all.
 
 pub struct MouseCursorPlugin;
 
@@ -25,13 +25,13 @@ fn spawn_mouse_cursor(
     commands.spawn_bundle(SpriteBundle {
         texture: game_textures.mouse_cursor.clone(),
         transform: Transform{
-            translation: Vec3::new(99999., 99999., MOUSE_Y),
+            translation: Vec3::new(99999., 99999., MOUSE_Z),
             scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
             ..default()
         },        
         ..default()
     })
-    .insert(MouseCursorComponent);
+    .insert(MouseCursorComponent); // TODO would it be more efficient to store the id instead?
 
     windows.primary_mut().set_cursor_visibility(false);
 }
@@ -48,13 +48,12 @@ fn mouse_motion_system(
     let Some(window) = windows.iter().next() else { return };
 
     for (mut transform) in &mut mouse_cursor_component_query {
-        if let Some(position) = window.cursor_position() {
-            
+        if let Some(position) = window.cursor_position() {            
             // Move and show it.
-            transform.translation = Vec3::new(position.x - window.width() / 2., position.y - window.height() / 2., MOUSE_Y);
+            transform.translation = Vec3::new(position.x - window.width() / 2., position.y - window.height() / 2., MOUSE_Z);
         } else {
             // Off-window, so hide it.
-            transform.translation = Vec3::new(99999., 99999., MOUSE_Y);
+            transform.translation = Vec3::new(99999., 99999., MOUSE_Z);
         }
     }
 }
