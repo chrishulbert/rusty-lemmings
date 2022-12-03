@@ -64,6 +64,14 @@ struct InGameLemmingsContainerId(Entity); // The entity id of the lemmings conta
 struct InGameSlices(Option<Slices>);
 struct InGameBottomPanelId(Entity); // The id of the skill selection / map panel.
 struct InGameSkillSelectionIndicatorId(Entity); // The id of the skill selection indicator.
+struct InGameSkillSelection(Option<SkillPanelSelection>);
+
+// Even though we refer to some entities by Id, we have to give them components so bevy doesn't panic when
+// querying 2+ of them in the one func.
+#[derive(Component)]
+struct InGameBottomPanelComponent;
+#[derive(Component)]
+struct InGameSkillSelectionIndicatorComponent;
 
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
@@ -75,6 +83,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameSlices(None));
         app.insert_resource(InGameBottomPanelId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelectionIndicatorId(Entity::from_raw(0)));
+        app.insert_resource(InGameSkillSelection(None));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -346,10 +355,13 @@ fn scroll(
 }
 
 fn mouse_click_system(
+    mut commands: Commands,
     windows: Res<Windows>,
     mouse_button_input: Res<Input<MouseButton>>,
     bottom_panel_id: Res<InGameBottomPanelId>,
-    bottom_panel_query: Query<&Transform>,
+    bottom_panel_query: Query<&Transform, With<InGameBottomPanelComponent>>,
+    skill_selection_indicator_id: Res<InGameSkillSelectionIndicatorId>,
+    mut skill_selection_indicator_query: Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let Some(window) = windows.iter().next() else { return };
@@ -365,7 +377,13 @@ fn mouse_click_system(
             if bottom_panel_click_x_position_pt >= 0. {
                 let button_index = bottom_panel_click_x_position_pt as isize / sizes::SKILL_PANEL_BUTTON_WIDTH as isize;
                 if let Some(selection) = SkillPanelSelection::from_index(button_index) {
-                    println!("clicked {:?}", selection);
+                    if let Ok(mut skill_selection_indicator) = skill_selection_indicator_query.get_mut(skill_selection_indicator_id.0) {
+                        let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 7.5;
+                        skill_selection_indicator.translation = Vec3::new(
+                            (leftmost_skill + button_index as f32 * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE, 
+                            0.,
+                            11.);
+                    }                    
                 }
             }
         }
@@ -386,7 +404,7 @@ fn enter(
     mut slices_resource: ResMut<InGameSlices>,
 	windows: Res<Windows>,
     mut bottom_panel_id: ResMut<InGameBottomPanelId>,
-    mut skill_selection_indicator: ResMut<InGameSkillSelectionIndicatorId>,
+    mut skill_selection_indicator_id: ResMut<InGameSkillSelectionIndicatorId>,
 ) {
 	let Some(window) = windows.iter().next() else { return };
     let Some(level) = game.level_named(&level_selection.level_name) else { return };
@@ -513,17 +531,20 @@ fn enter(
             ..default()
         })
         .with_children(|parent| {
-            skill_selection_indicator.0 = parent.spawn_bundle(SpriteBundle{
+            skill_selection_indicator_id.0 = parent.spawn_bundle(SpriteBundle{
                 texture: game_textures.skill_selection.clone(),
                 sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
                 transform: Transform{
-                    translation: Vec3::new(-7.5 * POINT_SIZE / TEXTURE_SCALE, 0., 11.), // Just on top of skill panel.
+                    translation: Vec3::new(-99999. * POINT_SIZE / TEXTURE_SCALE, 0., 11.), // Just on top of skill panel.
                     ..default()
                 },
                 ..default()
-            }).id();
+            }).insert(InGameSkillSelectionIndicatorComponent)
+            .id();
         })
-        .insert(InGameComponent).id();
+        .insert(InGameComponent)
+        .insert(InGameBottomPanelComponent)
+        .id();
 }
 
 fn update_lemmings(
