@@ -13,7 +13,7 @@ pub fn spawn_menu_background(
     const BG_WIDTH: f32 = 320.; // Texture size in original game pixels (points).
     const BG_HEIGHT: f32 = 104.;
     fn spawn(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, x: f32, y: f32) {
-        parent.spawn_bundle(SpriteBundle {
+        parent.spawn(SpriteBundle {
             texture: game_textures.background.clone(),
             transform: Transform{
                 translation: Vec3::new(x * POINT_SIZE, y * POINT_SIZE, 0.),
@@ -47,7 +47,7 @@ pub fn spawn_text(text: &str, parent: &mut ChildBuilder, game_textures: &Res<Gam
 		let a = c as u32;
 		if 33 <= a && a <= 126 { // Menu font is '!'(33) - '~'(126)
 			let index = (a - 33) as usize;
-			parent.spawn_bundle(SpriteSheetBundle {
+			parent.spawn(SpriteSheetBundle {
 				texture_atlas: game_textures.menu_font.clone(),
 				sprite: TextureAtlasSprite{index, ..default()},
 				transform: Transform {

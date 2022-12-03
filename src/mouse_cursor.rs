@@ -22,7 +22,7 @@ fn spawn_mouse_cursor(
     mut windows: ResMut<Windows>,
     game_textures: Res<GameTextures>,
 ) {
-    commands.spawn_bundle(SpriteBundle {
+    commands.spawn(SpriteBundle {
         texture: game_textures.mouse_cursor.clone(),
         transform: Transform{
             translation: Vec3::new(99999., 99999., MOUSE_Z),

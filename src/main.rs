@@ -75,7 +75,7 @@ fn animate_sprite(
 fn startup(
     mut commands: Commands,
 ) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 fn main() {

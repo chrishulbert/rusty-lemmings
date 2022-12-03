@@ -99,7 +99,7 @@ fn spawn_background(
 	game_textures: Res<GameTextures>,
 ) {
 	commands
-		.spawn_bundle(SpatialBundle::default())
+		.spawn(SpatialBundle::default())
 		.insert(LevelSelectionMenuComponent)
 		.with_children(|parent| {
 			spawn_menu_background(parent, &game_textures);
@@ -113,7 +113,7 @@ pub struct LevelSelectionButton{
 }
 
 fn spawn_level_button(parent: &mut ChildBuilder, game_textures: &Res<GameTextures>, name: &str, scale: f32, y: f32, skill: isize) {
-	parent.spawn_bundle(SpatialBundle{
+	parent.spawn(SpatialBundle{
 		transform: Transform {
 			translation: Vec3::new(0., y, 2.),
 			scale: Vec3::new(scale, scale, 1.),
@@ -135,7 +135,7 @@ fn spawn_levels(
 	game: Res<Game>,
 ) {
 	commands
-		.spawn_bundle(SpatialBundle::default())
+		.spawn(SpatialBundle::default())
 		.insert(LevelSelectionMenuComponent)
 		.with_children(|parent| {
 			let names = names_per_game_and_skill(&game.id, skill_selection.0);

@@ -70,7 +70,7 @@ fn spawn_background(
 	game_textures: Res<GameTextures>,
 ) {
 	commands
-		.spawn_bundle(SpatialBundle::default())
+		.spawn(SpatialBundle::default())
 		.insert(LevelPreviewComponent)
 		.with_children(|parent| {
 			spawn_menu_background(parent, &game_textures);
@@ -107,11 +107,11 @@ fn spawn_preview(
 			let all_height = (size + gap) * ((text_lines - 1) as f32); // From center of topmost to center of bottom-most.
 			let text_center_y_offset = -mini_map_background_height / 2.; // Center it in the remaining space under the black bar.
 			commands
-				.spawn_bundle(SpatialBundle::default())
+				.spawn(SpatialBundle::default())
 				.insert(LevelPreviewComponent)
 				.with_children(|parent| {
 					for (i, t) in text.iter().enumerate() {
-						parent.spawn_bundle(SpatialBundle{
+						parent.spawn(SpatialBundle{
 							transform: Transform::from_xyz(0., text_center_y_offset + all_height / 2. - ((i as f32) * (size + gap)), 2.),
 							..default()
 						}).with_children(|parent| {
@@ -122,7 +122,7 @@ fn spawn_preview(
 
 			// Black bar.
 			commands
-				.spawn_bundle(SpriteBundle {
+				.spawn(SpriteBundle {
 					texture: game_textures.white.clone(),
 					sprite: Sprite { 
 						color: Color::rgba(0., 0., 0., 1.), 
@@ -144,7 +144,7 @@ fn spawn_preview(
 			let level_texture = make_image_unscaled(&render.image, &mut images);
 			let scale_width: f32 = (render.image.width as f32) / (render.image.height as f32) * mini_map_height;
 			commands
-				.spawn_bundle(SpriteBundle{
+				.spawn(SpriteBundle{
 					sprite: Sprite { custom_size: Some(Vec2::new(scale_width, mini_map_height)), ..default() },
 					transform: Transform::from_xyz(0., window.height() / 2. - mini_map_background_height / 2., 2.),
 					texture: level_texture,

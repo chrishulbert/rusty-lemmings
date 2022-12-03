@@ -156,7 +156,7 @@ fn spawn_background(
     game_textures: Res<GameTextures>,
 ) {
     commands
-        .spawn_bundle(SpatialBundle::default())
+        .spawn(SpatialBundle::default())
         .insert(MainMenuComponent)
         .with_children(|parent| {
             spawn_menu_background(parent, &game_textures);
@@ -169,7 +169,7 @@ fn spawn_menu_logo(
 ) {
     const SCALE: f32 = TEXTURE_SCALE / 2.; // Logo is SVGA so halve it.
     fn spawn_blink(parent: &mut ChildBuilder, atlas: Handle<TextureAtlas>, x: f32, y: f32, index: isize, dwell: isize) {
-        parent.spawn_bundle(SpriteSheetBundle {
+        parent.spawn(SpriteSheetBundle {
             texture_atlas: atlas,
             transform: Transform{
                 translation: Vec3::new(x * POINT_SIZE / SCALE, y * POINT_SIZE / SCALE, 2.),
@@ -184,7 +184,7 @@ fn spawn_menu_logo(
     }
 
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn(SpriteBundle {
             texture: game_textures.logo.clone(),
             transform: Transform{
                 translation: Vec3::new(0., 52. * POINT_SIZE, 1.), // 52 -> make it overlap the background-tile-seam.
@@ -206,7 +206,7 @@ fn spawn_menu_buttons(
     game_textures: Res<GameTextures>,
 ) {
     fn spawn_button(commands: &mut ChildBuilder, sign: Handle<Image>, skill: Option<Handle<Image>>, x: f32, y: f32, action: MainMenuButtonAction) {
-        commands.spawn_bundle(SpriteBundle{
+        commands.spawn(SpriteBundle{
             texture: sign,
             transform: Transform{
                 translation: Vec3::new(x * POINT_SIZE, y * POINT_SIZE, 2.),
@@ -218,7 +218,7 @@ fn spawn_menu_buttons(
             action,
         }).with_children(|parent| {
             if let Some(skill) = skill {
-                parent.spawn_bundle(SpriteBundle{
+                parent.spawn(SpriteBundle{
                     texture: skill,
                     transform: Transform{
                         translation: Vec3::new(0., -28. * POINT_SIZE, 3.),
@@ -231,7 +231,7 @@ fn spawn_menu_buttons(
     }
 
     commands
-        .spawn_bundle(SpatialBundle {
+        .spawn(SpatialBundle {
             ..default()
         })
         .insert(MainMenuComponent)

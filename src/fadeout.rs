@@ -52,7 +52,7 @@ pub fn create_fadeout(
 ) {
     _ = state.push(GameState::Fading); // So you can't tap anything on the old screen.
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn(SpriteBundle {
             sprite: Sprite {
                  color: Color::NONE,
                  custom_size: Some(Vec2::splat(100000.0)),

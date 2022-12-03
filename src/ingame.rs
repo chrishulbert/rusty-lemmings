@@ -270,7 +270,7 @@ fn spawn_a_lemming(
     lemmings_container_id: &Entity,
 ) {
     commands.entity(*lemmings_container_id).with_children(|parent| {
-        parent.spawn_bundle(SpriteSheetBundle{
+        parent.spawn(SpriteSheetBundle{
             texture_atlas: game_textures.falling_right.clone(),
             transform: Transform{
                 scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
@@ -455,16 +455,16 @@ fn enter(
     let slices_raw = slice(&scaled, render.image.width * SCALE, render.image.height * SCALE, render.size.min_x * SCALE as isize);
     let slices = convert_slices_to_bevy(slices_raw, &mut images);
     commands
-        .spawn_bundle(SpatialBundle{
+        .spawn(SpatialBundle{
             // TODO for the start X, do we need to account for the current screen width?
             transform: Transform::from_xyz(-(level.globals.start_screen_xpos as f32 + ORIGINAL_GAME_W as f32 / 2.) * POINT_SIZE, 
                 level_offset_y, 1.),
             ..default()
         }).with_children(|parent| {
             // Terrain slices.
-            parent.spawn_bundle(SpatialBundle::default()).with_children(|parent| {
+            parent.spawn(SpatialBundle::default()).with_children(|parent| {
                 for slice in &slices.slices {
-                    parent.spawn_bundle(SpriteBundle{
+                    parent.spawn(SpriteBundle{
                         transform: Transform{
                             translation: Vec3::new((slice.x as f32 + (slice.width as f32 / 2.)) * TEXTURE_SCALE, 0., 2.),
                             scale: Vec3::new(TEXTURE_SCALE, TEXTURE_SCALE, 1.),
@@ -493,7 +493,7 @@ fn enter(
                     };
                     match handle {
                         AnimationOrImageHandle::Animation(anim) => {
-                            parent.spawn_bundle(SpriteSheetBundle{
+                            parent.spawn(SpriteSheetBundle{
                                 sprite: TextureAtlasSprite { index: object_info.start_animation_frame_index as usize % object_info.frame_count as usize, ..default() },
                                 texture_atlas: anim.clone(),
                                 transform, 
@@ -502,7 +502,7 @@ fn enter(
                             .insert(object_component);
                         },
                         AnimationOrImageHandle::Image(image) => {
-                            parent.spawn_bundle(SpriteBundle{
+                            parent.spawn(SpriteBundle{
                                 texture: image.clone(),
                                 transform, 
                                 ..default()
@@ -514,7 +514,7 @@ fn enter(
             }
 
             // Spawn lemmings container.
-            lemmings_container_id.0 = parent.spawn_bundle(SpatialBundle {
+            lemmings_container_id.0 = parent.spawn(SpatialBundle {
                 transform: Transform::from_xyz(0., 0., 4.),
                 ..default() 
             }).id();
@@ -530,7 +530,7 @@ fn enter(
 
     // Skill panel.
     bottom_panel_id.0 = commands
-        .spawn_bundle(SpriteBundle{
+        .spawn(SpriteBundle{
             sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
             texture: game_textures.skill_panel.clone(),
             transform: Transform{
@@ -541,7 +541,7 @@ fn enter(
             ..default()
         })
         .with_children(|parent| {
-            skill_selection_indicator_id.0 = parent.spawn_bundle(SpriteBundle{
+            skill_selection_indicator_id.0 = parent.spawn(SpriteBundle{
                 texture: game_textures.skill_selection.clone(),
                 sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
                 transform: Transform{
