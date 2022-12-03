@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::input::mouse::MouseMotion;
-use crate::{POINT_SIZE, TEXTURE_SCALE};
-use crate::{GameTextures};
+use crate::TEXTURE_SCALE;
+use crate::GameTextures;
 
 const MOUSE_Z: f32 = 999.; // On top of all.
 
@@ -47,7 +47,7 @@ fn mouse_motion_system(
     // Find the window.
     let Some(window) = windows.iter().next() else { return };
 
-    for (mut transform) in &mut mouse_cursor_component_query {
+    for mut transform in &mut mouse_cursor_component_query {
         if let Some(position) = window.cursor_position() {            
             // Move and show it.
             transform.translation = Vec3::new(position.x - window.width() / 2., position.y - window.height() / 2., MOUSE_Z);
