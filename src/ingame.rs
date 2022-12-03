@@ -362,6 +362,7 @@ fn mouse_click_system(
     bottom_panel_query: Query<&Transform, With<InGameBottomPanelComponent>>,
     skill_selection_indicator_id: Res<InGameSkillSelectionIndicatorId>,
     mut skill_selection_indicator_query: Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
+    mut in_game_skill_selection: ResMut<InGameSkillSelection>,
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let Some(window) = windows.iter().next() else { return };
@@ -377,6 +378,7 @@ fn mouse_click_system(
             if bottom_panel_click_x_position_pt >= 0. {
                 let button_index = bottom_panel_click_x_position_pt as isize / sizes::SKILL_PANEL_BUTTON_WIDTH as isize;
                 if let Some(selection) = SkillPanelSelection::from_index(button_index) {
+                    in_game_skill_selection.0 = Some(selection);
                     if let Ok(mut skill_selection_indicator) = skill_selection_indicator_query.get_mut(skill_selection_indicator_id.0) {
                         let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 7.5;
                         skill_selection_indicator.translation = Vec3::new(
