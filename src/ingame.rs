@@ -10,6 +10,7 @@ use crate::lemmings::level_renderer;
 use crate::helpers::{multi_scale, u32_to_rgba_u8};
 use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
 use crate::{ORIGINAL_GAME_W, FRAME_DURATION};
+use crate::lemmings::sizes;
 
 const DROP_POINTS_PER_FRAME: f32 = 2.;
 const LEMMING_NOMINAL_HEIGHT_HALF: i32 = 5; // Usual height for a lemming sprite in game points. Halved for use later.
@@ -60,6 +61,7 @@ struct InGameStartCountdown(i32); // Countdown to the entrance opening.
 struct InGameDropCountdown(i32); // Countdown between dropping lemmings. -1 if hasn't started yet, or has dropped all lemmings.
 struct InGameLemmingsContainerId(Entity); // The entity id of the lemmings container.
 struct InGameSlices(Option<Slices>);
+struct InGameBottomPanelId(Entity); // The id of the skill selection / map panel.
 struct InGameSkillSelectionIndicatorId(Entity); // The id of the skill selection indicator.
 
 impl Plugin for InGamePlugin {
@@ -70,6 +72,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameDropCountdown(-1));
         app.insert_resource(InGameLemmingsContainerId(Entity::from_raw(0)));
         app.insert_resource(InGameSlices(None));
+        app.insert_resource(InGameBottomPanelId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelectionIndicatorId(Entity::from_raw(0)));
 
 		app.add_system_set(
@@ -85,6 +88,7 @@ impl Plugin for InGamePlugin {
 			SystemSet::on_update(GameState::InGame)
                 .after("tick")
 				.with_system(scroll)
+				.with_system(mouse_click_system)                
                 .with_system(update_objects)
                 .with_system(do_countdown)
                 .with_system(drop_lemmings)
@@ -340,6 +344,30 @@ fn scroll(
     }
 }
 
+fn mouse_click_system(
+    windows: Res<Windows>,
+    mouse_button_input: Res<Input<MouseButton>>,
+    bottom_panel_id: Res<InGameBottomPanelId>,
+    bottom_panel_query: Query<&Transform>,
+) {
+    if mouse_button_input.just_pressed(MouseButton::Left) {
+        let Some(window) = windows.iter().next() else { return };
+        let Some(position) = window.cursor_position() else { return };
+        let mouse_x = position.x - window.width() / 2.;
+        let mouse_y = position.y - window.height() / 2.;
+
+        let Ok(bottom_panel) = bottom_panel_query.get(bottom_panel_id.0) else { return };
+        let bottom_panel_top = bottom_panel.translation.y + sizes::SKILL_PANEL_CLICKABLE_HEIGHT as f32 * POINT_SIZE;
+        let did_click_bottom_panel = mouse_y <= bottom_panel_top;
+        println!("Clicked bottom: {}", did_click_bottom_panel);
+
+        // if mouse_y >= bottom_panel.y {
+        //     print
+        // }
+        // transform.translation = Vec3::new(, , MOUSE_Y);
+    }
+}
+
 fn enter(
 	mut commands: Commands,
 	game_textures: Res<GameTextures>,
@@ -353,6 +381,7 @@ fn enter(
     mut lemmings_container_id: ResMut<InGameLemmingsContainerId>,
     mut slices_resource: ResMut<InGameSlices>,
 	windows: Res<Windows>,
+    mut bottom_panel_id: ResMut<InGameBottomPanelId>,
     mut skill_selection_indicator: ResMut<InGameSkillSelectionIndicatorId>,
 ) {
 	let Some(window) = windows.iter().next() else { return };
@@ -468,7 +497,7 @@ fn enter(
     slices_resource.0 = Some(slices);
 
     // Skill panel.
-    commands
+    bottom_panel_id.0 = commands
         .spawn_bundle(SpriteBundle{
             sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
             texture: game_textures.skill_panel.clone(),
@@ -488,9 +517,9 @@ fn enter(
                     ..default()
                 },
                 ..default()
-            }).insert(InGameComponent).id();
+            }).id();
         })
-        .insert(InGameComponent);
+        .insert(InGameComponent).id();
 }
 
 fn update_lemmings(
