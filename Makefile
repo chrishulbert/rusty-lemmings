@@ -15,7 +15,7 @@ macos:
 	cp icon/Assets.car Rusty\ Lemmings.app/Contents/Resources
 	cp target/release/rusty-lemmings Rusty\ Lemmings.app/Contents/MacOS
 	cp macos/Info.plist Rusty\ Lemmings.app/Contents
-	codesign -s Chris Rusty\ Lemmings.app
+	codesign -s - Rusty\ Lemmings.app
 	zip -r Rusty\ Lemmings.app.zip Rusty\ Lemmings.app
 	@echo "!!! Ensure the Cargo.toml bevy dependency isn't dynamic !!!"
 	@echo "!!! Ensure egui is disabled !!!"
