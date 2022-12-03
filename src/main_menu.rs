@@ -177,7 +177,7 @@ fn spawn_menu_logo(
             },        
             ..default()
         }).insert(BlinkAnimationTimer{
-            timer: Timer::from_seconds(FRAME_DURATION, true),
+            timer: Timer::from_seconds(FRAME_DURATION, TimerMode::Repeating),
             index,
             dwell,
         });

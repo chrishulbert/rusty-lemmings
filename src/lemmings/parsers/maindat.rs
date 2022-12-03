@@ -7,6 +7,7 @@ use std::io::ErrorKind;
 use super::helpers::BitsIterMS;
 use crate::lemmings::models::*;
 use crate::lemmings::sizes;
+use crate::lemmings::models::Image;
 
 // 1=blue, 2=green, 3=white.
 const MOUSE_CURSOR: [u8; 196] = [

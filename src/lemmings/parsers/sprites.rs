@@ -3,6 +3,7 @@
 use super::helpers::BitsIterMS;
 
 use crate::lemmings::models::*;
+use crate::lemmings::models::Image;
 
 // Creates a bit iterator from [u8].
 macro_rules! iterate_bits { ($data:expr) => { $data.iter().flat_map(BitsIterMS::new) } }

@@ -69,6 +69,6 @@ pub fn create_fadeout(
             alpha: 0.,
             sent: false,
             next_state: next_state,
-            timer: Timer::from_seconds(1., false),
+            timer: Timer::from_seconds(1., TimerMode::Once),
         });
 }

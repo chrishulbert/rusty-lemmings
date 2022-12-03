@@ -3,6 +3,7 @@
 use std::cmp;
 //use std::io::Result;
 use crate::lemmings::models::*;
+use crate::lemmings::models::Image;
 use crate::lemmings::parsers::special;
 
 const SPECIAL_LEFT_X: isize = 320;

@@ -90,15 +90,17 @@ fn main() {
         .add_state(GameState::InGame)
         .insert_resource(game)
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(WindowDescriptor {
-            title: "Rusty Lemmings".to_string(),
-            width: RES_W as f32,
-            height: RES_H as f32,
-            //resizable: false,
-            present_mode: PresentMode::Fifo, // Battery-friendly vsync.
-            ..Default::default()
-        })
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Rusty Lemmings".to_string(),
+                width: RES_W as f32,
+                height: RES_H as f32,
+                //resizable: false,
+                present_mode: PresentMode::Fifo, // Battery-friendly vsync.
+                ..Default::default()
+            },
+            ..default()
+        }))
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
         .add_plugin(fadeout::FadeoutPlugin)
         .add_plugin(main_menu::MainMenuPlugin)

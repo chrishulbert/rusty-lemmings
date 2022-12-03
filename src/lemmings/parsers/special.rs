@@ -4,6 +4,7 @@
 use std::io::{Error, ErrorKind, Result};
 use std::slice::Iter;
 use crate::lemmings::models::*;
+use crate::lemmings::models::Image;
 use super::helpers::BitsIterMS;
 
 // Creates a bit iterator from [u8].

@@ -149,6 +149,7 @@ fn load_lemmings_textures_startup(
 	commands.insert_resource(game_textures);
 }
 
+#[derive(Resource)]
 pub struct GameTextures {
     // Menu:
     pub background: Handle<Image>,

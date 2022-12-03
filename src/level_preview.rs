@@ -31,6 +31,7 @@ impl Plugin for LevelPreviewPlugin {
 #[derive(Component)]
 struct LevelPreviewComponent;
 
+#[derive(Resource)]
 pub struct LevelSelectionResource {
 	pub skill: isize,
 	pub level_name: String,

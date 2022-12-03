@@ -1,3 +1,4 @@
+use bevy::prelude::*;
 use std::collections::HashMap;
 use std::vec::IntoIter;
 
@@ -363,7 +364,7 @@ pub type GroundMap = HashMap<i32, GroundCombined>;
 pub type LevelMap = HashMap<i32, Level>; // Key is file# * 100 + section. Eg 203 = LEVEL002.DAT section 3.
 pub type SpecialMap = HashMap<i32, Image>;
 
-#[derive(Clone)]
+#[derive(Clone, Resource)]
 pub struct Game {
     pub name: String, // Eg 'Oh No More Lemmings'
     pub id: String, // Eg 'ohnomore'

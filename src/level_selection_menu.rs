@@ -9,6 +9,7 @@ use crate::lemmings::models::Game;
 #[derive(Component)]
 struct LevelSelectionMenuComponent; // Marker component so the menu can be despawned.
 
+#[derive(Resource)]
 pub struct MainMenuSkillSelection(pub isize);
 
 pub struct LevelSelectionMenuPlugin;

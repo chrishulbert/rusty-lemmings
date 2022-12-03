@@ -55,15 +55,23 @@ impl SkillPanelSelection {
 }
 
 /// Resource.
+#[derive(Resource)]
 struct GameTimer(Timer);
 
 /// Resource.
+#[derive(Resource)]
 struct InGameStartCountdown(i32); // Countdown to the entrance opening.
+#[derive(Resource)]
 struct InGameDropCountdown(i32); // Countdown between dropping lemmings. -1 if hasn't started yet, or has dropped all lemmings.
+#[derive(Resource)]
 struct InGameLemmingsContainerId(Entity); // The entity id of the lemmings container.
+#[derive(Resource)]
 struct InGameSlices(Option<Slices>);
+#[derive(Resource)]
 struct InGameBottomPanelId(Entity); // The id of the skill selection / map panel.
+#[derive(Resource)]
 struct InGameSkillSelectionIndicatorId(Entity); // The id of the skill selection indicator.
+#[derive(Resource)]
 struct InGameSkillSelection(Option<SkillPanelSelection>);
 
 // Even though we refer to some entities by Id, we have to give them components so bevy doesn't panic when
@@ -76,7 +84,7 @@ struct InGameSkillSelectionIndicatorComponent;
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
         // Instead of timers per entity, we use a global timer so that everyone moves in unison.
-        app.insert_resource(GameTimer(Timer::from_seconds(FRAME_DURATION, true)));
+        app.insert_resource(GameTimer(Timer::from_seconds(FRAME_DURATION, TimerMode::Repeating)));
         app.insert_resource(InGameStartCountdown(FPS as i32));        
         app.insert_resource(InGameDropCountdown(-1));
         app.insert_resource(InGameLemmingsContainerId(Entity::from_raw(0)));
@@ -619,14 +627,14 @@ fn update_lemmings(
                     t.translation.x = round_to_nearest_point(t.translation.x + facing_direction_x_delta as f32 * POINT_SIZE);
                     t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
                     if l.is_facing_right {
-                        if ta.id != game_textures.walking_right.id {
+                        if ta.id() != game_textures.walking_right.id() {
                             *ta = game_textures.walking_right.clone();
                             tas.index = 0;
                         } else {
                             texture_frame_count = Some(game_textures.walking_right_count);
                         }
                     } else {
-                        if ta.id != game_textures.walking_left.id {
+                        if ta.id() != game_textures.walking_left.id() {
                             *ta = game_textures.walking_left.clone();
                             tas.index = 0;
                         } else {
@@ -640,14 +648,14 @@ fn update_lemmings(
         } else {
             // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
             if l.is_facing_right {
-                if ta.id != game_textures.falling_right.id {
+                if ta.id() != game_textures.falling_right.id() {
                     *ta = game_textures.falling_right.clone();
                     tas.index = 0;
                 } else {
                     texture_frame_count = Some(game_textures.falling_right_count);
                 }
             } else {
-                if ta.id != game_textures.falling_left.id {
+                if ta.id() != game_textures.falling_left.id() {
                     *ta = game_textures.falling_left.clone();
                     tas.index = 0;
                 } else {

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::sprite::Rect;
+use bevy::math::Rect;
 use bevy::render::render_resource::Extent3d;
 use crate::xbrz;
 use crate::{SCALE, SCALE_A, SCALE_B};
