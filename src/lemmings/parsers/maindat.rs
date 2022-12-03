@@ -6,6 +6,7 @@ use std::io::Error;
 use std::io::ErrorKind;
 use super::helpers::BitsIterMS;
 use crate::lemmings::models::*;
+use crate::lemmings::sizes;
 
 // 1=blue, 2=green, 3=white.
 const MOUSE_CURSOR: [u8; 196] = [
@@ -405,29 +406,27 @@ pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
     game_palette[6] = rgba_from_rgb!(128,128,128); // Grey
 
     // Generate the skill selection box.
-    const SKILL_SELECTION_WIDTH: usize = 17;
-    const SKILL_SELECTION_HEIGHT: usize = 25;
-    const SKILL_SELECTION_PX: usize = SKILL_SELECTION_WIDTH * SKILL_SELECTION_HEIGHT;
+    const SKILL_SELECTION_PX: usize = sizes::SKILL_SELECTION_WIDTH * sizes::SKILL_SELECTION_HEIGHT;
     let mut skill_selection: [u8; SKILL_SELECTION_PX] = [0; SKILL_SELECTION_PX];
-    for x in 0..SKILL_SELECTION_WIDTH {
+    for x in 0..sizes::SKILL_SELECTION_WIDTH {
         skill_selection[x] = 3;
-        skill_selection[SKILL_SELECTION_WIDTH * (SKILL_SELECTION_HEIGHT - 1) + x] = 3;
+        skill_selection[sizes::SKILL_SELECTION_WIDTH * (sizes::SKILL_SELECTION_HEIGHT - 1) + x] = 3;
     }
-    for y in 0..SKILL_SELECTION_HEIGHT {
-        skill_selection[y * SKILL_SELECTION_WIDTH] = 3;
-        skill_selection[y * SKILL_SELECTION_WIDTH + (SKILL_SELECTION_WIDTH - 1)] = 3;
+    for y in 0..sizes::SKILL_SELECTION_HEIGHT {
+        skill_selection[y * sizes::SKILL_SELECTION_WIDTH] = 3;
+        skill_selection[y * sizes::SKILL_SELECTION_WIDTH + (sizes::SKILL_SELECTION_WIDTH - 1)] = 3;
     }
 
     Ok(MainDat {
         lemming_animations: LemmingAnimations::parse(&sections[0], game_palette)?,
         masks: Masks::parse(&sections[1]),
         countdown_numbers: parse_countdown_numbers(&sections[1]),
-        skill_panel_high_perf: Image::parse_4bpp(&sections[2], 320, 40, game_palette),
+        skill_panel_high_perf: Image::parse_4bpp(&sections[2], sizes::SKILL_PANEL_WIDTH, sizes::SKILL_PANEL_HEIGHT, game_palette),
         skill_number_digits: SkillNumberDigits::parse(&sections[2]),
         game_font_high_perf: GameFont::parse(&sections[2][0x19a0..], game_palette),
         main_menu: MainMenu::parse(&sections[3], &sections[4], menu_palette),
-        skill_panel: Image::parse_4bpp(&sections[6], 320, 40, game_palette),
-        skill_selection: Image::parse_8bpp(&skill_selection, SKILL_SELECTION_WIDTH, SKILL_SELECTION_HEIGHT, game_palette),
+        skill_panel: Image::parse_4bpp(&sections[6], sizes::SKILL_PANEL_WIDTH, sizes::SKILL_PANEL_HEIGHT, game_palette),
+        skill_selection: Image::parse_8bpp(&skill_selection, sizes::SKILL_SELECTION_WIDTH, sizes::SKILL_SELECTION_HEIGHT, game_palette),
         game_font: GameFont::parse(&sections[6][0x1900..], game_palette),
         mouse_cursor: Image::parse_8bpp(&MOUSE_CURSOR, 14, 14, game_palette),
         mouse_cursor_hovering: Image::parse_8bpp(&MOUSE_CURSOR_HOVERING, 14, 14, game_palette),
