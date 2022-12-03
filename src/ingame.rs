@@ -18,6 +18,7 @@ const LEMMING_WIDTH_FOR_BASE: f32 = 3.; // How many points under it to check to 
 
 pub struct InGamePlugin;
 
+#[derive(Debug)]
 enum SkillPanelSelection {
     Minus = 0, // Momentary.
     Plus = 1, // Momentary.
@@ -34,21 +35,21 @@ enum SkillPanelSelection {
 }
 
 impl SkillPanelSelection {
-    fn from_index(i: isize) -> SkillPanelSelection {
+    fn from_index(i: isize) -> Option<SkillPanelSelection> {
         match i {
-            0 => SkillPanelSelection::Minus,
-            1 => SkillPanelSelection::Plus,
-            2 => SkillPanelSelection::Climb,
-            3 => SkillPanelSelection::Umbrella,
-            4 => SkillPanelSelection::Explode,
-            5 => SkillPanelSelection::Block,
-            6 => SkillPanelSelection::Build,
-            7 => SkillPanelSelection::Bash,
-            8 => SkillPanelSelection::MineDiagonal,
-            9 => SkillPanelSelection::DigVertical,
-            10 => SkillPanelSelection::Pause,
-            11 => SkillPanelSelection::Nuke,
-            _ => SkillPanelSelection::Nuke,
+            0 => Some(SkillPanelSelection::Minus),
+            1 => Some(SkillPanelSelection::Plus),
+            2 => Some(SkillPanelSelection::Climb),
+            3 => Some(SkillPanelSelection::Umbrella),
+            4 => Some(SkillPanelSelection::Explode),
+            5 => Some(SkillPanelSelection::Block),
+            6 => Some(SkillPanelSelection::Build),
+            7 => Some(SkillPanelSelection::Bash),
+            8 => Some(SkillPanelSelection::MineDiagonal),
+            9 => Some(SkillPanelSelection::DigVertical),
+            10 => Some(SkillPanelSelection::Pause),
+            11 => Some(SkillPanelSelection::Nuke),
+            _ => None,
         }
     }
 }
@@ -359,12 +360,15 @@ fn mouse_click_system(
         let Ok(bottom_panel) = bottom_panel_query.get(bottom_panel_id.0) else { return };
         let bottom_panel_top = bottom_panel.translation.y + sizes::SKILL_PANEL_CLICKABLE_HEIGHT as f32 * POINT_SIZE;
         let did_click_bottom_panel = mouse_y <= bottom_panel_top;
-        println!("Clicked bottom: {}", did_click_bottom_panel);
-
-        // if mouse_y >= bottom_panel.y {
-        //     print
-        // }
-        // transform.translation = Vec3::new(, , MOUSE_Y);
+        if did_click_bottom_panel {
+            let bottom_panel_click_x_position_pt = (mouse_x - bottom_panel.translation.x) / POINT_SIZE + sizes::SKILL_PANEL_WIDTH as f32 / 2.;
+            if bottom_panel_click_x_position_pt >= 0. {
+                let button_index = bottom_panel_click_x_position_pt as isize / sizes::SKILL_PANEL_BUTTON_WIDTH as isize;
+                if let Some(selection) = SkillPanelSelection::from_index(button_index) {
+                    println!("clicked {:?}", selection);
+                }
+            }
+        }
     }
 }
 
