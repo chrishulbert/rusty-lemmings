@@ -73,6 +73,8 @@ struct InGameBottomPanelId(Entity); // The id of the skill selection / map panel
 struct InGameSkillSelectionIndicatorId(Entity); // The id of the skill selection indicator.
 #[derive(Resource)]
 struct InGameSkillSelection(Option<SkillPanelSelection>);
+#[derive(Resource)]
+struct InGameIsPaused(bool);
 
 // Even though we refer to some entities by Id, we have to give them components so bevy doesn't panic when
 // querying 2+ of them in the one func.
@@ -92,6 +94,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameBottomPanelId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelectionIndicatorId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelection(None));
+        app.insert_resource(InGameIsPaused(false));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -240,7 +243,9 @@ fn drop_lemmings(
     mut drop_countdown: ResMut<InGameDropCountdown>,
     query: Query<(&Transform, &ObjectComponent)>,
     lemmings_container_id: Res<InGameLemmingsContainerId>,
+    is_paused: Res<InGameIsPaused>,
 ) {
+    if is_paused.0 { return }
     if drop_countdown.0 < 0 { return } // hasn't started yet or is complete.
     if timer.0.just_finished() {
         let new_countdown = drop_countdown.0 - 1;
@@ -290,7 +295,9 @@ fn update_objects(
         &mut TextureAtlasSprite,
         &ObjectComponent,
     )>,
+    is_paused: Res<InGameIsPaused>,
 ) {
+    if is_paused.0 { return }
     if timer.0.just_finished() {
         for (mut tas, object_unknown) in &mut query {
             let object: &ObjectComponent = object_unknown; // Otherwise RLS can't suggest the type.
@@ -371,6 +378,7 @@ fn mouse_click_system(
     skill_selection_indicator_id: Res<InGameSkillSelectionIndicatorId>,
     mut skill_selection_indicator_query: Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
     mut in_game_skill_selection: ResMut<InGameSkillSelection>,
+    mut is_paused: ResMut<InGameIsPaused>
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let Some(window) = windows.iter().next() else { return };
