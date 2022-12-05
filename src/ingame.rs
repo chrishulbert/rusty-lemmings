@@ -394,14 +394,25 @@ fn mouse_click_system(
             if bottom_panel_click_x_position_pt >= 0. {
                 let button_index = bottom_panel_click_x_position_pt as isize / sizes::SKILL_PANEL_BUTTON_WIDTH as isize;
                 if let Some(selection) = SkillPanelSelection::from_index(button_index) {
-                    in_game_skill_selection.0 = Some(selection);
-                    if let Ok(mut skill_selection_indicator) = skill_selection_indicator_query.get_mut(skill_selection_indicator_id.0) {
-                        let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 7.5;
-                        skill_selection_indicator.translation = Vec3::new(
-                            (leftmost_skill + button_index as f32 * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE, 
-                            0.,
-                            11.);
-                    }                    
+                    match selection {
+                        SkillPanelSelection::Pause => {
+                            is_paused.0 ^= true; // No selection indicator because you can be both paused and have a skill chosen.
+                            // TODO some indicator! Maybe a different colour?
+                            // green for +-
+                            // blue for pause
+                            // red for nuke
+                        },
+                        _ => { // Normal skill.
+                            in_game_skill_selection.0 = Some(selection);
+                            if let Ok(mut skill_selection_indicator) = skill_selection_indicator_query.get_mut(skill_selection_indicator_id.0) {
+                                let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 7.5;
+                                skill_selection_indicator.translation = Vec3::new(
+                                    (leftmost_skill + button_index as f32 * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE, 
+                                    0.,
+                                    11.);
+                            }                    
+                        },
+                    }
                 }
             }
         }
@@ -575,7 +586,9 @@ fn update_lemmings(
     timer: Res<GameTimer>,
     slices: Res<InGameSlices>,
     game_textures: Res<GameTextures>,
+    is_paused: Res<InGameIsPaused>,
 ) {
+    if is_paused.0 { return }
     if !timer.0.just_finished() { return }
 
     for (mut t, mut tas, mut ta, mut l) in query.iter_mut() {
