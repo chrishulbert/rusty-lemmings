@@ -375,6 +375,22 @@ macro_rules! rgba_from_rgb { ($r:expr, $g:expr, $b:expr) => {
     (($r as u32) << 24) + (($g as u32) << 16) + (($b as u32) << 8) + 0xff
 }}
 
+const SKILL_SELECTION_PX: usize = sizes::SKILL_SELECTION_WIDTH * sizes::SKILL_SELECTION_HEIGHT;
+
+// Generate the skill selection box.
+fn skill_selection_indicator(colour: u8) -> [u8; SKILL_SELECTION_PX] {
+    let mut img: [u8; SKILL_SELECTION_PX] = [0; SKILL_SELECTION_PX];
+    for x in 0..sizes::SKILL_SELECTION_WIDTH {
+        img[x] = 3;
+        img[sizes::SKILL_SELECTION_WIDTH * (sizes::SKILL_SELECTION_HEIGHT - 1) + x] = 3;
+    }
+    for y in 0..sizes::SKILL_SELECTION_HEIGHT {
+        img[y * sizes::SKILL_SELECTION_WIDTH] = 3;
+        img[y * sizes::SKILL_SELECTION_WIDTH + (sizes::SKILL_SELECTION_WIDTH - 1)] = 3;
+    }
+    img
+}
+
 pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
     if sections.len() < 7 {
         return Err(Error::new(ErrorKind::InvalidData, "Not enough sections"))
@@ -406,17 +422,11 @@ pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
     game_palette[5] = rgba_from_rgb!(240, 32, 32); // Red
     game_palette[6] = rgba_from_rgb!(128,128,128); // Grey
 
-    // Generate the skill selection box.
-    const SKILL_SELECTION_PX: usize = sizes::SKILL_SELECTION_WIDTH * sizes::SKILL_SELECTION_HEIGHT;
-    let mut skill_selection: [u8; SKILL_SELECTION_PX] = [0; SKILL_SELECTION_PX];
-    for x in 0..sizes::SKILL_SELECTION_WIDTH {
-        skill_selection[x] = 3;
-        skill_selection[sizes::SKILL_SELECTION_WIDTH * (sizes::SKILL_SELECTION_HEIGHT - 1) + x] = 3;
-    }
-    for y in 0..sizes::SKILL_SELECTION_HEIGHT {
-        skill_selection[y * sizes::SKILL_SELECTION_WIDTH] = 3;
-        skill_selection[y * sizes::SKILL_SELECTION_WIDTH + (sizes::SKILL_SELECTION_WIDTH - 1)] = 3;
-    }
+    // Generate the selection boxes.
+    let skill_selection = skill_selection_indicator(3); // White for skills.
+    let speed_selection = skill_selection_indicator(2); // Green for +-.
+    let pause_selection = skill_selection_indicator(1); // Blue for pause.
+    let nuke_selection = skill_selection_indicator(5); // Red for nuke.
 
     Ok(MainDat {
         lemming_animations: LemmingAnimations::parse(&sections[0], game_palette)?,
@@ -428,6 +438,9 @@ pub fn parse(sections: &Vec<Vec<u8>>) -> io::Result<MainDat> {
         main_menu: MainMenu::parse(&sections[3], &sections[4], menu_palette),
         skill_panel: Image::parse_4bpp(&sections[6], sizes::SKILL_PANEL_WIDTH, sizes::SKILL_PANEL_HEIGHT, game_palette),
         skill_selection: Image::parse_8bpp(&skill_selection, sizes::SKILL_SELECTION_WIDTH, sizes::SKILL_SELECTION_HEIGHT, game_palette),
+        speed_selection: Image::parse_8bpp(&speed_selection, sizes::SKILL_SELECTION_WIDTH, sizes::SKILL_SELECTION_HEIGHT, game_palette),
+        pause_selection: Image::parse_8bpp(&pause_selection, sizes::SKILL_SELECTION_WIDTH, sizes::SKILL_SELECTION_HEIGHT, game_palette),
+        nuke_selection: Image::parse_8bpp(&nuke_selection, sizes::SKILL_SELECTION_WIDTH, sizes::SKILL_SELECTION_HEIGHT, game_palette),
         game_font: GameFont::parse(&sections[6][0x1900..], game_palette),
         mouse_cursor: Image::parse_8bpp(&MOUSE_CURSOR, 14, 14, game_palette),
         mouse_cursor_hovering: Image::parse_8bpp(&MOUSE_CURSOR_HOVERING, 14, 14, game_palette),
