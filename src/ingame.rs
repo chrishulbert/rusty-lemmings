@@ -72,6 +72,12 @@ struct InGameBottomPanelId(Entity); // The id of the skill selection / map panel
 #[derive(Resource)]
 struct InGameSkillSelectionIndicatorId(Entity); // The id of the skill selection indicator.
 #[derive(Resource)]
+struct InGameSpeedSelectionIndicatorId(Entity); // The id of the speed selection indicator.
+#[derive(Resource)]
+struct InGamePauseSelectionIndicatorId(Entity); // The id of the pause selection indicator.
+#[derive(Resource)]
+struct InGameNukeSelectionIndicatorId(Entity); // The id of the nuke selection indicator.
+#[derive(Resource)]
 struct InGameSkillSelection(Option<SkillPanelSelection>);
 #[derive(Resource)]
 struct InGameIsPaused(bool);
@@ -82,6 +88,12 @@ struct InGameIsPaused(bool);
 struct InGameBottomPanelComponent;
 #[derive(Component)]
 struct InGameSkillSelectionIndicatorComponent;
+#[derive(Component)]
+struct InGameSpeedSelectionIndicatorComponent;
+#[derive(Component)]
+struct InGamePauseSelectionIndicatorComponent;
+#[derive(Component)]
+struct InGameNukeSelectionIndicatorComponent;
 
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
@@ -93,12 +105,16 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameSlices(None));
         app.insert_resource(InGameBottomPanelId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelectionIndicatorId(Entity::from_raw(0)));
+        app.insert_resource(InGameSpeedSelectionIndicatorId(Entity::from_raw(0)));
+        app.insert_resource(InGamePauseSelectionIndicatorId(Entity::from_raw(0)));
+        app.insert_resource(InGameNukeSelectionIndicatorId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelection(None));
         app.insert_resource(InGameIsPaused(false));
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
 				.with_system(enter)
+				.with_system(enter_and_spawn_bottom_skill_panel)
 		);
 		app.add_system_set(
 			SystemSet::on_update(GameState::InGame)
@@ -376,7 +392,11 @@ fn mouse_click_system(
     bottom_panel_id: Res<InGameBottomPanelId>,
     bottom_panel_query: Query<&Transform, With<InGameBottomPanelComponent>>,
     skill_selection_indicator_id: Res<InGameSkillSelectionIndicatorId>,
+    speed_selection_indicator_id: Res<InGameSpeedSelectionIndicatorId>,
+    pause_selection_indicator_id: Res<InGamePauseSelectionIndicatorId>,
+    nuke_selection_indicator_id: Res<InGameNukeSelectionIndicatorId>,
     mut skill_selection_indicator_query: Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
+    mut pause_selection_indicator_query: Query<&mut Transform, (With<InGamePauseSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>)>,
     mut in_game_skill_selection: ResMut<InGameSkillSelection>,
     mut is_paused: ResMut<InGameIsPaused>
 ) {
@@ -397,10 +417,16 @@ fn mouse_click_system(
                     match selection {
                         SkillPanelSelection::Pause => {
                             is_paused.0 ^= true; // No selection indicator because you can be both paused and have a skill chosen.
-                            // TODO some indicator! Maybe a different colour?
-                            // green for +-
-                            // blue for pause
-                            // red for nuke
+                            if let Ok(mut pause_indicator) = pause_selection_indicator_query.get_mut(pause_selection_indicator_id.0) {
+                                if is_paused.0 {
+                                    pause_indicator.translation = Vec3::new(
+                                        (-7.5 + sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE,
+                                        0.,
+                                        11.);
+                                } else {
+                                    pause_indicator.translation = Vec3::new(-99999., 0., 11.);
+                                }    
+                            }
                         },
                         _ => { // Normal skill.
                             in_game_skill_selection.0 = Some(selection);
@@ -420,10 +446,10 @@ fn mouse_click_system(
 }
 
 fn enter(
-	mut commands: Commands,
-	game_textures: Res<GameTextures>,
     level_selection: Res<LevelSelectionResource>,
 	game: Res<Game>,
+	windows: Res<Windows>,
+	mut commands: Commands,
     mut timer: ResMut<GameTimer>,
     mut start_countdown: ResMut<InGameStartCountdown>,
     mut drop_countdown: ResMut<InGameDropCountdown>,
@@ -431,9 +457,6 @@ fn enter(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut lemmings_container_id: ResMut<InGameLemmingsContainerId>,
     mut slices_resource: ResMut<InGameSlices>,
-	windows: Res<Windows>,
-    mut bottom_panel_id: ResMut<InGameBottomPanelId>,
-    mut skill_selection_indicator_id: ResMut<InGameSkillSelectionIndicatorId>,
 ) {
 	let Some(window) = windows.iter().next() else { return };
     let Some(level) = game.level_named(&level_selection.level_name) else { return };
@@ -546,7 +569,20 @@ fn enter(
 
     // Keep the slices around.
     slices_resource.0 = Some(slices);
+}
 
+fn enter_and_spawn_bottom_skill_panel(
+    mut commands: Commands,
+    game_textures: Res<GameTextures>,
+    windows: Res<Windows>,
+    mut bottom_panel_id: ResMut<InGameBottomPanelId>,
+    mut skill_selection_indicator_id: ResMut<InGameSkillSelectionIndicatorId>,
+    mut speed_selection_indicator_id: ResMut<InGameSpeedSelectionIndicatorId>,
+    mut pause_selection_indicator_id: ResMut<InGamePauseSelectionIndicatorId>,
+    mut nuke_selection_indicator_id: ResMut<InGameNukeSelectionIndicatorId>,
+) {
+    let Some(window) = windows.iter().next() else { return };
+    
     // Skill panel.
     bottom_panel_id.0 = commands
         .spawn(SpriteBundle{
@@ -569,6 +605,39 @@ fn enter(
                 },
                 ..default()
             }).insert(InGameSkillSelectionIndicatorComponent)
+            .id();
+
+            speed_selection_indicator_id.0 = parent.spawn(SpriteBundle{
+                texture: game_textures.speed_selection.clone(),
+                sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+                transform: Transform{
+                    translation: Vec3::new(-99999. * POINT_SIZE / TEXTURE_SCALE, 0., 11.),
+                    ..default()
+                },
+                ..default()
+            }).insert(InGameSpeedSelectionIndicatorComponent)
+            .id();
+
+            pause_selection_indicator_id.0 = parent.spawn(SpriteBundle{
+                texture: game_textures.pause_selection.clone(),
+                sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+                transform: Transform{
+                    translation: Vec3::new(-99999. * POINT_SIZE / TEXTURE_SCALE, 0., 11.),
+                    ..default()
+                },
+                ..default()
+            }).insert(InGamePauseSelectionIndicatorComponent)
+            .id();
+
+            nuke_selection_indicator_id.0 = parent.spawn(SpriteBundle{
+                texture: game_textures.nuke_selection.clone(),
+                sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+                transform: Transform{
+                    translation: Vec3::new(-99999. * POINT_SIZE / TEXTURE_SCALE, 0., 11.),
+                    ..default()
+                },
+                ..default()
+            }).insert(InGameNukeSelectionIndicatorComponent)
             .id();
         })
         .insert(InGameComponent)
