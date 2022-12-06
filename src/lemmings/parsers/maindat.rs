@@ -381,12 +381,12 @@ const SKILL_SELECTION_PX: usize = sizes::SKILL_SELECTION_WIDTH * sizes::SKILL_SE
 fn skill_selection_indicator(colour: u8) -> [u8; SKILL_SELECTION_PX] {
     let mut img: [u8; SKILL_SELECTION_PX] = [0; SKILL_SELECTION_PX];
     for x in 0..sizes::SKILL_SELECTION_WIDTH {
-        img[x] = 3;
-        img[sizes::SKILL_SELECTION_WIDTH * (sizes::SKILL_SELECTION_HEIGHT - 1) + x] = 3;
+        img[x] = colour;
+        img[sizes::SKILL_SELECTION_WIDTH * (sizes::SKILL_SELECTION_HEIGHT - 1) + x] = colour;
     }
     for y in 0..sizes::SKILL_SELECTION_HEIGHT {
-        img[y * sizes::SKILL_SELECTION_WIDTH] = 3;
-        img[y * sizes::SKILL_SELECTION_WIDTH + (sizes::SKILL_SELECTION_WIDTH - 1)] = 3;
+        img[y * sizes::SKILL_SELECTION_WIDTH] = colour;
+        img[y * sizes::SKILL_SELECTION_WIDTH + (sizes::SKILL_SELECTION_WIDTH - 1)] = colour;
     }
     img
 }
