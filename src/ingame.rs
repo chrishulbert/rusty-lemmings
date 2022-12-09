@@ -1,5 +1,6 @@
 use std::time::Duration;
 use std::collections::HashMap;
+use bevy::input::mouse;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
@@ -18,10 +19,10 @@ const LEMMING_WIDTH_FOR_BASE: f32 = 3.; // How many points under it to check to 
 
 pub struct InGamePlugin;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum SkillPanelSelection {
-    Minus = 0, // Momentary.
-    Plus = 1, // Momentary.
+    SpeedMinus = 0, // Momentary.
+    SpeedPlus = 1, // Momentary.
     Climb = 2,
     Umbrella = 3,
     Explode = 4,
@@ -37,8 +38,8 @@ enum SkillPanelSelection {
 impl SkillPanelSelection {
     fn from_index(i: isize) -> Option<SkillPanelSelection> {
         match i {
-            0 => Some(SkillPanelSelection::Minus),
-            1 => Some(SkillPanelSelection::Plus),
+            0 => Some(SkillPanelSelection::SpeedMinus),
+            1 => Some(SkillPanelSelection::SpeedPlus),
             2 => Some(SkillPanelSelection::Climb),
             3 => Some(SkillPanelSelection::Umbrella),
             4 => Some(SkillPanelSelection::Explode),
@@ -397,6 +398,8 @@ fn mouse_click_system(
     nuke_selection_indicator_id: Res<InGameNukeSelectionIndicatorId>,
     mut skill_selection_indicator_query: Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
     mut pause_selection_indicator_query: Query<&mut Transform, (With<InGamePauseSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>)>,
+    mut speed_selection_indicator_query: Query<&mut Transform, (With<InGameSpeedSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>, Without<InGamePauseSelectionIndicatorComponent>)>,
+    mut nuke_selection_indicator_query: Query<&mut Transform, (With<InGameNukeSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>, Without<InGamePauseSelectionIndicatorComponent>, Without<InGameSpeedSelectionIndicatorComponent>)>,
     mut in_game_skill_selection: ResMut<InGameSkillSelection>,
     mut is_paused: ResMut<InGameIsPaused>
 ) {
@@ -414,13 +417,25 @@ fn mouse_click_system(
             if bottom_panel_click_x_position_pt >= 0. {
                 let button_index = bottom_panel_click_x_position_pt as isize / sizes::SKILL_PANEL_BUTTON_WIDTH as isize;
                 if let Some(selection) = SkillPanelSelection::from_index(button_index) {
+                    let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 7.5;
                     match selection {
+                        SkillPanelSelection::SpeedMinus | SkillPanelSelection::SpeedPlus => {
+                            // TODO have an actual speed resource.
+                            let delta: isize = if selection == SkillPanelSelection::SpeedMinus { -1 } else { 1 };
+                            let index: f32 = if selection == SkillPanelSelection::SpeedMinus { 0. } else { 1. };
+                            if let Ok(mut speed_indicator) = speed_selection_indicator_query.get_mut(speed_selection_indicator_id.0) {
+                                speed_indicator.translation = Vec3::new(
+                                    (leftmost_skill + index * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE,
+                                    0.,
+                                    11.);
+                            }
+                        },
                         SkillPanelSelection::Pause => {
                             is_paused.0 ^= true; // No selection indicator because you can be both paused and have a skill chosen.
                             if let Ok(mut pause_indicator) = pause_selection_indicator_query.get_mut(pause_selection_indicator_id.0) {
                                 if is_paused.0 {
                                     pause_indicator.translation = Vec3::new(
-                                        (-7.5 + sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE,
+                                        (leftmost_skill + 10. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE,
                                         0.,
                                         11.);
                                 } else {
@@ -428,10 +443,17 @@ fn mouse_click_system(
                                 }    
                             }
                         },
+                        SkillPanelSelection::Nuke => {
+                            if let Ok(mut nuke_indicator) = nuke_selection_indicator_query.get_mut(nuke_selection_indicator_id.0) {
+                                nuke_indicator.translation = Vec3::new(
+                                    (leftmost_skill + 11. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE,
+                                    0.,
+                                    11.);
+                            }
+                        },
                         _ => { // Normal skill.
                             in_game_skill_selection.0 = Some(selection);
                             if let Ok(mut skill_selection_indicator) = skill_selection_indicator_query.get_mut(skill_selection_indicator_id.0) {
-                                let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 7.5;
                                 skill_selection_indicator.translation = Vec3::new(
                                     (leftmost_skill + button_index as f32 * sizes::SKILL_PANEL_BUTTON_WIDTH as f32) * POINT_SIZE / TEXTURE_SCALE, 
                                     0.,
@@ -441,6 +463,16 @@ fn mouse_click_system(
                     }
                 }
             }
+        }
+    }
+
+    // Release the momentaries if any.
+    if mouse_button_input.just_released(MouseButton::Left) {
+        if let Ok(mut speed_indicator) = speed_selection_indicator_query.get_mut(speed_selection_indicator_id.0) {
+            speed_indicator.translation = Vec3::new(99999., 0., 0.);
+        }
+        if let Ok(mut nuke_indicator) = nuke_selection_indicator_query.get_mut(nuke_selection_indicator_id.0) {
+            nuke_indicator.translation = Vec3::new(99999., 0., 0.);
         }
     }
 }
