@@ -1,6 +1,5 @@
 use std::time::Duration;
 use std::collections::HashMap;
-use bevy::input::mouse;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::render::render_resource::Extent3d;
@@ -387,7 +386,6 @@ fn scroll(
 }
 
 fn mouse_click_system(
-    mut commands: Commands,
     windows: Res<Windows>,
     mouse_button_input: Res<Input<MouseButton>>,
     bottom_panel_id: Res<InGameBottomPanelId>,
@@ -421,7 +419,7 @@ fn mouse_click_system(
                     match selection {
                         SkillPanelSelection::SpeedMinus | SkillPanelSelection::SpeedPlus => {
                             // TODO have an actual speed resource.
-                            let delta: isize = if selection == SkillPanelSelection::SpeedMinus { -1 } else { 1 };
+                            let _delta: isize = if selection == SkillPanelSelection::SpeedMinus { -1 } else { 1 };
                             let index: f32 = if selection == SkillPanelSelection::SpeedMinus { 0. } else { 1. };
                             if let Ok(mut speed_indicator) = speed_selection_indicator_query.get_mut(speed_selection_indicator_id.0) {
                                 speed_indicator.translation = Vec3::new(
@@ -693,9 +691,10 @@ fn update_lemmings(
     if !timer.0.just_finished() { return }
 
     for (mut t, mut tas, mut ta, mut l) in query.iter_mut() {
-        let mut t: Mut<Transform> = t;
-        let mut tas: Mut<TextureAtlasSprite> = tas;
-        let mut l: Mut<LemmingComponent> = l;
+        // let mut t: Mut<Transform> = t; // Uncomment these for IDE suggestions, but recomment them to remove compile warnings.
+        // let mut tas: Mut<TextureAtlasSprite> = tas;
+        // let mut l: Mut<LemmingComponent> = l;
+        
         let (game_x, game_y) = game_xy_from_translation(&t.translation);
         let bottom_y = game_y + LEMMING_NOMINAL_HEIGHT_HALF;
         let mut texture_frame_count: Option<usize> = None; // Set if you want it to animate.

@@ -38,6 +38,8 @@ fn load_lemmings_textures_startup(
         bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb);
     let white = images.add(white_image);
 
+    let skill_number_digits = SkillNumberDigits::make_images(&game.main.skill_number_digits, &mut images);
+
     // For inspecting the images conveniently:
     // {
     //     let data = crate::lemmings::png::png_data(game.main.main_menu.exit_to_dos.width as u32, game.main.main_menu.exit_to_dos.height as u32, &game.main.main_menu.exit_to_dos.bitmap);
@@ -144,12 +146,50 @@ fn load_lemmings_textures_startup(
         speed_selection: make_image(&game.main.speed_selection, &mut images, true),
         pause_selection: make_image(&game.main.pause_selection, &mut images, true),
         nuke_selection: make_image(&game.main.nuke_selection, &mut images, true),
+        skill_number_digits, 
         
         white,
         mouse_cursor: make_image(&game.main.mouse_cursor, &mut images, true),
         mouse_cursor_hovering: make_image(&game.main.mouse_cursor_hovering, &mut images, true),
 	};
 	commands.insert_resource(game_textures);
+}
+
+pub struct SkillNumberDigits {
+    pub left: [Handle<Image>; 10],
+    pub right: [Handle<Image>; 10],
+}
+
+impl SkillNumberDigits {
+    fn make_images(data: &crate::lemmings::models::SkillNumberDigits, images: &mut ResMut<Assets<Image>>) -> SkillNumberDigits {
+        // This ugly thing is because a map returns an array of references, not actual images.
+        SkillNumberDigits {
+            left: [
+                make_image(&data.left[0], images, true),
+                make_image(&data.left[1], images, true),
+                make_image(&data.left[2], images, true),
+                make_image(&data.left[3], images, true),
+                make_image(&data.left[4], images, true),
+                make_image(&data.left[5], images, true),
+                make_image(&data.left[6], images, true),
+                make_image(&data.left[7], images, true),
+                make_image(&data.left[8], images, true),
+                make_image(&data.left[9], images, true),
+            ],
+            right: [
+                make_image(&data.right[0], images, true),
+                make_image(&data.right[1], images, true),
+                make_image(&data.right[2], images, true),
+                make_image(&data.right[3], images, true),
+                make_image(&data.right[4], images, true),
+                make_image(&data.right[5], images, true),
+                make_image(&data.right[6], images, true),
+                make_image(&data.right[7], images, true),
+                make_image(&data.right[8], images, true),
+                make_image(&data.right[9], images, true),
+            ]
+        }
+    }
 }
 
 #[derive(Resource)]
@@ -253,6 +293,7 @@ pub struct GameTextures {
     pub speed_selection: Handle<Image>,
     pub pause_selection: Handle<Image>,
     pub nuke_selection: Handle<Image>,
+    pub skill_number_digits: SkillNumberDigits,
 
     // Other:
     pub white: Handle<Image>,
