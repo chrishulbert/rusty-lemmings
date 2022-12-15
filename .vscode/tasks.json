@@ -6,6 +6,9 @@
         {
             "type": "cargo",
             "command": "run",
+            "presentation": {
+                "clear": true
+            },
             "problemMatcher": [
                 "$rustc"
             ],
