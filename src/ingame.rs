@@ -99,7 +99,7 @@ impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
         // Instead of timers per entity, we use a global timer so that everyone moves in unison.
         app.insert_resource(GameTimer(Timer::from_seconds(FRAME_DURATION, TimerMode::Repeating)));
-        app.insert_resource(InGameStartCountdown(FPS as i32));        
+        app.insert_resource(InGameStartCountdown(FPS as i32));
         app.insert_resource(InGameDropCountdown(-1));
         app.insert_resource(InGameLemmingsContainerId(Entity::from_raw(0)));
         app.insert_resource(InGameSlices(None));
@@ -669,10 +669,45 @@ fn enter_and_spawn_bottom_skill_panel(
                 ..default()
             }).insert(InGameNukeSelectionIndicatorComponent)
             .id();
+
+            // Make a container for all the digits.
+            parent.spawn(SpatialBundle{
+                ..default()
+            }).with_children(|parent| {
+                let point = POINT_SIZE / TEXTURE_SCALE; // Makes it simpler below.
+                let y = 18.5 * point;
+                let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 8.;
+                let mut ids: Vec<LeftRightEntityPair> = Vec::new();
+                for button_index in 0..10 {
+                    let x = (leftmost_skill + (button_index * sizes::SKILL_PANEL_BUTTON_WIDTH) as f32) * point;
+                    let left = parent.spawn(SpriteBundle{
+                        texture: game_textures.skill_number_digits.left[1].clone(),
+                        transform: Transform{
+                            translation: Vec3::new(x, y, 12.),
+                            ..default()
+                        },
+                        ..default()
+                    }).id();
+                    let right = parent.spawn(SpriteBundle{
+                        texture: game_textures.skill_number_digits.right[2].clone(),
+                        transform: Transform{
+                            translation: Vec3::new(x, y, 12.),
+                            ..default()
+                        },
+                        ..default()
+                    }).id();
+                    ids.push(LeftRightEntityPair { left: left, right: right });
+                }
+            });
         })
         .insert(InGameComponent)
         .insert(InGameBottomPanelComponent)
         .id();
+}
+
+struct LeftRightEntityPair {
+    left: Entity,
+    right: Entity,
 }
 
 fn update_lemmings(
