@@ -415,8 +415,6 @@ impl Games {
     }
 }
 
-/////////////////////////////////////////////////////////
-/// For iterating through all the assets for pre-scaling. 
 impl Game {
     pub fn level_named<'a>(&'a self, name: &str) -> Option<&'a Level> {
         for (_, l) in &self.levels {

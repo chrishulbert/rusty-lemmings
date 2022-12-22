@@ -190,6 +190,23 @@ impl SkillNumberDigits {
             ]
         }
     }
+
+    /// Safely returns a cloned digit handle, even if index is out of 0 to 9.
+    pub fn image(&self, is_left: bool, index: isize) -> Handle<Image> {
+        if is_left {
+            if 0 <= index && index <= 9 {
+                return self.left[index as usize].clone()
+            } else {
+                return self.left[0].clone()
+            }
+        } else {
+            if 0 <= index && index <= 9 {
+                return self.right[index as usize].clone()
+            } else {
+                return self.right[0].clone()
+            }
+        }
+    }
 }
 
 #[derive(Resource)]
