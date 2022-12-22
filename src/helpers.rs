@@ -124,8 +124,8 @@ pub fn make_atlas_from_animation(
     let (cols, rows) = cols_rows_for_frames(animation.frames.len());
     let scaled_width = animation.width * SCALE;
     let scaled_height = animation.height * SCALE;
-    let atlas_width = (scaled_width + 1) * cols - 1; // 1px gap between each.
-    let atlas_height = (scaled_height + 1) * rows - 1;
+    let atlas_width = (scaled_width + 2) * cols - 2; // 2px gap between each (1px still leaves artifacts).
+    let atlas_height = (scaled_height + 2) * rows - 2;
     let atlas_pixels = atlas_width * atlas_height;
     let mut atlas = Vec::<u32>::with_capacity(atlas_pixels);
     atlas.resize(atlas_pixels, 0);
@@ -134,8 +134,8 @@ pub fn make_atlas_from_animation(
     let mut sprite_rects = Vec::<Rect>::with_capacity(animation.frames.len());
     for small_frame in &animation.frames {
         let scaled_frame = multi_scale(small_frame, animation.width, animation.height, should_add_then_remove_margin);
-        let start_atlas_x = col * (scaled_width + 1);
-        let mut atlas_y = row * (scaled_height + 1);
+        let start_atlas_x = col * (scaled_width + 2);
+        let mut atlas_y = row * (scaled_height + 2);
 
         sprite_rects.push(Rect { 
             min: Vec2 { x: start_atlas_x as f32, y: atlas_y as f32 },
