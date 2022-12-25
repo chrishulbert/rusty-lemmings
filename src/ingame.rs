@@ -18,7 +18,10 @@ const LEMMING_WIDTH_FOR_BASE: f32 = 3.; // How many points under it to check to 
 
 pub struct InGamePlugin;
 
-#[derive(Debug, PartialEq)]
+/// This does a sort of double-duty as both the skill panel buttons, and as 'skill'.
+/// I did debate the correctness of using this for skills when it contains the +-/pause/nuke buttons.
+/// But if i made a separate enum for skills, that'd be more correct, but would involve doubling up and mapping.
+#[derive(Eq, Hash, Debug, PartialEq)]
 enum SkillPanelSelection {
     SpeedMinus = 0, // Momentary.
     SpeedPlus = 1, // Momentary.
@@ -82,6 +85,8 @@ struct InGameNukeSelectionIndicatorId(Entity); // The id of the nuke selection i
 #[derive(Resource)]
 struct InGameSkillSelection(Option<SkillPanelSelection>);
 #[derive(Resource)]
+struct InGameSkillCounts(HashMap<SkillPanelSelection, isize>);
+#[derive(Resource)]
 struct InGameReleaseRate(isize); // Current release rate 0-99.
 #[derive(Resource)]
 struct InGameIsPaused(bool);
@@ -116,6 +121,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGamePauseSelectionIndicatorId(Entity::from_raw(0)));
         app.insert_resource(InGameNukeSelectionIndicatorId(Entity::from_raw(0)));
         app.insert_resource(InGameSkillSelection(None));
+        app.insert_resource(InGameSkillCounts(HashMap::new()));
         app.insert_resource(InGameReleaseRate(50));
         app.insert_resource(InGameIsPaused(false));
         app.add_event::<UpdatePanelDigitsEvent>();
@@ -495,6 +501,7 @@ fn mouse_click_system(
         if let Ok(mut nuke_indicator) = nuke_selection_indicator_query.get_mut(nuke_selection_indicator_id.0) {
             nuke_indicator.translation = Vec3::new(99999., 0., 0.);
         }
+        // TODO if they clicked a skill that has 0 available, deselect it on mouseup.
     }
 }
 
@@ -511,6 +518,7 @@ fn enter(
     mut lemmings_container_id: ResMut<InGameLemmingsContainerId>,
     mut slices_resource: ResMut<InGameSlices>,
     mut release_rate: ResMut<InGameReleaseRate>,
+    mut skill_counts: ResMut<InGameSkillCounts>,
 ) {
 	let Some(window) = windows.iter().next() else { return };
     let Some(level) = game.level_named(&level_selection.level_name) else { return };
@@ -519,7 +527,16 @@ fn enter(
     start_countdown.0 = FPS as i32;
     drop_countdown.0 = -1; // Not dropping yet.
     timer.0.set_elapsed(Duration::ZERO);
-    
+
+    skill_counts.0.insert(SkillPanelSelection::Climb, level.globals.skills.climbers as isize);
+    skill_counts.0.insert(SkillPanelSelection::Umbrella, level.globals.skills.floaters as isize);
+    skill_counts.0.insert(SkillPanelSelection::Explode, level.globals.skills.bombers as isize);
+    skill_counts.0.insert(SkillPanelSelection::Block, level.globals.skills.blockers as isize);
+    skill_counts.0.insert(SkillPanelSelection::Build, level.globals.skills.builders as isize);
+    skill_counts.0.insert(SkillPanelSelection::Bash, level.globals.skills.bashers as isize);
+    skill_counts.0.insert(SkillPanelSelection::MineDiagonal, level.globals.skills.miners as isize);
+    skill_counts.0.insert(SkillPanelSelection::DigVertical, level.globals.skills.diggers as isize);
+
     // Scale and bevy-ify the ground's objects.
     let ground = &game.grounds[&(level.globals.normal_graphic_set as i32)];
     pub enum AnimationOrImageHandle {
@@ -629,41 +646,42 @@ fn enter(
 struct UpdatePanelDigitsEvent; // No params, update them all.
 fn update_panel_digits_system(
     mut events: EventReader<UpdatePanelDigitsEvent>,
+    level_selection: Res<LevelSelectionResource>,
+	game: Res<Game>,
     game_textures: Res<GameTextures>,
     panel_digits: Res<InGamePanelDigits>,
     release_rate: Res<InGameReleaseRate>,
+    skill_counts: Res<InGameSkillCounts>,
     mut digits_query: Query<&mut Handle<Image>, With<InGamePanelDigitComponent>>,
 ) {
     let Some(_ev) = events.iter().next() else { return }; // Quit early if no event.
+    let Some(level) = game.level_named(&level_selection.level_name) else { return };
     for (index, pair) in panel_digits.0.iter().enumerate() {
         let Some(button) = SkillPanelSelection::from_index(index as isize) else { continue };
         let value: isize = match button {
-            SkillPanelSelection::SpeedMinus => -1, // Do not update.
+            SkillPanelSelection::SpeedMinus => level.globals.release_rate as isize,
             SkillPanelSelection::SpeedPlus => release_rate.0 as isize,
-            SkillPanelSelection::Climb => 1,
-            SkillPanelSelection::Umbrella => 2,
-            SkillPanelSelection::Explode => 3,
-            SkillPanelSelection::Block => 4,
-            SkillPanelSelection::Build => 5,
-            SkillPanelSelection::Bash => 6,
-            SkillPanelSelection::MineDiagonal => 72,
-            SkillPanelSelection::DigVertical => 83,
-            SkillPanelSelection::Pause => 94,
-            SkillPanelSelection::Nuke => 68,
+            _ => *skill_counts.0.get(&button).unwrap_or(&0),
         };
-        if value < 0 { continue }
         if let Ok(mut handle) = digits_query.get_mut(pair.left) {
-            *handle = game_textures.skill_number_digits.image(true, value / 10);
+            let left_value = value / 10;
+            if left_value == 0 {
+                *handle = Handle::default(); // No leading zeros.
+            } else {
+                *handle = game_textures.skill_number_digits.image(true, left_value);
+            }
         }
         if let Ok(mut handle) = digits_query.get_mut(pair.right) {
-            *handle = game_textures.skill_number_digits.image(false, value % 10);
+            if value == 0 {
+                *handle = Handle::default(); // Show nothing at all if they're both 0.
+            } else {
+                *handle = game_textures.skill_number_digits.image(false, value % 10);
+            }
         }
     }
 }
 
 fn enter_and_spawn_bottom_skill_panel(
-    level_selection: Res<LevelSelectionResource>,
-	game: Res<Game>,
     mut commands: Commands,
     game_textures: Res<GameTextures>,
     windows: Res<Windows>,
@@ -673,9 +691,9 @@ fn enter_and_spawn_bottom_skill_panel(
     mut pause_selection_indicator_id: ResMut<InGamePauseSelectionIndicatorId>,
     mut nuke_selection_indicator_id: ResMut<InGameNukeSelectionIndicatorId>,
     mut panel_digits: ResMut<InGamePanelDigits>,
+    mut update_panel_digits_events: EventWriter<UpdatePanelDigitsEvent>,
 ) {
     let Some(window) = windows.iter().next() else { return };
-    let Some(level) = game.level_named(&level_selection.level_name) else { return };
 
     // Skill panel.
     bottom_panel_id.0 = commands
@@ -743,43 +761,15 @@ fn enter_and_spawn_bottom_skill_panel(
                 let leftmost_skill: f32 = -9. * sizes::SKILL_PANEL_BUTTON_WIDTH as f32 - 8.;
                 let mut ids: Vec<LeftRightEntityPair> = Vec::new();
                 for button_index in 0..10 {
-                    let Some(button) = SkillPanelSelection::from_index(button_index) else { continue };
-                    let value: isize = match button {
-                        SkillPanelSelection::SpeedMinus => level.globals.release_rate as isize,
-                        SkillPanelSelection::SpeedPlus => level.globals.release_rate as isize,
-                        SkillPanelSelection::Climb => 0,
-                        SkillPanelSelection::Umbrella => 0,
-                        SkillPanelSelection::Explode => 0,
-                        SkillPanelSelection::Block => 0,
-                        SkillPanelSelection::Build => 0,
-                        SkillPanelSelection::Bash => 0,
-                        SkillPanelSelection::MineDiagonal => 0,
-                        SkillPanelSelection::DigVertical => 0,
-                        SkillPanelSelection::Pause => 0,
-                        SkillPanelSelection::Nuke => 0,
-                    };
                     let x = (leftmost_skill + (button_index as f32 * sizes::SKILL_PANEL_BUTTON_WIDTH as f32)) * point;
-                    let left = parent.spawn(SpriteBundle{
-                        texture: game_textures.skill_number_digits.image(true, value / 10),
-                        transform: Transform{
-                            translation: Vec3::new(x, y, 12.),
-                            ..default()
-                        },
+                    let transform = Transform{
+                        translation: Vec3::new(x, y, 12.),
                         ..default()
-                    })
-                    .insert(InGamePanelDigitComponent)
-                    .id();
-                    let right = parent.spawn(SpriteBundle{
-                        texture: game_textures.skill_number_digits.image(false, value % 10),
-                        transform: Transform{
-                            translation: Vec3::new(x, y, 12.),
-                            ..default()
-                        },
-                        ..default()
-                    })
-                    .insert(InGamePanelDigitComponent)
-                    .id();
-                    ids.push(LeftRightEntityPair { left: left, right: right });
+                    }; 
+                    let bundle = SpriteBundle{transform, ..default()};
+                    let left = parent.spawn(bundle.clone()).insert(InGamePanelDigitComponent).id();
+                    let right = parent.spawn(bundle).insert(InGamePanelDigitComponent).id();
+                    ids.push(LeftRightEntityPair { left, right });
                 }
                 panel_digits.0 = ids;
             });
@@ -787,6 +777,9 @@ fn enter_and_spawn_bottom_skill_panel(
         .insert(InGameComponent)
         .insert(InGameBottomPanelComponent)
         .id();
+
+    // Set the digits.
+    update_panel_digits_events.send(UpdatePanelDigitsEvent);
 }
 
 struct LeftRightEntityPair {
