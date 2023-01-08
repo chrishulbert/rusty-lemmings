@@ -171,6 +171,22 @@ struct ObjectComponent {
 #[derive(Component)]
 struct LemmingComponent {
     is_facing_right: bool,
+    skill_in_use: Option<SkillPanelSelection>,
+    has_umbrella: bool,
+    can_climb: bool,
+    builder_bricks_remaining: i8,
+}
+
+impl Default for LemmingComponent {
+    fn default() -> LemmingComponent {
+        LemmingComponent {
+            is_facing_right: true,
+            skill_in_use: None,
+            has_umbrella: false,
+            can_climb: false,
+            builder_bricks_remaining: 0,
+        }
+    }
 }
 
 #[derive(Component)]
@@ -322,7 +338,7 @@ fn spawn_a_lemming(
                 ..default()
             },
             ..default()
-        }).insert(LemmingComponent{is_facing_right: true});
+        }).insert(LemmingComponent::default());
     });
 }
 
