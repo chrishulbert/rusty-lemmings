@@ -106,6 +106,9 @@ struct InGamePauseSelectionIndicatorComponent;
 #[derive(Component)]
 struct InGameNukeSelectionIndicatorComponent;
 
+// Events.
+struct LemmingUnderPointerEvent(Option<Entity>);
+
 impl Plugin for InGamePlugin {
 	fn build(&self, app: &mut App) {
         // Instead of timers per entity, we use a global timer so that everyone moves in unison.
@@ -125,6 +128,7 @@ impl Plugin for InGamePlugin {
         app.insert_resource(InGameReleaseRate(50));
         app.insert_resource(InGameIsPaused(false));
         app.add_event::<UpdatePanelDigitsEvent>();
+        app.add_event::<LemmingUnderPointerEvent>();
 
 		app.add_system_set(
 			SystemSet::on_enter(GameState::InGame)
@@ -400,9 +404,10 @@ fn determine_lemming_under_mouse_system(
     windows: Res<Windows>,
     map_query: Query<&Transform, &MapContainerComponent>,
     lemmings_query: Query<(Entity, &Transform), &LemmingComponent>,
+    mut event: EventWriter<LemmingUnderPointerEvent>,
 ) {
     let closest = determine_lemming_under_mouse(windows, map_query, lemmings_query);
-    println!("Found: {:?}", closest);
+    event.send(LemmingUnderPointerEvent(closest));
 }
 
 fn determine_lemming_under_mouse(
