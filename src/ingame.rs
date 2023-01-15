@@ -141,7 +141,7 @@ impl Plugin for InGamePlugin {
                 .label("updates")
                 .after("tick")
 				.with_system(scroll)
-                .with_system(determine_lemming_under_mouse)
+                .with_system(determine_lemming_under_mouse_system)
 				.with_system(mouse_click_system)                
                 .with_system(update_objects)
                 .with_system(do_countdown)
@@ -396,22 +396,31 @@ fn tick(
     timer.0.tick(time.delta());
 }
 
-fn determine_lemming_under_mouse(
+fn determine_lemming_under_mouse_system(
     windows: Res<Windows>,
     map_query: Query<&Transform, &MapContainerComponent>,
     lemmings_query: Query<(Entity, &Transform), &LemmingComponent>,
 ) {
-    let Some(window) = windows.iter().next() else { return };
-    let Some(position) = window.cursor_position() else {
-        // TODO set 'no lemming under mouse'.
-        return
-    };
+    let closest = determine_lemming_under_mouse(windows, map_query, lemmings_query);
+    println!("Found: {:?}", closest);
+}
+
+fn determine_lemming_under_mouse(
+    windows: Res<Windows>,
+    map_query: Query<&Transform, &MapContainerComponent>,
+    lemmings_query: Query<(Entity, &Transform), &LemmingComponent>,
+) -> Option<Entity> {
+    let Some(window) = windows.iter().next() else { return None };
+    let Some(position) = window.cursor_position() else { return None };
+    let Ok(map) = map_query.get_single() else { return None };
+
+    // Locate the mouse.
     let mouse_x = position.x - window.width() / 2.;
     let mouse_y = position.y - window.height() / 2.; // +=top, -=bottom.
-    let Ok(map) = map_query.get_single() else { return };
     let mouse_x_in_game = mouse_x - map.translation.x;
     let mouse_y_in_game = mouse_y - map.translation.y; // +=top, -=bot, 0=mid of game area.
 
+    // Find closest lemming.
     let min_delta = 10. * POINT_SIZE;
     let mut closest: Option<Entity> = None;
     let mut closest_delta: f32 = 99999.;
@@ -426,8 +435,7 @@ fn determine_lemming_under_mouse(
             }
         }
     }
-
-    println!("Found: {:?}, {}", closest, closest_delta);
+    closest
 }
 
 /// Scroll left and right if your mouse is at the edge.
