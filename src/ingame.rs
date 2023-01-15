@@ -11,6 +11,7 @@ use crate::helpers::{multi_scale, u32_to_rgba_u8};
 use crate::helpers::{make_image_from_bitmap, make_atlas_from_animation};
 use crate::{ORIGINAL_GAME_W, FRAME_DURATION};
 use crate::lemmings::sizes;
+use crate::mouse_cursor::{MouseCursorShouldBecomeSelectorEvent, update_mouse_cursor_style_system, reset_mouse_cursor_system};
 
 const DROP_POINTS_PER_FRAME: f32 = 2.;
 const LEMMING_NOMINAL_HEIGHT_HALF: i32 = 5; // Usual height for a lemming sprite in game points. Halved for use later.
@@ -157,11 +158,13 @@ impl Plugin for InGamePlugin {
                 .label("post_updates")
                 .after("updates")
 				.with_system(update_panel_digits_system)
+                .with_system(update_mouse_cursor_style_system)
                 // This is where you can rely on output of determine_lemming_under_mouse.
 		);
 		app.add_system_set(
 		    SystemSet::on_exit(GameState::InGame)
 		        .with_system(exit)
+                .with_system(reset_mouse_cursor_system)
 		);
 	}
 }
@@ -405,9 +408,11 @@ fn determine_lemming_under_mouse_system(
     map_query: Query<&Transform, &MapContainerComponent>,
     lemmings_query: Query<(Entity, &Transform), &LemmingComponent>,
     mut event: EventWriter<LemmingUnderPointerEvent>,
+    mut mouse_should_become_selector: EventWriter<MouseCursorShouldBecomeSelectorEvent>,
 ) {
     let closest = determine_lemming_under_mouse(windows, map_query, lemmings_query);
-    event.send(LemmingUnderPointerEvent(closest));
+    event.send(LemmingUnderPointerEvent(closest));    
+    mouse_should_become_selector.send(MouseCursorShouldBecomeSelectorEvent(closest.is_some()));
 }
 
 fn determine_lemming_under_mouse(

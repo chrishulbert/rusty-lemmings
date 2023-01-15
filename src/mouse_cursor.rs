@@ -11,11 +11,18 @@ impl Plugin for MouseCursorPlugin {
 	fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_mouse_cursor);
         app.add_system(mouse_motion_system);
+        app.insert_resource(MouseCursorIsSelectorSquare(false));
+        app.add_event::<MouseCursorShouldBecomeSelectorEvent>();
 	}
 }
 
 #[derive(Component)]
-struct MouseCursorComponent;
+pub struct MouseCursorComponent;
+
+#[derive(Resource)]
+pub struct MouseCursorIsSelectorSquare(bool);
+
+pub struct MouseCursorShouldBecomeSelectorEvent(pub bool);
 
 fn spawn_mouse_cursor(
     mut commands: Commands,
@@ -34,6 +41,37 @@ fn spawn_mouse_cursor(
     .insert(MouseCursorComponent); // TODO would it be more efficient to store the id instead?
 
     windows.primary_mut().set_cursor_visibility(false);
+}
+
+/// Add this to your game state after sending MouseCursorShouldBecomeSelectorEvent.
+pub fn update_mouse_cursor_style_system(
+    mut should_become_selector: EventReader<MouseCursorShouldBecomeSelectorEvent>,
+    mut is_selector_square: ResMut<MouseCursorIsSelectorSquare>, 
+    mut cursor_query: Query<&mut Handle<Image>, With<MouseCursorComponent>>,
+    game_textures: Res<GameTextures>,
+) {
+    let Some(should_be_selector) = should_become_selector.iter().next() else { return };
+    if should_be_selector.0 == is_selector_square.0 { return }; // To save time, don't change unless necessary.
+    for mut handle in cursor_query.iter_mut() {
+        if should_be_selector.0 {
+            *handle = game_textures.mouse_cursor_hovering.clone();
+        } else {
+            *handle = game_textures.mouse_cursor.clone();
+        }
+    }
+    is_selector_square.0 = should_be_selector.0;
+}
+
+// Call this when exiting your game state.
+pub fn reset_mouse_cursor_system(
+    mut is_selector_square: ResMut<MouseCursorIsSelectorSquare>, 
+    game_textures: Res<GameTextures>,
+    mut cursor_query: Query<&mut Handle<Image>, With<MouseCursorComponent>>,
+) {
+    for mut handle in cursor_query.iter_mut() {
+        *handle = game_textures.mouse_cursor.clone();
+    }
+    is_selector_square.0 = false;
 }
 
 fn mouse_motion_system(
