@@ -22,7 +22,7 @@ pub struct InGamePlugin;
 /// This does a sort of double-duty as both the skill panel buttons, and as 'skill'.
 /// I did debate the correctness of using this for skills when it contains the +-/pause/nuke buttons.
 /// But if i made a separate enum for skills, that'd be more correct, but would involve doubling up and mapping.
-#[derive(Eq, Hash, Debug, PartialEq)]
+#[derive(Eq, Hash, Debug, PartialEq, Clone, Copy)]
 enum SkillPanelSelection {
     SpeedMinus = 0, // Momentary.
     SpeedPlus = 1, // Momentary.
@@ -483,18 +483,32 @@ fn mouse_click_system(
     mouse_button_input: Res<Input<MouseButton>>,
     bottom_panel_id: Res<InGameBottomPanelId>,
     bottom_panel_query: Query<&Transform, With<InGameBottomPanelComponent>>,
-    skill_selection_indicator_id: Res<InGameSkillSelectionIndicatorId>,
-    speed_selection_indicator_id: Res<InGameSpeedSelectionIndicatorId>,
-    pause_selection_indicator_id: Res<InGamePauseSelectionIndicatorId>,
-    nuke_selection_indicator_id: Res<InGameNukeSelectionIndicatorId>,
-    mut skill_selection_indicator_query: Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
-    mut pause_selection_indicator_query: Query<&mut Transform, (With<InGamePauseSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>)>,
-    mut speed_selection_indicator_query: Query<&mut Transform, (With<InGameSpeedSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>, Without<InGamePauseSelectionIndicatorComponent>)>,
-    mut nuke_selection_indicator_query: Query<&mut Transform, (With<InGameNukeSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>, Without<InGamePauseSelectionIndicatorComponent>, Without<InGameSpeedSelectionIndicatorComponent>)>,
-    mut in_game_skill_selection: ResMut<InGameSkillSelection>,
+    (
+        skill_selection_indicator_id,
+        speed_selection_indicator_id,
+        pause_selection_indicator_id,
+        nuke_selection_indicator_id): (
+            Res<InGameSkillSelectionIndicatorId>,
+            Res<InGameSpeedSelectionIndicatorId>,
+            Res<InGamePauseSelectionIndicatorId>,
+            Res<InGameNukeSelectionIndicatorId>
+        ),
+    (
+        mut skill_selection_indicator_query,
+        mut pause_selection_indicator_query,
+        mut speed_selection_indicator_query,
+        mut nuke_selection_indicator_query): (
+            Query<&mut Transform, (With<InGameSkillSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>)>,
+            Query<&mut Transform, (With<InGamePauseSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>)>,
+            Query<&mut Transform, (With<InGameSpeedSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>, Without<InGamePauseSelectionIndicatorComponent>)>,
+            Query<&mut Transform, (With<InGameNukeSelectionIndicatorComponent>, Without<InGameBottomPanelComponent>, Without<InGameSkillSelectionIndicatorComponent>, Without<InGamePauseSelectionIndicatorComponent>, Without<InGameSpeedSelectionIndicatorComponent>)>
+        ),
+    (mut in_game_skill_selection, mut in_game_skill_counts): (ResMut<InGameSkillSelection>, ResMut<InGameSkillCounts>),
     mut is_paused: ResMut<InGameIsPaused>,
     mut release_rate: ResMut<InGameReleaseRate>,
     mut update_panel_digits_events: EventWriter<UpdatePanelDigitsEvent>,
+    mut lemming_under_pointer: EventReader<LemmingUnderPointerEvent>,
+    mut lemmings_query: Query<&mut LemmingComponent>,
 ) {
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let Some(window) = windows.iter().next() else { return };
@@ -560,11 +574,19 @@ fn mouse_click_system(
                     }
                 }
             }
+        } else { // Didn't click the bottom panel, clicked on the game.
+            let Some(event) = lemming_under_pointer.iter().next() else { return };
+            let Some(lemming_id) = event.0 else { return };
+            let Ok(mut lemming) = lemmings_query.get_mut(lemming_id) else { return };
+            let Some(selected_skill) = in_game_skill_selection.0 else { return };
+            if lemming.skill_in_use == Some(selected_skill) { return };
+            let Some(skill_count) = in_game_skill_counts.0.get_mut(&selected_skill) else { return };
+            if *skill_count <= 0 { return };
+            *skill_count -= 1;
+            update_panel_digits_events.send(UpdatePanelDigitsEvent);
+            lemming.skill_in_use = Some(selected_skill);
         }
-    }
-
-    // Release the momentaries if any.
-    if mouse_button_input.just_released(MouseButton::Left) {
+    } else if mouse_button_input.just_released(MouseButton::Left) { // Release the momentaries if any.
         if let Ok(mut speed_indicator) = speed_selection_indicator_query.get_mut(speed_selection_indicator_id.0) {
             speed_indicator.translation = Vec3::new(99999., 0., 0.);
         }
