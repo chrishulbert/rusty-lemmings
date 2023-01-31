@@ -143,20 +143,30 @@ impl Plugin for InGamePlugin {
 		);
 		app.add_system_set(
 			SystemSet::on_update(GameState::InGame)
-                .label("updates")
+                .label("early_updates")
                 .after("tick")
 				.with_system(scroll)
                 .with_system(determine_lemming_under_mouse_system)
+		);
+		app.add_system_set(
+			SystemSet::on_update(GameState::InGame)
+                .label("mid_updates")
+                .after("early_updates")
 				.with_system(mouse_click_system)                
-                .with_system(update_objects)
                 .with_system(do_countdown)
                 .with_system(drop_lemmings)
+		);
+		app.add_system_set(
+			SystemSet::on_update(GameState::InGame)
+                .label("late_updates")
+                .after("mid_updates")
+                .with_system(update_objects)
                 .with_system(update_lemmings)               
 		);
 		app.add_system_set(
 			SystemSet::on_update(GameState::InGame)
-                .label("post_updates")
-                .after("updates")
+                .label("later_updates")
+                .after("late_updates")
 				.with_system(update_panel_digits_system)
                 .with_system(update_mouse_cursor_style_system)
                 // This is where you can rely on output of determine_lemming_under_mouse.
