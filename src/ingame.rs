@@ -911,93 +911,108 @@ fn update_lemmings(
         
         let (game_x, game_y) = game_xy_from_translation(&t.translation);
         let bottom_y = game_y + LEMMING_NOMINAL_HEIGHT_HALF;
-        let mut texture_frame_count: Option<usize> = None; // Set if you want it to animate.
+        let mut texture_frame_count: Option<usize> = None; // Set if you want it to animate, don't set if you jump to 0 on new anim.
         // Check if there's any ground under this lemming.
         let is_ground_under = is_there_ground_at_xy(game_x, bottom_y, slices.0.as_ref());
-        if is_ground_under {
-            let facing_direction_x_delta: i32 = if l.is_facing_right { 1 } else { -1 };
-            let game_x_in_direction = game_x + facing_direction_x_delta;
-            // These keep track of 'is there ground where i'm walking'.
-            // TODO optimise away the fact that these all use the same x, thus same slice.
-            let is_ground_3down = is_there_ground_at_xy(game_x_in_direction, bottom_y + 3, slices.0.as_ref());
-            let is_ground_2down = is_there_ground_at_xy(game_x_in_direction, bottom_y + 2, slices.0.as_ref());
-            let is_ground_1down = is_there_ground_at_xy(game_x_in_direction, bottom_y + 1, slices.0.as_ref());
-            let is_ground_on_same_level = is_there_ground_at_xy(game_x_in_direction, bottom_y, slices.0.as_ref());
-            let is_ground_1up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 1, slices.0.as_ref());
-            let is_ground_2up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 2, slices.0.as_ref());
-            let is_ground_3up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 3, slices.0.as_ref()); // Jump.
-            let is_ground_4up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 4, slices.0.as_ref());
-            let is_ground_5up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 5, slices.0.as_ref());
-            let is_ground_6up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 6, slices.0.as_ref());
-            let is_ground_7up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 7, slices.0.as_ref()); // Blocked.
-            let is_ground_8up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 8, slices.0.as_ref());
-            let is_ground_9up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 9, slices.0.as_ref());
-            // Jumping is if you walk 3-6 pixels up.
-            let is_blocked = is_ground_7up || is_ground_8up || is_ground_9up;
-            if is_blocked { // Turn around.
-                l.is_facing_right ^= true; // Toggle.
-                *ta = if l.is_facing_right { game_textures.walking_right.clone() } else { game_textures.walking_left.clone() };
-                tas.index = 0;
-            } else { // Not blocked.
-                let should_jump = is_ground_3up || is_ground_4up || is_ground_5up || is_ground_6up;
-                if should_jump { // Take a jump up.
-                    let y_offset: f32;
-                    if is_ground_6up { y_offset = -6. }
-                    else if is_ground_5up { y_offset = -5. }
-                    else if is_ground_4up { y_offset = -4. }
-                    else { y_offset = -3. }
-                    t.translation.x = round_to_nearest_point(t.translation.x + facing_direction_x_delta as f32 * POINT_SIZE);
-                    t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
-                    *ta = if l.is_facing_right { game_textures.jumping_right.clone() } else { game_textures.jumping_left.clone() };
-                    tas.index = 0;
-                } else { // Just walk normally.
-                    let y_offset: f32;
-                    if is_ground_2up { y_offset = -2. }
-                    else if is_ground_1up { y_offset = -1. }
-                    else if is_ground_on_same_level { y_offset = 0. }
-                    else if is_ground_1down { y_offset = 1. }
-                    else if is_ground_2down { y_offset = 2. }
-                    else if is_ground_3down { y_offset = 3. }
-                    else { y_offset = 1. } // Walking into thin air. Make it drop a little to start with.
-                    t.translation.x = round_to_nearest_point(t.translation.x + facing_direction_x_delta as f32 * POINT_SIZE);
-                    t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
-                    if l.is_facing_right {
-                        if ta.id() != game_textures.walking_right.id() {
-                            *ta = game_textures.walking_right.clone();
-                            tas.index = 0;
-                        } else {
-                            texture_frame_count = Some(game_textures.walking_right_count);
-                        }
+        if let Some(skill) = l.skill_in_use {
+            match skill {
+                SkillPanelSelection::DigVertical => {
+                    if ta.id() != game_textures.digging.id() {
+                        *ta = game_textures.digging.clone();
+                        tas.index = 0;
                     } else {
-                        if ta.id() != game_textures.walking_left.id() {
-                            *ta = game_textures.walking_left.clone();
-                            tas.index = 0;
+                        texture_frame_count = Some(game_textures.digging_count);
+                    }
+                },
+                _ => todo!(),
+            }
+        } else {
+            // No skill being used, just walking.
+            if is_ground_under {
+                let facing_direction_x_delta: i32 = if l.is_facing_right { 1 } else { -1 };
+                let game_x_in_direction = game_x + facing_direction_x_delta;
+                // These keep track of 'is there ground where i'm walking'.
+                // TODO optimise away the fact that these all use the same x, thus same slice.
+                let is_ground_3down = is_there_ground_at_xy(game_x_in_direction, bottom_y + 3, slices.0.as_ref());
+                let is_ground_2down = is_there_ground_at_xy(game_x_in_direction, bottom_y + 2, slices.0.as_ref());
+                let is_ground_1down = is_there_ground_at_xy(game_x_in_direction, bottom_y + 1, slices.0.as_ref());
+                let is_ground_on_same_level = is_there_ground_at_xy(game_x_in_direction, bottom_y, slices.0.as_ref());
+                let is_ground_1up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 1, slices.0.as_ref());
+                let is_ground_2up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 2, slices.0.as_ref());
+                let is_ground_3up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 3, slices.0.as_ref()); // Jump.
+                let is_ground_4up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 4, slices.0.as_ref());
+                let is_ground_5up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 5, slices.0.as_ref());
+                let is_ground_6up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 6, slices.0.as_ref());
+                let is_ground_7up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 7, slices.0.as_ref()); // Blocked.
+                let is_ground_8up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 8, slices.0.as_ref());
+                let is_ground_9up = is_there_ground_at_xy(game_x_in_direction, bottom_y - 9, slices.0.as_ref());
+                // Jumping is if you walk 3-6 pixels up.
+                let is_blocked = is_ground_7up || is_ground_8up || is_ground_9up;
+                if is_blocked { // Turn around.
+                    l.is_facing_right ^= true; // Toggle.
+                    *ta = if l.is_facing_right { game_textures.walking_right.clone() } else { game_textures.walking_left.clone() };
+                    tas.index = 0;
+                } else { // Not blocked.
+                    let should_jump = is_ground_3up || is_ground_4up || is_ground_5up || is_ground_6up;
+                    if should_jump { // Take a jump up.
+                        let y_offset: f32;
+                        if is_ground_6up { y_offset = -6. }
+                        else if is_ground_5up { y_offset = -5. }
+                        else if is_ground_4up { y_offset = -4. }
+                        else { y_offset = -3. }
+                        t.translation.x = round_to_nearest_point(t.translation.x + facing_direction_x_delta as f32 * POINT_SIZE);
+                        t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
+                        *ta = if l.is_facing_right { game_textures.jumping_right.clone() } else { game_textures.jumping_left.clone() };
+                        tas.index = 0;
+                    } else { // Just walk normally.
+                        let y_offset: f32;
+                        if is_ground_2up { y_offset = -2. }
+                        else if is_ground_1up { y_offset = -1. }
+                        else if is_ground_on_same_level { y_offset = 0. }
+                        else if is_ground_1down { y_offset = 1. }
+                        else if is_ground_2down { y_offset = 2. }
+                        else if is_ground_3down { y_offset = 3. }
+                        else { y_offset = 1. } // Walking into thin air. Make it drop a little to start with.
+                        t.translation.x = round_to_nearest_point(t.translation.x + facing_direction_x_delta as f32 * POINT_SIZE);
+                        t.translation.y = round_to_nearest_point(t.translation.y - y_offset * POINT_SIZE);
+                        if l.is_facing_right {
+                            if ta.id() != game_textures.walking_right.id() {
+                                *ta = game_textures.walking_right.clone();
+                                tas.index = 0;
+                            } else {
+                                texture_frame_count = Some(game_textures.walking_right_count);
+                            }
                         } else {
-                            texture_frame_count = Some(game_textures.walking_left_count);
+                            if ta.id() != game_textures.walking_left.id() {
+                                *ta = game_textures.walking_left.clone();
+                                tas.index = 0;
+                            } else {
+                                texture_frame_count = Some(game_textures.walking_left_count);
+                            }
                         }
                     }
                 }
-            }
-            //t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round_to_nearest_point();
-            // Walk left or right. If there's no ground under it to the side, he can climb down or up no dramas without needing to fall.
-        } else {
-            // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
-            if l.is_facing_right {
-                if ta.id() != game_textures.falling_right.id() {
-                    *ta = game_textures.falling_right.clone();
-                    tas.index = 0;
-                } else {
-                    texture_frame_count = Some(game_textures.falling_right_count);
-                }
+                //t.translation.x = (t.translation.x + x_delta_from_direction_faced * POINT_SIZE).round_to_nearest_point();
+                // Walk left or right. If there's no ground under it to the side, he can climb down or up no dramas without needing to fall.
             } else {
-                if ta.id() != game_textures.falling_left.id() {
-                    *ta = game_textures.falling_left.clone();
-                    tas.index = 0;
+                // TODO if there was nothing under it, iterate DROP_POINTS_PER_FRAME times.
+                if l.is_facing_right {
+                    if ta.id() != game_textures.falling_right.id() {
+                        *ta = game_textures.falling_right.clone();
+                        tas.index = 0;
+                    } else {
+                        texture_frame_count = Some(game_textures.falling_right_count);
+                    }
                 } else {
-                    texture_frame_count = Some(game_textures.falling_left_count);
+                    if ta.id() != game_textures.falling_left.id() {
+                        *ta = game_textures.falling_left.clone();
+                        tas.index = 0;
+                    } else {
+                        texture_frame_count = Some(game_textures.falling_left_count);
+                    }
                 }
+                t.translation.y = round_to_nearest_point(t.translation.y - POINT_SIZE); // Round on changes so we don't accumulate some float error.
             }
-            t.translation.y = round_to_nearest_point(t.translation.y - POINT_SIZE); // Round on changes so we don't accumulate some float error.
         }
         if let Some(count) = texture_frame_count {
             tas.index = (tas.index + 1) % count;
