@@ -674,18 +674,18 @@ fn blend_pixel(scale: u8,
     }
 }
 
-fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: u32, src_height: u32) {
-    let y_first: u32 = 0;
+fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: i32, src_height: i32) {
+    let y_first: i32 = 0;
     let y_last = src_height;
     if y_first >= y_last { return }
     if src_width <= 0 { return }
 
-    let trg_width = src_width * scale as u32;
+    let trg_width = src_width * scale as i32;
 
     //"use" space at the end of the image as temporary buffer for "on the fly preprocessing": we even could use larger area of
     //"sizeof(uint32_t) * src_width * (y_last - y_first)" bytes without risk of accidental overwriting before accessing
     let buffer_size = src_width;
-    let pre_proc_buffer_ptr: *mut u8 = unsafe { (trg.offset((y_last * scale as u32 * trg_width) as isize) as *mut u8).offset(-(buffer_size as isize)) };
+    let pre_proc_buffer_ptr: *mut u8 = unsafe { (trg.offset((y_last * scale as i32 * trg_width) as isize) as *mut u8).offset(-(buffer_size as isize)) };
     unsafe { pre_proc_buffer_ptr.write_bytes(0, buffer_size as usize) };
     let pre_proc_buffer: &mut [u8] = unsafe { std::slice::from_raw_parts_mut(pre_proc_buffer_ptr, buffer_size as usize) };
     // let mut pre_proc_buffer: Vec<u8> = vec![0; buffer_size as usize];
@@ -746,9 +746,9 @@ fn do_scale(scale: u8, src: &[u32], trg: *mut u32, src_width: u32, src_height: u
     }
     //------------------------------------------------------------------------------------
     for y in y_first..y_last {
-        let mut out: *mut u32 = unsafe { trg.offset((scale as u32 * y * trg_width) as isize) };
+        let mut out: *mut u32 = unsafe { trg.offset((scale as i32 * y * trg_width) as isize) };
 
-        let s_m1 = &src[((src_width * cmp::max(y as i32 - 1, 0) as u32) as usize)..];
+        let s_m1 = &src[((src_width * cmp::max(y - 1, 0)) as usize)..];
         let s_0  = &src[((src_width * y) as usize)..]; //center line
         let s_p1 = &src[((src_width * cmp::min(y + 1, src_height - 1)) as usize)..];
         let s_p2 = &src[((src_width * cmp::min(y + 2, src_height - 1)) as usize)..];
@@ -842,7 +842,7 @@ pub fn scale(factor: u8, src: &[u32], src_width: u32, src_height: u32) -> Vec<u3
     }
 
     let mut output: Vec<u32> = vec![0; (src_width * src_height * factor as u32 * factor as u32) as usize];
-    do_scale(factor, src, output.as_mut_ptr(), src_width, src_height);
+    do_scale(factor, src, output.as_mut_ptr(), src_width as i32, src_height as i32);
     return output;
 }
 
