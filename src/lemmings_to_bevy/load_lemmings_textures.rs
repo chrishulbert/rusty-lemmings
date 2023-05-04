@@ -7,7 +7,7 @@ pub struct LoadLemmingsTexturesPlugin;
 
 impl Plugin for LoadLemmingsTexturesPlugin {
 	fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PreStartup, load_lemmings_textures_startup);
+        app.add_startup_system(load_lemmings_textures_startup.in_base_set(StartupSet::PreStartup));
 	}
 }
 

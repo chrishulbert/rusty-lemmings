@@ -17,27 +17,22 @@ pub struct LevelSelectionMenuPlugin;
 impl Plugin for LevelSelectionMenuPlugin {
 	fn build(&self, app: &mut App) {
 		app.insert_resource(MainMenuSkillSelection(1));
-		app.add_system_set(
-			SystemSet::on_enter(GameState::LevelSelectionMenu)
-				// .with_system(enter)
-				.with_system(spawn_background)
-				.with_system(spawn_levels)
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::LevelSelectionMenu)
-				// .with_system(update)
-				.with_system(button_highlight_system)
-				.with_system(button_system)
-		);
-		app.add_system_set(
-		    SystemSet::on_exit(GameState::LevelSelectionMenu)
-		        .with_system(exit),
-		);
+		app.add_systems((
+            spawn_background,
+            spawn_levels,
+        ).in_schedule(OnEnter(GameState::LevelSelectionMenu)));
+        app.add_systems((
+            button_highlight_system,
+            button_system,
+        ).in_set(OnUpdate(GameState::LevelSelectionMenu)));
+        app.add_systems((
+            exit,
+        ).in_schedule(OnExit(GameState::LevelSelectionMenu)));
 	}
 }
 
 fn button_highlight_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mouse_buttons: Res<Input<MouseButton>>,
     mut buttons: Query<(&Transform, &Children), With<LevelSelectionButton>>,
 	mut letters: Query<&mut TextureAtlasSprite>,
@@ -59,11 +54,11 @@ fn button_highlight_system(
 }
 
 fn button_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mouse_buttons: Res<Input<MouseButton>>,
     buttons: Query<(&Transform, &LevelSelectionButton)>,
     game_textures: Res<GameTextures>,
-    mut state: ResMut<State<GameState>>,
+    //mut state: ResMut<State<GameState>>,
     mut level_selection: ResMut<LevelSelectionResource>,
     mut commands: Commands,
 ) {
@@ -78,7 +73,7 @@ fn button_system(
                     let lsb: &LevelSelectionButton = button.1;
 					level_selection.level_name = lsb.level_name.to_string();
 					level_selection.skill = lsb.skill;
-					create_fadeout(&mut commands, GameState::LevelPreview, &game_textures, &mut state);
+					create_fadeout(&mut commands, GameState::LevelPreview, &game_textures); // , &mut state);
                 }
             }
         }    

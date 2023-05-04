@@ -5,9 +5,9 @@ authors = ["Chris Hulbert <chris.hulbert@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-# bevy = "0.9.1" # For release.
-bevy = { version = "0.9.1", features = ["dynamic"] } # For development, see: https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
-bevy-inspector-egui = "0.14.0"
+# bevy = "0.10.1" # For release.
+bevy = { version = "0.10.1", features = ["dynamic_linking"] } # For development, see: https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
+bevy-inspector-egui = "0.18.3"
 
 [workspace]
 resolver = "2" # Important! wgpu/Bevy needs this!

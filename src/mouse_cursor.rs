@@ -26,7 +26,7 @@ pub struct MouseCursorShouldBecomeSelectorEvent(pub bool);
 
 fn spawn_mouse_cursor(
     mut commands: Commands,
-    mut windows: ResMut<Windows>,
+    mut windows: Query<&mut Window>,
     game_textures: Res<GameTextures>,
 ) {
     commands.spawn(SpriteBundle {
@@ -40,7 +40,9 @@ fn spawn_mouse_cursor(
     })
     .insert(MouseCursorComponent); // TODO would it be more efficient to store the id instead?
 
-    windows.primary_mut().set_cursor_visibility(false);
+    // https://blog.rust-lang.org/2022/11/03/Rust-1.65.0.html#let-else-statements
+    let Some(mut window) = windows.iter_mut().next() else { return };
+    window.cursor.visible = false;
 }
 
 /// Add this to your game state after sending MouseCursorShouldBecomeSelectorEvent.
@@ -75,7 +77,7 @@ pub fn reset_mouse_cursor_system(
 }
 
 fn mouse_motion_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mut mouse_motion_events: EventReader<MouseMotion>,
     mut mouse_cursor_component_query: Query<&mut Transform, With<MouseCursorComponent>>,
 ) {

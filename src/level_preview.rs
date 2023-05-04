@@ -12,19 +12,16 @@ pub struct LevelPreviewPlugin;
 impl Plugin for LevelPreviewPlugin {
 	fn build(&self, app: &mut App) {
 		app.insert_resource(LevelSelectionResource::default());
-		app.add_system_set(
-			SystemSet::on_enter(GameState::LevelPreview)
-				.with_system(spawn_background)
-				.with_system(spawn_preview)
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::LevelPreview)
-				.with_system(button_system)
-		);
-		app.add_system_set(
-		    SystemSet::on_exit(GameState::LevelPreview)
-		        .with_system(exit),
-		);
+		app.add_systems((
+            spawn_background,
+            spawn_preview,
+        ).in_schedule(OnEnter(GameState::LevelPreview)));
+        app.add_systems((
+            button_system,
+        ).in_set(OnUpdate(GameState::LevelPreview)));
+        app.add_systems((
+            exit,
+        ).in_schedule(OnExit(GameState::LevelPreview)));
 	}
 }
 
@@ -56,12 +53,12 @@ fn exit(
 
 fn button_system(
 	mut commands: Commands,
-    mut state: ResMut<State<GameState>>,
+    // mut state: ResMut<State<GameState>>,
 	game_textures: Res<GameTextures>,
     mouse_buttons: Res<Input<MouseButton>>,
 ) {
     if mouse_buttons.just_released(MouseButton::Left) {
-		create_fadeout(&mut commands, GameState::InGame, &game_textures, &mut state);
+		create_fadeout(&mut commands, GameState::InGame, &game_textures); // , &mut state);
 	}
 }
 
@@ -83,7 +80,7 @@ fn spawn_preview(
 	level_selection: Res<LevelSelectionResource>,
 	game: Res<Game>,
 	mut images: ResMut<Assets<Image>>,
-	windows: Res<Windows>,
+	windows: Query<&Window>,
 ) {
 	if let Some(window) = windows.iter().next() {
 		if let Some(level) = game.level_named(&level_selection.level_name) {

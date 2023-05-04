@@ -131,51 +131,26 @@ impl Plugin for InGamePlugin {
         app.add_event::<UpdatePanelDigitsEvent>();
         app.add_event::<LemmingUnderPointerEvent>();
 
-		app.add_system_set(
-			SystemSet::on_enter(GameState::InGame)
-				.with_system(enter)
-				.with_system(enter_and_spawn_bottom_skill_panel)
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::InGame)
-                .label("tick")
-                .with_system(tick)
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::InGame)
-                .label("early_updates")
-                .after("tick")
-				.with_system(scroll)
-                .with_system(determine_lemming_under_mouse_system)
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::InGame)
-                .label("mid_updates")
-                .after("early_updates")
-				.with_system(mouse_click_system)                
-                .with_system(do_countdown)
-                .with_system(drop_lemmings)
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::InGame)
-                .label("late_updates")
-                .after("mid_updates")
-                .with_system(update_objects)
-                .with_system(update_lemmings)               
-		);
-		app.add_system_set(
-			SystemSet::on_update(GameState::InGame)
-                .label("later_updates")
-                .after("late_updates")
-				.with_system(update_panel_digits_system)
-                .with_system(update_mouse_cursor_style_system)
-                // This is where you can rely on output of determine_lemming_under_mouse.
-		);
-		app.add_system_set(
-		    SystemSet::on_exit(GameState::InGame)
-		        .with_system(exit)
-                .with_system(reset_mouse_cursor_system)
-		);
+		app.add_systems((
+            enter,
+            enter_and_spawn_bottom_skill_panel,
+        ).in_schedule(OnEnter(GameState::InGame)));
+
+        // Systems on the same line were in parallel before bevy 0.10 changed the syntax, it's poorly documented,
+        // so i'm not sure how to reproduce ordered groups of parallel systems. Perhaps, efficiency-wise, it
+        // doesn't matter.
+        app.add_systems((
+            tick,            
+            scroll, determine_lemming_under_mouse_system,
+            mouse_click_system, do_countdown, drop_lemmings,
+            update_objects, update_lemmings,
+            update_panel_digits_system, update_mouse_cursor_style_system,
+        ).chain().in_set(OnUpdate(GameState::InGame)));
+
+        app.add_systems((
+            exit,
+            reset_mouse_cursor_system,
+        ).in_schedule(OnExit(GameState::InGame)));
 	}
 }
 
@@ -414,7 +389,7 @@ fn tick(
 }
 
 fn determine_lemming_under_mouse_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     map_query: Query<&Transform, &MapContainerComponent>,
     lemmings_query: Query<(Entity, &Transform), &LemmingComponent>,
     mut event: EventWriter<LemmingUnderPointerEvent>,
@@ -426,7 +401,7 @@ fn determine_lemming_under_mouse_system(
 }
 
 fn determine_lemming_under_mouse(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     map_query: Query<&Transform, &MapContainerComponent>,
     lemmings_query: Query<(Entity, &Transform), &LemmingComponent>,
 ) -> Option<Entity> {
@@ -461,7 +436,7 @@ fn determine_lemming_under_mouse(
 /// Scroll left and right if your mouse is at the edge.
 fn scroll(
     time: Res<Time>,
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mut query: Query<(&mut Transform, &MapContainerComponent)>,
 ) {
     let Some(window) = windows.iter().next() else { return };
@@ -489,7 +464,7 @@ fn scroll(
 }
 
 fn mouse_click_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mouse_button_input: Res<Input<MouseButton>>,
     bottom_panel_id: Res<InGameBottomPanelId>,
     bottom_panel_query: Query<&Transform, With<InGameBottomPanelComponent>>,
@@ -610,7 +585,7 @@ fn mouse_click_system(
 fn enter(
     level_selection: Res<LevelSelectionResource>,
 	game: Res<Game>,
-	windows: Res<Windows>,
+	windows: Query<&Window>,
 	mut commands: Commands,
     mut timer: ResMut<GameTimer>,
     mut start_countdown: ResMut<InGameStartCountdown>,
@@ -786,7 +761,7 @@ fn update_panel_digits_system(
 fn enter_and_spawn_bottom_skill_panel(
     mut commands: Commands,
     game_textures: Res<GameTextures>,
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mut bottom_panel_id: ResMut<InGameBottomPanelId>,
     mut skill_selection_indicator_id: ResMut<InGameSkillSelectionIndicatorId>,
     mut speed_selection_indicator_id: ResMut<InGameSpeedSelectionIndicatorId>,

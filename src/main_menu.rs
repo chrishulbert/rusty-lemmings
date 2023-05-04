@@ -53,23 +53,19 @@ pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(GameState::MainMenu)
-                // .with_system(enter)
-                .with_system(spawn_menu_logo)
-                .with_system(spawn_menu_buttons)                
-                .with_system(spawn_background)
-        )
-        .add_system_set(
-            SystemSet::on_update(GameState::MainMenu)
-                .with_system(button_system)
-                .with_system(animate_blinking_sprites)
-                .with_system(button_highlight_system)
-        )
-        .add_system_set(
-            SystemSet::on_exit(GameState::MainMenu)
-                .with_system(exit)
-        );
+        app.add_systems((
+            spawn_menu_logo,
+            spawn_menu_buttons,
+            spawn_background,
+        ).in_schedule(OnEnter(GameState::MainMenu)));
+        app.add_systems((
+            button_system,
+            animate_blinking_sprites,
+            button_highlight_system,
+        ).in_set(OnUpdate(GameState::MainMenu)));
+        app.add_systems((
+            exit,
+        ).in_schedule(OnExit(GameState::MainMenu)));
 	}
 }
 
@@ -85,7 +81,7 @@ pub struct MainMenuButton{
 }
 
 fn button_highlight_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mouse_buttons: Res<Input<MouseButton>>,
     mut buttons: Query<(&mut Sprite, &Transform), With<MainMenuButton>>,
 ) {
@@ -104,11 +100,11 @@ fn button_highlight_system(
 }
 
 fn button_system(
-    windows: Res<Windows>,
+    windows: Query<&Window>,
     mouse_buttons: Res<Input<MouseButton>>,
     buttons: Query<(&Transform, &MainMenuButton)>,
     game_textures: Res<GameTextures>,
-    mut state: ResMut<State<GameState>>,
+    // mut state: ResMut<State<GameState>>,
     mut skill: ResMut<MainMenuSkillSelection>,
     mut commands: Commands,
     mut exit: EventWriter<AppExit>,
@@ -127,7 +123,7 @@ fn button_system(
                     match mmb.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
-                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures, &mut state);
+                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures); // , &mut state);
                         },
                         MainMenuButtonAction::Settings => {
                             println!("Settings TODO");

@@ -42,12 +42,13 @@ const ORIGINAL_GAME_H: usize = 200;
 const POINT_SIZE: f32 = (RES_H as f32) / (ORIGINAL_GAME_H as f32); // How many bevy transform values to get one 'point' (pixel) in the original game.
 const TEXTURE_SCALE: f32 = POINT_SIZE / (SCALE as f32);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(States, PartialEq, Eq, Debug, Clone, Hash, Default, Copy)]
 pub enum GameState {
+    // #[default]
     MainMenu,
     LevelSelectionMenu,
-    Fading,
     LevelPreview,
+    #[default]
     InGame,
 }
 
@@ -86,21 +87,22 @@ fn main() {
     // TODO think about how all the assets are centered, so that they can be blurry maybe?
     // Especially seems to affect even numbered ones? Or odd?
     App::new()
-        // .add_state(GameState::MainMenu)
-        .add_state(GameState::InGame)
+        .add_state::<GameState>()
         .insert_resource(game)
         .insert_resource(ClearColor(Color::BLACK))
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
-                title: "Rusty Lemmings".to_string(),
-                width: RES_W as f32,
-                height: RES_H as f32,
-                //resizable: false,
-                present_mode: PresentMode::Fifo, // Battery-friendly vsync.
-                ..Default::default()
-            },
-            ..default()
-        }))
+        .add_plugins(DefaultPlugins)
+        // TODO think about how to configure the window in bevy 0.10
+        // .add_plugins(DefaultPlugins.set(WindowPlugin {
+        //     window: WindowDescriptor {
+        //         title: "Rusty Lemmings".to_string(),
+        //         width: RES_W as f32,
+        //         height: RES_H as f32,
+        //         //resizable: false,
+        //         present_mode: PresentMode::Fifo, // Battery-friendly vsync.
+        //         ..Default::default()
+        //     },
+        //     ..default()
+        // }))
         .add_plugin(lemmings_to_bevy::load_lemmings_textures::LoadLemmingsTexturesPlugin)
         .add_plugin(fadeout::FadeoutPlugin)
         .add_plugin(main_menu::MainMenuPlugin)
@@ -110,6 +112,6 @@ fn main() {
         .add_plugin(mouse_cursor::MouseCursorPlugin)
         .add_startup_system(startup)
         .add_system(animate_sprite)
-        .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
+        .add_plugin(bevy_inspector_egui::quick::WorldInspectorPlugin::new())
         .run();
 }
