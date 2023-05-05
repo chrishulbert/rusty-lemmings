@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::fadeout::create_fadeout;
+use crate::fadeout::*;
 use crate::{GameTextures, GameState, POINT_SIZE};
 use crate::menu_common::{spawn_menu_background, text_size, spawn_text};
 use crate::lemmings::levels_per_game_and_skill::names_per_game_and_skill;
@@ -22,8 +22,8 @@ impl Plugin for LevelSelectionMenuPlugin {
             spawn_levels,
         ).in_schedule(OnEnter(GameState::LevelSelectionMenu)));
         app.add_systems((
-            button_highlight_system,
-            button_system,
+            button_highlight_system.run_if(screen_fade_is_not_transitioning),
+            button_system.run_if(screen_fade_is_not_transitioning),
         ).in_set(OnUpdate(GameState::LevelSelectionMenu)));
         app.add_systems((
             exit,
@@ -58,7 +58,7 @@ fn button_system(
     mouse_buttons: Res<Input<MouseButton>>,
     buttons: Query<(&Transform, &LevelSelectionButton)>,
     game_textures: Res<GameTextures>,
-    //mut state: ResMut<State<GameState>>,
+    is_transitioning: ResMut<ScreenFadeIsTransitioning>,
     mut level_selection: ResMut<LevelSelectionResource>,
     mut commands: Commands,
 ) {
@@ -73,7 +73,7 @@ fn button_system(
                     let lsb: &LevelSelectionButton = button.1;
 					level_selection.level_name = lsb.level_name.to_string();
 					level_selection.skill = lsb.skill;
-					create_fadeout(&mut commands, GameState::LevelPreview, &game_textures); // , &mut state);
+					create_fadeout(&mut commands, GameState::LevelPreview, &game_textures, is_transitioning);
                 }
             }
         }    

@@ -5,7 +5,7 @@ use crate::GameState;
 use crate::level_selection_menu::MainMenuSkillSelection;
 use crate::{POINT_SIZE, TEXTURE_SCALE, FRAME_DURATION};
 use crate::menu_common::{spawn_menu_background};
-use crate::fadeout::create_fadeout;
+use crate::fadeout::*;
 
 #[derive(Component)]
 struct MainMenuComponent; // Marker component so the menu can be despawned.
@@ -59,9 +59,9 @@ impl Plugin for MainMenuPlugin {
             spawn_background,
         ).in_schedule(OnEnter(GameState::MainMenu)));
         app.add_systems((
-            button_system,
+            button_system.run_if(screen_fade_is_not_transitioning),
+            button_highlight_system.run_if(screen_fade_is_not_transitioning),
             animate_blinking_sprites,
-            button_highlight_system,
         ).in_set(OnUpdate(GameState::MainMenu)));
         app.add_systems((
             exit,
@@ -104,7 +104,7 @@ fn button_system(
     mouse_buttons: Res<Input<MouseButton>>,
     buttons: Query<(&Transform, &MainMenuButton)>,
     game_textures: Res<GameTextures>,
-    // mut state: ResMut<State<GameState>>,
+    is_transitioning: ResMut<ScreenFadeIsTransitioning>,
     mut skill: ResMut<MainMenuSkillSelection>,
     mut commands: Commands,
     mut exit: EventWriter<AppExit>,
@@ -123,7 +123,7 @@ fn button_system(
                     match mmb.action {
                         MainMenuButtonAction::Skill(skill_level) => {
                             skill.0 = skill_level;
-                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures); // , &mut state);
+                            create_fadeout(&mut commands, GameState::LevelSelectionMenu, &game_textures, is_transitioning);
                         },
                         MainMenuButtonAction::Settings => {
                             println!("Settings TODO");

@@ -4,6 +4,7 @@ use crate::{GameState, GameTextures};
 
 pub struct FadeoutPlugin;
 
+// This is a component not a resource because it doesn't exist when a fade isn't running.
 #[derive(Component)]
 struct ScreenFade {
     alpha: f32,
@@ -12,16 +13,28 @@ struct ScreenFade {
     timer: Timer,
 }
 
+// This is a resource for efficient lookup, as it is used as a run condition.
+#[derive(Resource)]
+pub struct ScreenFadeIsTransitioning(bool);
+
 impl Plugin for FadeoutPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(fadeout);
+        app.insert_resource(ScreenFadeIsTransitioning(false));
     }
+}
+
+// To be used as a run condition using 'run_if' for any interaction system you want disabled
+// while transitioning.
+pub fn screen_fade_is_not_transitioning(is_transitioning: Res<ScreenFadeIsTransitioning>) -> bool {
+    !is_transitioning.0
 }
 
 fn fadeout(
     mut commands: Commands,
     mut fade_query: Query<(Entity, &mut ScreenFade, &mut Sprite)>,
     mut state: ResMut<NextState<GameState>>,
+    mut is_transitioning: ResMut<ScreenFadeIsTransitioning>,
     time: Res<Time>,
 ) {
     for (entity, mut fade, mut sprite) in fade_query.iter_mut() {
@@ -40,20 +53,20 @@ fn fadeout(
 
         if fade.timer.just_finished() {
             commands.entity(entity).despawn_recursive();
+            is_transitioning.0 = false;
         }
     }
 }
 
+// TODO consider the pros and cons of making fadeouts happen using Events rather than calling this directly.
 pub fn create_fadeout(
     commands: &mut Commands,
     next_state: GameState,
     game_textures: &Res<GameTextures>,
-    //mut state: ResMut<State<GameState>>,
+    mut is_transitioning: ResMut<ScreenFadeIsTransitioning>,
 ) {
-    // TODO now that bevy 0.10 does not have the state stack, I have to rethink
-    // some way to replicate how it used to 'push' a fading state to disable the old screen
-    // yet still have it displayed.
-    //_ = state.push(GameState::Fading); // So you can't tap anything on the old screen.
+    // Stop eg mouse clicks while transitioning.
+    is_transitioning.0 = true;
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {

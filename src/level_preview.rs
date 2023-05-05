@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use crate::fadeout::create_fadeout;
+use crate::fadeout::*;
 use crate::{GameTextures, GameState};
 use crate::menu_common::{spawn_menu_background, text_size, spawn_text};
 use crate::lemmings::level_renderer;
@@ -17,7 +17,7 @@ impl Plugin for LevelPreviewPlugin {
             spawn_preview,
         ).in_schedule(OnEnter(GameState::LevelPreview)));
         app.add_systems((
-            button_system,
+            button_system.run_if(screen_fade_is_not_transitioning),
         ).in_set(OnUpdate(GameState::LevelPreview)));
         app.add_systems((
             exit,
@@ -53,12 +53,12 @@ fn exit(
 
 fn button_system(
 	mut commands: Commands,
-    // mut state: ResMut<State<GameState>>,
+    is_transitioning: ResMut<ScreenFadeIsTransitioning>,
 	game_textures: Res<GameTextures>,
     mouse_buttons: Res<Input<MouseButton>>,
 ) {
     if mouse_buttons.just_released(MouseButton::Left) {
-		create_fadeout(&mut commands, GameState::InGame, &game_textures); // , &mut state);
+		create_fadeout(&mut commands, GameState::InGame, &game_textures, is_transitioning);
 	}
 }
 
